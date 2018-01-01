@@ -9,7 +9,7 @@ Created on Sun Dec 10 21:51:04 2017
 def getPDBCodeFromLog(logFileName):
     logFile = open(logFileName, 'r')
     
-    outputName = "allPDBandLigandCodes.log"
+    outputName = logFileName[:-4]+"Parsed.log"
     outputFile = open( outputName, "a+" )
     
     line = logFile.readline()
@@ -19,7 +19,6 @@ def getPDBCodeFromLog(logFileName):
     while line:
         if "ligand code" in line:
             pdbRubbish = line.split("ligand code: ")
-            print( pdbRubbish)
             del pdbRubbish[0]
             for i in pdbRubbish:
                 LigandCode = i.split(": ")[0].strip()
@@ -40,8 +39,8 @@ def getPDBCodeFromLog(logFileName):
     logFile.close()
     print("Znaleziono: "+str(pdbNo)+" kodow PDB" +" oraz " +str(LigandCodeNo)+" kodów liganda")
   
-getPDBCodeFromLog("tescik.log")
-#getPDBCodeFromLog("wiecej_niz_1_pierscien_obecny_aromat_i_metal.log")
-#getPDBCodeFromLog("aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.log")
+#getPDBCodeFromLog("logs/tescik.log")
+#getPDBCodeFromLog("logs/wiecej_niz_1_pierscien_obecny_aromat_i_metal.log")
+getPDBCodeFromLog("logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.log")
 
 

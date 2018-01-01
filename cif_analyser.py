@@ -99,7 +99,7 @@ def isFlat(allAtomsList, atomsIndList):
     norm_vec = normalize(np.cross(vec1, vec2))
     
     if len(atomsIndList) <= 3:
-        print("LOL strasznie krotki pierscien")
+#        print("LOL strasznie krotki pierscien")
         #verdict['isFlat'] = True
         verdict['normVec'] = norm_vec
         return verdict    
@@ -186,7 +186,14 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
     Hehehe, czas pokaze...
     """
     parser = MMCIFParser()
-    structure = parser.get_structure('temp', cifFile)
+    
+    try:
+        structure = parser.get_structure('temp', cifFile)
+    except:
+        print("Biopytong nie ogarnia!", cifFile)
+        #Zeby zobaczyc co sie dzieje
+        return True        
+        
     atoms = Selection.unfold_entities(structure, 'A')  
     ns = NeighborSearch(atoms)
     supramolecularFound = False    
@@ -325,7 +332,7 @@ def extractNeighbours( atomList, ligandCode ):
             potentiallySupramolecular, anionType = handleOthers(atom)            
             
         if potentiallySupramolecular:
-            print("cos watergo uwagi :D", atom.get_fullname())
+#            print("cos watergo uwagi :D", atom.get_fullname())
             extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
             
     return extractedAtoms
@@ -345,8 +352,10 @@ def isItWorthAnalyzing(atom, ligandCode):
     """
     parent_name = atom.get_parent().get_resname()
     
-    bad_parents = [ "HOH", "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS",
-        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+#    bad_parents = [ "HOH", "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS",
+#        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+        
+    bad_parents = [ "HOH" ]
         
     if parent_name == ligandCode:
         return False
@@ -379,14 +388,14 @@ def handleOxygen( atom ):
     oxygen_neighbors = []
     oxygen_neighbors = graph.neighbors(oxygenInd)
     
-    if len(oxygen_neighbors) > 1:
+    if len(oxygen_neighbors) == 0:
+        return True, "Complex-O?"
+    elif len(oxygen_neighbors) > 1:
         print("Prawdopodobnie ester lub eter")
         return False, "O"
         
     oxygen_neighbor_index = oxygen_neighbors[0]
     oxygen_neighbor_symbol = atoms[ oxygen_neighbor_index ].element
-    
-    print("Moj somsiad: ", oxygen_neighbor_symbol)
     
     center_neighbors = graph.neighbors( oxygen_neighbor_index )
     
@@ -418,10 +427,17 @@ def handleHalogens( atom):
     """
     atoms = list(atom.get_parent().get_atoms())
     
-    if len(atoms) > 1:
-        return False, atom.element
+    if len(atoms) == 1:
+        return True, atom.element
+        
+    graph, halogenInd = molecule2graph(atom, atoms )
+    halogen_neighbors = graph.neighbors(halogenInd)
     
-    return True, atom.element
+    if len(halogen_neighbors) == 0:
+        return True, "Complex-"+atom.element+"?"
+        
+    return False, atom.element
+    
 
 def handleChalcogens(atom):
     """
@@ -437,10 +453,16 @@ def handleChalcogens(atom):
     """
     atoms = list(atom.get_parent().get_atoms())
     
-    if len(atoms) > 1:
-        return False, atom.element
+    if len(atoms) == 1:
+        return True, atom.element
+        
+    graph, chalcogenInd = molecule2graph(atom, atoms )
+    chalcogen_neighbors = graph.neighbors(chalcogenInd)
     
-    return True, atom.element
+    if len(chalcogen_neighbors) == 0:
+        return True, "Complex-"+atom.element+"?"
+        
+    return False, atom.element
 
 def handlePnictogens(atom):
     """
@@ -504,38 +526,54 @@ def molecule2graph( atom, atoms ):
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
     atomName = atom.get_fullname()    
+    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.1,
+                  "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
     
     G = nx.Graph()
     atoms_found = []
     for atom1Ind in range(len(atoms)):
+        threshold1 = 2.2
         atom1 = atoms[atom1Ind]
         if atom1.element == "H":
             continue
+        
+        if atom1.element in thresholds.keys():
+            threshold1 = thresholds[atom1.element]
         
         if atom1.get_fullname() == atomName:
             atoms_found.append(atom1Ind)
         
         for atom2Ind in range(atom1Ind+1, len(atoms)):
+            threshold2 = 2.2
             atom2 = atoms[atom2Ind]            
             if atom2.element == "H":
                 continue
             
+            if atom2.element in thresholds.keys():
+                threshold2 = thresholds[atom2.element]
+            
             distance = atom1 - atom2
             
-            if distance < 1.8 :
+            threshold = max( threshold1, threshold2 )
+            if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
     if len(atoms_found) != 1:
         print("WTF!? ", atoms_found)
+        
+    if not atoms_found[0] in G.nodes():
+        print("Nie znalazlem "+ atom.element+" w grafie!")
+        G.add_node( atoms_found[0] )
         
     return G, atoms_found[0]
 
 if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
-    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
-    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
-    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
+    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
+#    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
+#    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
+#    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
     timeStop = time.time()
     print("Calosc: ", timeStop-timeStart)
 #findSupramolecular( "LUM", 666 )

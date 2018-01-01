@@ -27,7 +27,8 @@ def getLigandCodePDBcodeFromLog( logFileName ):
     
     return results
 
-logInput = "logs/allPDBandLigandCodes.log"
+#logInput = "logs/allPDBandLigandCodes.log"
+logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
 writeSupramolecularSearchHeader()
 
 data = getLigandCodePDBcodeFromLog(logInput)
@@ -36,11 +37,16 @@ notFoundList = []
 
 if not isdir("cif"):
     makedirs("cif")
+    
+dataLen = float(len(data))
+dataProcessed = 0
 
+timeStart = time.time()
 for record in data:
     ligandCode = record["ligandCode"]
     PDBcode = record["PDBcode"]
     cifFile = pdbl.retrieve_pdb_file( PDBcode, pdir="cif", file_format="mmCif" )
+    dataProcessed += 1
     if not isfile(cifFile):
         notFoundList.append(PDBcode)
         continue
@@ -49,9 +55,13 @@ for record in data:
     
     if not supramolecularFound:
         remove(cifFile)
-    else:
-        print("wow! cos mam!")
-            
+        
+    
+    if dataProcessed % 10 == 0:
+        print("Postep: ", str(dataProcessed)+"/"+str(dataLen), str(dataProcessed*100.0/dataLen)[0:5]+"%")
+
+timeStop = time.time()            
 print("Kody PDB, ktorych nie udao sie pobrac: ", len(notFoundList))
 print(notFoundList)
+print("Czas analizy: ", timeStop-timeStart)
     
