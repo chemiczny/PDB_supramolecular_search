@@ -82,11 +82,13 @@ def isFlat(allAtomsList, atomsIndList):
                 wspolrzedne wektora normalnego plaszczyzny, jesli struktura nie
                 jest plaska wszystkie jego wspolrzedne sa rowne 0)
     """
-    if len(atomsIndList) <= 3:
-        print("LOL strasznie krotki pierscien")
-        return True
         
     verdict = { 'isFlat' : False, 'normVec' : [ 0, 0, 0] }
+    
+    if len(atomsIndList) < 3:
+        print("Znaleziono 2-wu elementowy cykl!!!")
+        return verdict
+    
     A = np.array( allAtomsList[ atomsIndList[0] ].get_coord() )
     B = np.array( allAtomsList[ atomsIndList[1] ].get_coord() )
     C = np.array( allAtomsList[ atomsIndList[2] ].get_coord() )
@@ -95,6 +97,12 @@ def isFlat(allAtomsList, atomsIndList):
     vec2 = B-C
     
     norm_vec = normalize(np.cross(vec1, vec2))
+    
+    if len(atomsIndList) <= 3:
+        print("LOL strasznie krotki pierscien")
+        #verdict['isFlat'] = True
+        verdict['normVec'] = norm_vec
+        return verdict    
     
     lastAtom = C    
     for i in range( 3, len(atomsIndList)  ):
@@ -181,11 +189,11 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
     structure = parser.get_structure('temp', cifFile)
     atoms = Selection.unfold_entities(structure, 'A')  
     ns = NeighborSearch(atoms)
+    supramolecularFound = False    
     
     ligands = []
     for residue in structure.get_residues():
         if ligandCode == residue.get_resname():
-            print("Znalazlem!", ligandCode)
             ligands.append(residue)
     for ligand in ligands:
         centroids = getRingsCentroids( ligand )
@@ -194,7 +202,12 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
         for centroid in centroids:
             neighbors = ns.search(np.array(centroid["coords"]), 5, 'A')
             extractedAtoms = extractNeighbours( neighbors, ligandCode )
+            if len(extractedAtoms) > 0:
+                supramolecularFound = True
+            
             writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms)
+            
+    return supramolecularFound
     
             
 def writeSupramolecularSearchHeader( ):

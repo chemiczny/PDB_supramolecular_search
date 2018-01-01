@@ -249,9 +249,9 @@ if __name__ == "__main__":
     1. Pobierz kody ligandow z pliku sdf
     2. Dla kazdego z ligandow znajdz kody PDB i zapisz je do pliku
     """
-    #sdfInput =  "aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.sdf"
+    #sdfInput =  "sdf/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.sdf"
     
-    sdfInput = "wiecej_niz_1_pierscien_obecny_aromat_i_metal.sdf"
+    sdfInput = "sdf/wiecej_niz_1_pierscien_obecny_aromat_i_metal.sdf"
     sdfOutput = sdfInput[0:-3]+"log"
     
     ligandyEmilki = getLigandCodeFromSdf( sdfInput )
