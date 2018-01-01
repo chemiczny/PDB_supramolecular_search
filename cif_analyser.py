@@ -12,6 +12,8 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 
 
 from Bio.PDB import MMCIFParser, NeighborSearch, Selection
+from math import sqrt, acos, degrees
+import time
 import networkx as nx
 import numpy as np
 
@@ -163,7 +165,7 @@ def getRingsCentroids( molecule ):
     return centroids
         
 
-def findSupramolecularAnionPiLigand( ligandCode, cifFile ):
+def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
     """
     Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
     zwiazanych z konkretnym ligandem
@@ -177,22 +179,103 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile ):
     """
     parser = MMCIFParser()
     structure = parser.get_structure('temp', cifFile)
-    atoms = Selection.unfold_entities(structure, 'A')    
+    atoms = Selection.unfold_entities(structure, 'A')  
+    ns = NeighborSearch(atoms)
     
     ligands = []
     for residue in structure.get_residues():
         if ligandCode == residue.get_resname():
             print("Znalazlem!", ligandCode)
             ligands.append(residue)
-    
     for ligand in ligands:
         centroids = getRingsCentroids( ligand )
         #print(centroids)
         
-        ns = NeighborSearch(atoms)
         for centroid in centroids:
             neighbors = ns.search(np.array(centroid["coords"]), 5, 'A')
             extractedAtoms = extractNeighbours( neighbors, ligandCode )
+            writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms)
+    
+            
+def writeSupramolecularSearchHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/anionPiLigand.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\tLigand Code\tResidue Name\tAnion type\t")
+    resultsFile.write("Atom symbol\tDistance\tAngle\n")
+    resultsFile.close()
+    
+            
+def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms ):
+    """
+    Zapisz dane do pliku z wynikami
+    """
+    resultsFileName = "logs/anionPiLigand.log"
+    
+    resultsFile = open(resultsFileName, "a+")
+    
+    for atomData in extractedAtoms:
+        residueName = atomData["Atom"].get_parent().get_resname()
+        resultsFile.write(PDBcode+"\t")
+        resultsFile.write(ligandCode+"\t")
+        resultsFile.write(residueName+"\t")
+        resultsFile.write(atomData["AnionType"]+"\t")
+        resultsFile.write(atomData["Atom"].element+"\t")
+        
+        distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
+        angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
+        
+        resultsFile.write(str(distance)+"\t")
+        resultsFile.write(str(angle)+"\n")
+        
+        
+    
+    resultsFile.close()
+    
+def atomDistanceFromCentroid( atom, centroid ):
+    """
+    Funkcja pomocnicza, oblicza odleglosc pomiedzy atomem a srodkiem 
+    pierscienia
+    
+    Wejscie:
+    atom - obiekt Atom (Biopython)
+    centroid - slownik, klucze: coords, normVec
+    
+    Wyjscie:
+    odleglosc (float)
+    """
+    atomCoords = atom.get_coord()
+    centoridCoords = centroid["coords"]
+    
+    dist = 0
+    for atomCoord, centroidCoord in  zip( atomCoords, centoridCoords ):
+        dist+= (atomCoord-centroidCoord)*(atomCoord-centroidCoord)
+        
+    return sqrt(dist)
+
+def atomAngleNomVecCentroid( atom, centroid ):
+    """
+    Funkcja pomocnicza, oblicza kat pomiedzy kierunkiem od srodka 
+    pierscienia do atomu a wektorem normalnym plaszczyzny pierscienia
+    
+    Wejscie:
+    atom - obiekt Atom (Biopython)
+    centroid - slownik, klucze: coords, normVec
+    
+    Wyjscie:
+    kat w stopniach
+    """
+    atomCoords = np.array(atom.get_coord())
+    centroidCoords = np.array(centroid["coords"])
+    normVec = centroid["normVec"]
+    
+    centrAtomVec= normalize( atomCoords - centroidCoords )
+    inner_prod = np.inner( normVec, centrAtomVec )
+    
+    return degrees( acos(inner_prod) )
+    
             
 def extractNeighbours( atomList, ligandCode ):
     """
@@ -203,7 +286,8 @@ def extractNeighbours( atomList, ligandCode ):
     ligandCode - kod liganda
     
     Wysjcie:
-    jeszcze nieokreslone :)
+    extractedAtoms - lista slownikow z informacjami o potencjalnym anionie,
+        klucze: Atom - atom, AnionType - rodzaj anionu
     """
     extractedAtoms = []
     
@@ -214,21 +298,22 @@ def extractNeighbours( atomList, ligandCode ):
             continue
         
         potentiallySupramolecular = False
+        anionType = ""
         
         if element_symbol == "O":
-            potentiallySupramolecular = handleOxygen(atom)
+            potentiallySupramolecular, anionType = handleOxygen(atom)
         elif element_symbol in [ "F", "CL", "BR", "I" ]:
-            potentiallySupramolecular = handleHalogens(atom)
+            potentiallySupramolecular, anionType = handleHalogens(atom)
         elif element_symbol in [ "S", "SE" ]:
-            potentiallySupramolecular = handleChalcogens(atom)
+            potentiallySupramolecular, anionType = handleChalcogens(atom)
         elif element_symbol in [ "N", "P" ]:
-            potentiallySupramolecular = handlePnictogens(atom)
+            potentiallySupramolecular, anionType = handlePnictogens(atom)
         else:
-            potentiallySupramolecular = handleOthers(atom)            
+            potentiallySupramolecular, anionType = handleOthers(atom)            
             
         if potentiallySupramolecular:
             print("cos watergo uwagi :D", atom.get_fullname())
-            extractedAtoms.append(atom)
+            extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
             
     return extractedAtoms
 
@@ -283,7 +368,7 @@ def handleOxygen( atom ):
     
     if len(oxygen_neighbors) > 1:
         print("Prawdopodobnie ester lub eter")
-        return
+        return False, "O"
         
     oxygen_neighbor_index = oxygen_neighbors[0]
     oxygen_neighbor_symbol = atoms[ oxygen_neighbor_index ].element
@@ -300,7 +385,7 @@ def handleOxygen( atom ):
     if oxygen_neighbor_symbol == "C" and oxygens_found < 2:
         return False, oxygen_neighbor_symbol+str(oxygens_found)+"O"
     
-    return True, oxygen_neighbor_symbol+str(oxygens_found)+"O"
+    return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
     
 
@@ -433,7 +518,11 @@ def molecule2graph( atom, atoms ):
     return G, atoms_found[0]
 
 if __name__ == "__main__":
-    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif" )
-    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif" )
-    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif" )
+    writeSupramolecularSearchHeader( )
+    timeStart = time.time()
+    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
+    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
+    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
+    timeStop = time.time()
+    print("Calosc: ", timeStop-timeStart)
 #findSupramolecular( "LUM", 666 )

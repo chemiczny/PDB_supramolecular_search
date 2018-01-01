@@ -243,33 +243,34 @@ def addTextToOutput( text  ):
 
     outputFile.close()
 
-"""
-Wlasciwa czesc kodu:
-1. Pobierz kody ligandow z pliku sdf
-2. Dla kazdego z ligandow znajdz kody PDB i zapisz je do pliku
-"""
-#sdfInput =  "aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.sdf"
-
-sdfInput = "wiecej_niz_1_pierscien_obecny_aromat_i_metal.sdf"
-sdfOutput = sdfInput[0:-3]+"log"
-
-ligandyEmilki = getLigandCodeFromSdf( sdfInput )
-ligandsNo = len(ligandyEmilki)
-print("Znaleziono: "+str(ligandsNo)+" kodow ligandow")
-
-ligandInd = 0
-
-for ligand in ligandyEmilki:
-    ligands2PDBdata, ligandsStack = getPdbCode( ligand )
-    ligandInd+= 1
+if __name__ == "__main__":
+    """
+    Wlasciwa czesc kodu:
+    1. Pobierz kody ligandow z pliku sdf
+    2. Dla kazdego z ligandow znajdz kody PDB i zapisz je do pliku
+    """
+    #sdfInput =  "aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2.sdf"
     
-    if len(ligandsStack)>2:
-        print("Wiecej niz dwa ligandy na stosie! "+str(ligandsStack))
+    sdfInput = "wiecej_niz_1_pierscien_obecny_aromat_i_metal.sdf"
+    sdfOutput = sdfInput[0:-3]+"log"
     
-    if ligands2PDBdata:
-        addDataToOutput( ligands2PDBdata, ligandsStack)
-    else:
-        addTextToOutput("Nie mozna znalezc pdb code dla: "+ligand)
-
-    if ligandInd % 20 == 0:
-        print("Postep: "+str(ligandInd)+"/"+str(ligandsNo))
+    ligandyEmilki = getLigandCodeFromSdf( sdfInput )
+    ligandsNo = len(ligandyEmilki)
+    print("Znaleziono: "+str(ligandsNo)+" kodow ligandow")
+    
+    ligandInd = 0
+    
+    for ligand in ligandyEmilki:
+        ligands2PDBdata, ligandsStack = getPdbCode( ligand )
+        ligandInd+= 1
+        
+        if len(ligandsStack)>2:
+            print("Wiecej niz dwa ligandy na stosie! "+str(ligandsStack))
+        
+        if ligands2PDBdata:
+            addDataToOutput( ligands2PDBdata, ligandsStack)
+        else:
+            addTextToOutput("Nie mozna znalezc pdb code dla: "+ligand)
+    
+        if ligandInd % 20 == 0:
+            print("Postep: "+str(ligandInd)+"/"+str(ligandsNo))

@@ -4,8 +4,9 @@ Created on Tue Dec 19 18:24:14 2017
 
 @author: michal
 """
-import cif_analyser
+from cif_analyser import getRingsCentroids
 from math import sqrt
+import numpy as np
 
 class myResidue:
     def __init__(self):
@@ -56,16 +57,23 @@ class myAtom:
         return sqrt(dist)
         
 def writeLigandAndCentorids( ligandAtoms, centroids ):
-    atomNo = len(ligandAtoms) + len(centroids)
+    atomNo = len(ligandAtoms) + len(centroids)*2
     
-    xyz = open("ligand_and_centroids3.xyz", 'a+')
+    xyz = open("xyz/cit_centroids.xyz", 'a+')
     xyz.write( str(atomNo)+"\n\n" )
     for atom in ligandAtoms:
         coord = atom.get_coord()
         xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
         
     for centroid in centroids:
+        normVec = centroid["normVec"]
+        centroid = np.array(centroid["coords"])
+        
+        newGhost = centroid+normVec
+        print(newGhost)
+        
         xyz.write("X "+str(centroid[0])+" "+str(centroid[1])+" "+str(centroid[2])+"\n")
+        xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
         
     xyz.close()
     
@@ -78,7 +86,7 @@ myRes = myResidue()
 #myRes.read_xyz("peptyd.xyz", False)
 #centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
-myRes.read_xyz("big_peptyd.xyz", False)
+myRes.read_xyz("xyz/cit_check.xyz", False)
 centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
 #myRes.read_xyz("antracen.xyz", False)
