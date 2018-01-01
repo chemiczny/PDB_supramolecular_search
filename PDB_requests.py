@@ -17,21 +17,21 @@ class PDBdata:
         self.method = method
 
 
-"""
-Funkcja do znajdowania unikalnych rekordow PDB powiazanych z wprowadzonym 
-kodem liganda. Z znalezionych wynikow usuwane sa duplikaty
-
-Wejscie:
-ligandcode - string, kod liganda
-
-Wyjcie:
-ligand2pdbData - slownik, kluczem jest kod liganda, wartoscia lista obiektow
-                PDBdata
-ligandStack    - lista kodow ligandow, kolejnosc jest zgodna z kolejnoscia
-                znajdowania kodow w bazie. Wszystkie kody dotycza tej samej
-                struktury
-"""
 def getPdbCode( ligandCode ):
+    """
+    Funkcja do znajdowania unikalnych rekordow PDB powiazanych z wprowadzonym 
+    kodem liganda. Z znalezionych wynikow usuwane sa duplikaty
+    
+    Wejscie:
+    ligandcode - string, kod liganda
+    
+    Wyjcie:
+    ligand2pdbData - slownik, kluczem jest kod liganda, wartoscia lista obiektow
+                    PDBdata
+    ligandStack    - lista kodow ligandow, kolejnosc jest zgodna z kolejnoscia
+                    znajdowania kodow w bazie. Wszystkie kody dotycza tej samej
+                    struktury
+    """
     ligand2PDBcodes, ligandStack = getPdbCodeAndReplacedLigandCode( ligandCode)
     
     ligand2pdbData = {}
@@ -64,19 +64,19 @@ def getPdbCode( ligandCode ):
                 
     return ligand2pdbData, ligandStack
 
-"""
-Funkcja sluzy do znajdowania rekordow PDB powiazanych z konretnym ligandem.
-Ze znalezionych rekordow nie sa usuwane duplikaty.
-Wyszukiwania sa dokonywane przez ... (nie wiem jak nazwac ta druga wyszukiwarke)
-
-Wejscie:
-ligandcode - string, kod liganda
-
-Wyjcie:
-ligand2pdbData - slownik, kluczem jest kod liganda, wartoscia lista obiektow
-                PDBdata
-"""
 def getAllPDBcodes( ligandCode ):
+    """
+    Funkcja sluzy do znajdowania rekordow PDB powiazanych z konretnym ligandem.
+    Ze znalezionych rekordow nie sa usuwane duplikaty.
+    Wyszukiwania sa dokonywane przez ... (nie wiem jak nazwac ta druga wyszukiwarke)
+    
+    Wejscie:
+    ligandcode - string, kod liganda
+    
+    Wyjcie:
+    ligand2pdbData - slownik, kluczem jest kod liganda, wartoscia lista obiektow
+                    PDBdata
+    """
     ligandSearchAdress = "http://ligand-expo.rcsb.org/pyapps/ldHandler.py"
     
     payload = {'formid': 'cc-db-inst-search' ,'targetId': ligandCode, 'operation':'idsearch'}
@@ -115,22 +115,22 @@ def getAllPDBcodes( ligandCode ):
         
     return allPdbCodes
 
-"""
-Funkcja sluzy do znajdowania rekordow PDB powiazanych z konretnym ligandem.
-Wyszukiwania sa dokonywane przez ... (nie wiem jak nazwac ta druga wyszukiwarke)
-
-Wejscie:
-ligandcode - string, kod liganda
-
-Wyjcie:
-ligand2pdbCodes - slownik, kluczem jest kod liganda, wartoscia lista kodow
-                PDB
-
-ligandStack    - lista kodow ligandow, kolejnosc jest zgodna z kolejnoscia
-                znajdowania kodow w bazie. Wszystkie kody dotycza tej samej
-                struktury
-"""
 def getPdbCodeAndReplacedLigandCode( ligandCode ):
+    """
+    Funkcja sluzy do znajdowania rekordow PDB powiazanych z konretnym ligandem.
+    Wyszukiwania sa dokonywane przez ... (nie wiem jak nazwac ta druga wyszukiwarke)
+    
+    Wejscie:
+    ligandcode - string, kod liganda
+    
+    Wyjcie:
+    ligand2pdbCodes - slownik, kluczem jest kod liganda, wartoscia lista kodow
+                    PDB
+    
+    ligandStack    - lista kodow ligandow, kolejnosc jest zgodna z kolejnoscia
+                    znajdowania kodow w bazie. Wszystkie kody dotycza tej samej
+                    struktury
+    """
     ligandSearchAdress = "http://ligand-expo.rcsb.org/pyapps/ldHandler.py"
 
     payload = {'formid': 'cc-index-search' ,'target': ligandCode, 'operation':'ccid'}
@@ -175,16 +175,16 @@ def getPdbCodeAndReplacedLigandCode( ligandCode ):
         
     return ligand2PDBcodes, ligandStack
 
-"""
-Funkcja sluzy do pobierania kodow ligandow z pliku .sdf
-
-Wejscie:
-sdfFileName - nazwa pliku sdf
-
-Wyjscie:
-ligandCodes - lista znalezionych kodow ligandow
-"""
 def getLigandCodeFromSdf ( sdfFileName  ):
+    """
+    Funkcja sluzy do pobierania kodow ligandow z pliku .sdf
+    
+    Wejscie:
+    sdfFileName - nazwa pliku sdf
+    
+    Wyjscie:
+    ligandCodes - lista znalezionych kodow ligandow
+    """
     sdfFile= open(sdfFileName, 'r' )
 
     line = sdfFile.readline()
@@ -200,18 +200,18 @@ def getLigandCodeFromSdf ( sdfFileName  ):
 
     return ligandCodes
 
-"""
-Funkcja sluzy do wpisania znalezionych danych dotyczacych pojedynczej struktury
-liganda (a moze ligandu?). Dane wspisywane sa do pliku wynikowego, jego nazwa
-jest okreslona przez wartosc zmiennej globalnej sdfOutput
-
-Wejscie:
-ligands2PDBdata - slownik, kluczem jest kod liganda, wartoscia lista obiektow
-                PDBdata
-ligandStack     - lista znalezionych kodow odpowiadajacych pojedynczemu 
-                ligandowi.
-"""
 def addDataToOutput( ligands2PDBdata, ligandsStack):
+    """
+    Funkcja sluzy do wpisania znalezionych danych dotyczacych pojedynczej struktury
+    liganda (a moze ligandu?). Dane wspisywane sa do pliku wynikowego, jego nazwa
+    jest okreslona przez wartosc zmiennej globalnej sdfOutput
+    
+    Wejscie:
+    ligands2PDBdata - slownik, kluczem jest kod liganda, wartoscia lista obiektow
+                    PDBdata
+    ligandStack     - lista znalezionych kodow odpowiadajacych pojedynczemu 
+                    ligandowi.
+    """
     outputName = sdfOutput
     outputFile = open( outputName, "a+" )
 
@@ -231,11 +231,11 @@ def addDataToOutput( ligands2PDBdata, ligandsStack):
 
     outputFile.close()
 
-"""
-Funckja zapisuje dane na temat ligandow, dla ktorych nie znaleziono ani jednego
-rekordu w bazie PDB. Zapis nastepuje do pliku PDBwrong.log
-"""
 def addTextToOutput( text  ):
+    """
+    Funckja zapisuje dane na temat ligandow, dla ktorych nie znaleziono ani jednego
+    rekordu w bazie PDB. Zapis nastepuje do pliku PDBwrong.log
+    """
     outputName = "PDBwrong.log"
     outputFile = open( outputName, "a+" )
 
