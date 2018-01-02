@@ -26,9 +26,15 @@ def getLigandCodePDBcodeFromLog( logFileName ):
     logFile.close()
     
     return results
+    
+def writeProgres(dataProcessed, allData):
+    progressFile = open("logs/progress.log", "w")
+    progressFile.write("Postep: ", str(dataProcessed)+"/"+str(dataLen), str(dataProcessed*100.0/dataLen)[0:5]+"%\n")
+    progressFile.close()
+    
 
-#logInput = "logs/allPDBandLigandCodes.log"
-logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
+logInput = "logs/anionPiSearchTest.log"
+#logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
 writeSupramolecularSearchHeader()
 
 data = getLigandCodePDBcodeFromLog(logInput)
@@ -53,12 +59,12 @@ for record in data:
     
     supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode )
     
-    if not supramolecularFound:
-        remove(cifFile)
+    #if not supramolecularFound:
+    #remove(cifFile)
         
     
     if dataProcessed % 10 == 0:
-        print("Postep: ", str(dataProcessed)+"/"+str(dataLen), str(dataProcessed*100.0/dataLen)[0:5]+"%")
+        writeProgres(dataProcessed, dataLen)
 
 timeStop = time.time()            
 print("Kody PDB, ktorych nie udao sie pobrac: ", len(notFoundList))

@@ -207,7 +207,8 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
         #print(centroids)
         
         for centroid in centroids:
-            neighbors = ns.search(np.array(centroid["coords"]), 5, 'A')
+            distance = 4.5
+            neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
             extractedAtoms = extractNeighbours( neighbors, ligandCode )
             if len(extractedAtoms) > 0:
                 supramolecularFound = True
@@ -237,18 +238,19 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
     resultsFile = open(resultsFileName, "a+")
     
     for atomData in extractedAtoms:
-        residueName = atomData["Atom"].get_parent().get_resname()
-        resultsFile.write(PDBcode+"\t")
-        resultsFile.write(ligandCode+"\t")
-        resultsFile.write(residueName+"\t")
-        resultsFile.write(atomData["AnionType"]+"\t")
-        resultsFile.write(atomData["Atom"].element+"\t")
-        
         distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
         angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
         
-        resultsFile.write(str(distance)+"\t")
-        resultsFile.write(str(angle)+"\n")
+        if angle < 70 or angle > 110:
+            residueName = atomData["Atom"].get_parent().get_resname()
+            resultsFile.write(PDBcode+"\t")
+            resultsFile.write(ligandCode+"\t")
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(atomData["AnionType"]+"\t")
+            resultsFile.write(atomData["Atom"].element+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
+            resultsFile.write(str(angle)+"\n")
         
         
     
@@ -461,7 +463,25 @@ def handleChalcogens(atom):
     
     if len(chalcogen_neighbors) == 0:
         return True, "Complex-"+atom.element+"?"
+    elif len(chalcogen_neighbors) == 1:
+        #tiol
+        atom_neighbor = atoms[chalcogen_neighbors[0]]
+        if atom.element == "S" and atom_neighbor.element == "C":
+            return True, "RSH"
+        elif atom.element == "S" and atom_neighbor.element == "S":  
+            #mostek disulfidowy
+            return True, "S~SH?"
         
+            
+    elif len(chalcogen_neighbors) == 2:
+        #mostek disulfidowy
+        neighbors_element = []
+        neighbors_element.append( atoms[chalcogen_neighbors[0]].element )
+        neighbors_element.append( atoms[chalcogen_neighbors[1]].element )
+        
+        if atom.element == "S" and "S" in neighbors_element and "C" in neighbors_element:
+            return True, "RS~SR"
+            
     return False, atom.element
 
 def handlePnictogens(atom):
@@ -526,7 +546,7 @@ def molecule2graph( atom, atoms ):
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
     atomName = atom.get_fullname()    
-    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.1,
+    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
                   "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
     
     G = nx.Graph()
