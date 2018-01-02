@@ -357,7 +357,7 @@ def isItWorthAnalyzing(atom, ligandCode):
 #    bad_parents = [ "HOH", "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS",
 #        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
         
-    bad_parents = [ "HOH" ]
+    bad_parents = [ "HOH", "DOD"]
         
     if parent_name == ligandCode:
         return False
