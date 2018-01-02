@@ -60,7 +60,7 @@ for record in data:
     supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode )
     
     #if not supramolecularFound:
-    #remove(cifFile)
+    remove(cifFile)
         
     
     if dataProcessed % 10 == 0:
