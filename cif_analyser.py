@@ -11,7 +11,7 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 """
 
 
-from Bio.PDB import MMCIFParser, NeighborSearch, Selection
+from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from math import sqrt, acos, degrees
 import time
 import networkx as nx
@@ -185,7 +185,7 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
     Wyjscie:
     Hehehe, czas pokaze...
     """
-    parser = MMCIFParser()
+    parser = FastMMCIFParser()
     
     try:
         structure = parser.get_structure('temp', cifFile)
@@ -194,12 +194,13 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
         #Zeby zobaczyc co sie dzieje
         return True        
         
-    atoms = Selection.unfold_entities(structure, 'A')  
+    model = structure[0]
+    atoms = Selection.unfold_entities(model, 'A')  
     ns = NeighborSearch(atoms)
     supramolecularFound = False    
     
     ligands = []
-    for residue in structure.get_residues():
+    for residue in model.get_residues():
         if ligandCode == residue.get_resname():
             ligands.append(residue)
     for ligand in ligands:
@@ -590,7 +591,9 @@ def molecule2graph( atom, atoms ):
 if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
-    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
+    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+#    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
+#    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
 #    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
 #    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
 #    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
