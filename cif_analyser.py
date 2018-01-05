@@ -194,27 +194,29 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
         #Zeby zobaczyc co sie dzieje
         return True        
         
-    model = structure[0]
-    atoms = Selection.unfold_entities(model, 'A')  
-    ns = NeighborSearch(atoms)
-    supramolecularFound = False    
+    supramolecularFound = False 
     
-    ligands = []
-    for residue in model.get_residues():
-        if ligandCode == residue.get_resname():
-            ligands.append(residue)
-    for ligand in ligands:
-        centroids = getRingsCentroids( ligand )
-        #print(centroids)
+    for modelIndex, model in enumerate(structure):
+        atoms = Selection.unfold_entities(model, 'A')  
+        ns = NeighborSearch(atoms)
+           
         
-        for centroid in centroids:
-            distance = 4.5
-            neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-            extractedAtoms = extractNeighbours( neighbors, ligandCode )
-            if len(extractedAtoms) > 0:
-                supramolecularFound = True
+        ligands = []
+        for residue in model.get_residues():
+            if ligandCode == residue.get_resname():
+                ligands.append(residue)
+        for ligand in ligands:
+            centroids = getRingsCentroids( ligand )
+            #print(centroids)
             
-            writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms)
+            for centroid in centroids:
+                distance = 4.5
+                neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
+                extractedAtoms = extractNeighbours( neighbors, ligandCode )
+                if len(extractedAtoms) > 0:
+                    supramolecularFound = True
+                
+                writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex)
             
     return supramolecularFound
     
@@ -226,11 +228,11 @@ def writeSupramolecularSearchHeader( ):
     resultsFileName = "logs/anionPiLigand.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tLigand Code\tResidue Name\tAnion type\t")
-    resultsFile.write("Atom symbol\tDistance\tAngle\n")
+    resultsFile.write("Atom symbol\tDistance\tAngle\tModel No\n")
     resultsFile.close()
     
             
-def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms ):
+def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms, modelIndex ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -251,7 +253,9 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
             resultsFile.write(atomData["Atom"].element+"\t")
             
             resultsFile.write(str(distance)+"\t")
-            resultsFile.write(str(angle)+"\n")
+            resultsFile.write(str(angle)+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\n")
         
         
     
@@ -471,7 +475,7 @@ def handleChalcogens(atom):
             return True, "RSH"
         elif atom.element == "S" and atom_neighbor.element == "S":  
             #mostek disulfidowy
-            return True, "S~SH?"
+            return True, "S~S?"
         
             
     elif len(chalcogen_neighbors) == 2:
@@ -482,13 +486,15 @@ def handleChalcogens(atom):
         
         if atom.element == "S" and "S" in neighbors_element and "C" in neighbors_element:
             return True, "RS~SR"
+        elif atom.element == "S" and "C" in neighbors_element and "N" in neighbors_element:
+            return True, "SCN"
             
     return False, atom.element
 
 def handlePnictogens(atom):
     """
     Zweryfikuj atom azotowca jako potencjalny anion.
-    W chwili obecnej rozwazamy tylko jony CN- oraz N3-
+    W chwili obecnej rozwazamy tylko jony CN- oraz N3-, NCS-
     
     Wejscie:
     atom - obiekt Atom (Biopython), azotowiec
@@ -511,12 +517,21 @@ def handlePnictogens(atom):
         
     elif len(atoms) ==3:
         onlyNitrogen = True
+        sulphfurExists = False
+        carbonExists = False
         
         for unknown in atoms:
             if unknown.element != "N":
                 onlyNitrogen = False
+            elif unknown.element == "S":
+                sulphfurExists = True
+            elif unknown.element == "C":
+                carbonExists = True
                 
-        return onlyNitrogen, "N3"
+        if onlyNitrogen:
+            return True, "N3"
+        elif carbonExists and sulphfurExists:
+            return True, "NCS"
     
     return False, atom.element
 
@@ -592,7 +607,7 @@ if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
     findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
-#    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
+    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
 #    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
 #    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
 #    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
