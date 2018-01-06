@@ -29,12 +29,12 @@ def getLigandCodePDBcodeFromLog( logFileName ):
     
 def writeProgres(dataProcessed, allData):
     progressFile = open("logs/progress.log", "w")
-    progressFile.write("Postep: ", str(dataProcessed)+"/"+str(dataLen), str(dataProcessed*100.0/dataLen)[0:5]+"%\n")
+    progressFile.write("Postep: "+ str(dataProcessed)+"/"+str(dataLen)+ str(dataProcessed*100.0/dataLen)[0:5]+"%\n")
     progressFile.close()
     
 
-logInput = "logs/anionPiSearchTest.log"
-#logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
+#logInput = "logs/anionPiSearchTest.log"
+logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
 writeSupramolecularSearchHeader()
 
 data = getLigandCodePDBcodeFromLog(logInput)
