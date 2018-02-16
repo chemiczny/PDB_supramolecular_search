@@ -58,17 +58,32 @@ if not isdir("cif"):
 if not isdir("xyz"):
     makedirs("xyz")
     
+if not isdir("xyz/ligands"):
+    makedirs("xyz/ligands")
+
+if not isdir("xyz/ligands_ENV"):
+    makedirs("xyz/ligands_ENV")
+
+if not isdir("xyz/anions"):
+    makedirs("xyz/anions")
+    
 dataLen = float(len(data))
 dataProcessed = 0
 
 timeStart = time.time()
+
+previousPDBcode = ""
+cifFile = ""
+
 for record in data:
     ligandCode = record["ligandCode"]
     PDBcode = record["PDBcode"]
-    if "5" in PDBcode:
-        continue
     
-    cifFile = pdbl.retrieve_pdb_file( PDBcode, pdir="cif", file_format="mmCif" )
+    if not PDBcode == previousPDBcode:
+        if isfile(cifFile):
+            remove(cifFile)
+        cifFile = pdbl.retrieve_pdb_file( PDBcode, pdir="cif", file_format="mmCif" )
+        
     dataProcessed += 1
     if not isfile(cifFile):
         notFoundList.append(PDBcode)
@@ -77,8 +92,8 @@ for record in data:
     supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData )
     
     #if not supramolecularFound:
-    remove(cifFile)
-        
+    
+    previousPDBCode = PDBcode        
     
     if dataProcessed % 10 == 0:
         writeProgres(dataProcessed, dataLen)

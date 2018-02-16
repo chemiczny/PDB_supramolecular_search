@@ -21,4 +21,15 @@ logData = logData[ logData["Residue Name"].isin(anionsCodes) ]
 logData = logData[ [ "Ligand Code" , "PDB Code" ] ]
 logData = logData.drop_duplicates()
 
-logData.to_csv( "logs/MergeResultsFromLigprep.log", sep = ":", header = False, index = False )
+tolerances = pd.read_table("resolu.idx" , sep = "\t;\t", engine = "python")
+tolerances = tolerances.drop_duplicates(subset = "PDB Code") 
+#Zduplikowane PDB nie roznia sie istotnie rozdzielczoscia
+#Tylko do odsiewu
+
+logData = logData.merge(tolerances, on = "PDB Code")
+
+
+logData = logData[  logData["RESOLUTION"] < 3.5  ]
+
+logData = logData.sort_values( by = [ "PDB Code" ] )
+logData.to_csv( "logs/MergeResultsFromLigprep.log", sep = ":", columns = [ "Ligand Code" , "PDB Code" ] , header = False, index = False )
