@@ -6,6 +6,7 @@ Created on Mon Jan  1 18:00:25 2018
 """
 
 from cif_analyser import writeSupramolecularSearchHeader, findSupramolecularAnionPiLigand
+from PDB_requests import getLigandCodeFromSdf
 from Bio.PDB import PDBList
 from os.path import isfile, isdir
 from os import remove, makedirs
@@ -17,8 +18,8 @@ def getLigandCodePDBcodeFromLog( logFileName ):
     line = logFile.readline()
     
     while line:
-        data = line.split()
-        ligandCode = data[0].replace(":", "").strip()
+        data = line.split(":")
+        ligandCode = data[0].strip()
         PDBcode = data[1].strip()
         results.append( { "ligandCode" : ligandCode, "PDBcode": PDBcode }  )
         line=logFile.readline()
@@ -34,7 +35,17 @@ def writeProgres(dataProcessed, allData):
     
 
 #logInput = "logs/anionPiSearchTest.log"
-logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
+#logInput = "logs/aromaty_wiecej_niz_1_pierscien_podst_elektrofilowe_2Parsed.log"
+print("Zaczynamy! Tralala")
+logInput = "logs/MergeResultsFromLigprep.log"
+sdfFromLigprep = "sdf/ligprep_2-out_cutted.sdf"
+
+anionsCodes = getLigandCodeFromSdf(sdfFromLigprep)
+anionsCodes = list(set(anionsCodes))
+anionsCodes.append("CL")
+
+ligprepData = { "anionNames" : anionsCodes }
+
 writeSupramolecularSearchHeader()
 
 data = getLigandCodePDBcodeFromLog(logInput)
@@ -44,6 +55,9 @@ notFoundList = []
 if not isdir("cif"):
     makedirs("cif")
     
+if not isdir("xyz"):
+    makedirs("xyz")
+    
 dataLen = float(len(data))
 dataProcessed = 0
 
@@ -51,13 +65,16 @@ timeStart = time.time()
 for record in data:
     ligandCode = record["ligandCode"]
     PDBcode = record["PDBcode"]
+    if "5" in PDBcode:
+        continue
+    
     cifFile = pdbl.retrieve_pdb_file( PDBcode, pdir="cif", file_format="mmCif" )
     dataProcessed += 1
     if not isfile(cifFile):
         notFoundList.append(PDBcode)
         continue
     
-    supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode )
+    supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData )
     
     #if not supramolecularFound:
     remove(cifFile)
@@ -65,6 +82,8 @@ for record in data:
     
     if dataProcessed % 10 == 0:
         writeProgres(dataProcessed, dataLen)
+        
+    break
 
 timeStop = time.time()            
 print("Kody PDB, ktorych nie udao sie pobrac: ", len(notFoundList))

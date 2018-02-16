@@ -89,11 +89,11 @@ def extract_data ( logFileName, badPDB = [] ):
     print("Average connections in pdb: ", float(averagePDBconn)/len(pdbA))
     return pdbA
     
-pdbDict = extract_data("logs/anionPiLigandBig.log")
+pdbDict = extract_data("logs/anionPiLigandFull.log")
 badPDB = []
 for pdb in pdbDict:
     if pdbDict[pdb] > 5:
         badPDB.append(pdb)
 
-extract_data("logs/anionPiLigandBig.log", badPDB)
+extract_data("logs/anionPiLigandFull.log", badPDB)
 print("Wywalilem: ", len(badPDB))

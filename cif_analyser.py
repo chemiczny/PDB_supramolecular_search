@@ -16,6 +16,7 @@ from math import sqrt, acos, degrees
 import time
 import networkx as nx
 import numpy as np
+from os.path import isfile
 
 def normalize(v):
     """
@@ -173,7 +174,7 @@ def getRingsCentroids( molecule ):
     return centroids
         
 
-def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
+def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData = None ):
     """
     Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
     zwiazanych z konkretnym ligandem
@@ -208,27 +209,124 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode ):
         for ligand in ligands:
             centroids = getRingsCentroids( ligand )
             #print(centroids)
+            ligandWithAnions = False
             
             for centroid in centroids:
                 distance = 4.5
                 neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
                 extractedAtoms = extractNeighbours( neighbors, ligandCode )
+                    
+                if ligprepData:
+                    extractedAtoms = anionScreening( extractedAtoms, ligprepData )
+                    
                 if len(extractedAtoms) > 0:
                     supramolecularFound = True
+                    ligandWithAnions = True
                 
                 writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex)
+                
+            if ligandWithAnions:
+                saveLigand(ligand, ligandCode, PDBcode, modelIndex )
+                saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns)
             
     return supramolecularFound
     
+def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
+    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
+    atomNo = len(ligandAtoms)
+    
+    xyzName = "xyz/"+ligandCode+".xyz"
+    structureNo = 1    
+    if isfile(xyzName):
+        structureNo = countStructures(xyzName)
+    
+    xyz = open(xyzName, 'a+')
+    xyz.write( str(atomNo)+"\n" )
+    xyz.write("PDBCode: "+PDBcode+"ModelNo: "+str(modelIndex)+"Structure:"+str(structureNo)+"\n")
+    for atom in ligandAtoms:
+        coord = atom.get_coord()
+        xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+        
+    xyz.close()
+    
+def countStructures(xyzName):
+    xyz = open(xyzName, 'r')
+    line = xyz.readline()
+    structures = 0
+    while line:
+        
+        if "PDB" in line:
+            structures += 1
+        
+        line = xyz.readline()
+        
+    xyz.close()
+    
+    return structures
+
+def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns):
+    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
+    neighbors = []
+    distance = 4.5
+    
+    for atom in ligandAtoms:
+        neighbors += ns.search(np.array(atom.get_coord()), distance, 'A')
+        
+    neighbors = Selection.unfold_entities(neighbors, 'R')
+    atomsList = []
+    for neighbor in neighbors:
+        if not neighbor.get_resname() in [ "HOH", "DOD" ]:
+            atomsList += Selection.unfold_entities(neighbor, 'A') 
+         
+    atomNo = len(atomsList)+len(centroids)*2
+    
+    xyzName = "xyz/"+ligandCode+"_ENV.xyz"
+    structureNo = 1    
+    if isfile(xyzName):
+        structureNo = countStructures(xyzName)
+    
+    xyz = open(xyzName, 'a+')
+    xyz.write( str(atomNo)+"\n" )
+    xyz.write("PDBCode: "+PDBcode+"ModelNo: "+str(modelIndex)+"Structure:"+str(structureNo)+"\n")
+    for atom in atomsList:
+        coord = atom.get_coord()
+        xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+        
+    for centroid in centroids:
+        normVec = centroid["normVec"]
+        centroid = np.array(centroid["coords"])
+        
+        newGhost = centroid+normVec
+        
+        xyz.write("X "+str(centroid[0])+" "+str(centroid[1])+" "+str(centroid[2])+"\n")
+        xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
+        
+    xyz.close()
+    
+    
+    
+def anionScreening( atoms, ligprepData ):
+    selectedAtoms = []
+    anionsNames = ligprepData["anionNames"]
+    
+    for atomData in atoms:
+        parentName = atomData["Atom"].get_parent().get_resname()        
+        if parentName in anionsNames:
+            selectedAtoms.append(atomData)
+        
+    return selectedAtoms
             
 def writeSupramolecularSearchHeader( ):
     """
     Zapisz naglowki do pliku z wynikami:
     """
-    resultsFileName = "logs/anionPiLigand.log"
+    resultsFileName = "logs/MergeResultsFromLigprepOutput.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tLigand Code\tResidue Name\tAnion type\t")
-    resultsFile.write("Atom symbol\tDistance\tAngle\tModel No\n")
+    resultsFile.write("Atom symbol\tDistance\tAngle\tModel No\t")
+    resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
+    resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
+    resultsFile.write("Disordered\n")
     resultsFile.close()
     
             
@@ -236,7 +334,7 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
     """
     Zapisz dane do pliku z wynikami
     """
-    resultsFileName = "logs/anionPiLigand.log"
+    resultsFileName = "logs/MergeResultsFromLigprepOutput.log"
     
     resultsFile = open(resultsFileName, "a+")
     
@@ -244,20 +342,31 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
         distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
         angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
         
-        if angle < 70 or angle > 110:
-            residueName = atomData["Atom"].get_parent().get_resname()
-            resultsFile.write(PDBcode+"\t")
-            resultsFile.write(ligandCode+"\t")
-            resultsFile.write(residueName+"\t")
-            resultsFile.write(atomData["AnionType"]+"\t")
-            resultsFile.write(atomData["Atom"].element+"\t")
-            
-            resultsFile.write(str(distance)+"\t")
-            resultsFile.write(str(angle)+"\t")
-            
-            resultsFile.write(str(modelIndex)+"\n")
+#        if angle < 70 or angle > 110:
+        atomCoords = atomData["Atom"].get_coord()
+        centroidCoords = centroid["coords"]        
         
+        residueName = atomData["Atom"].get_parent().get_resname()
+        resultsFile.write(PDBcode+"\t")
+        resultsFile.write(ligandCode+"\t")
+        resultsFile.write(residueName+"\t")
+        resultsFile.write(atomData["AnionType"]+"\t")
+        resultsFile.write(atomData["Atom"].element+"\t")
         
+        resultsFile.write(str(distance)+"\t")
+        resultsFile.write(str(angle)+"\t")
+        
+        resultsFile.write(str(modelIndex)+"\t")
+        
+        resultsFile.write(str(centroidCoords[0])+"\t")
+        resultsFile.write(str(centroidCoords[1])+"\t")
+        resultsFile.write(str(centroidCoords[2])+"\t")
+        
+        resultsFile.write(str(atomCoords[0])+"\t")
+        resultsFile.write(str(atomCoords[1])+"\t")
+        resultsFile.write(str(atomCoords[2])+"\t")
+        
+        resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\n")
     
     resultsFile.close()
     

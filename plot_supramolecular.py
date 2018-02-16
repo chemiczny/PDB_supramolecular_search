@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
-data = np.loadtxt("logs/anionPiLigandBigExtracted.log", usecols = (5, 6), skiprows = 1)
+data = np.loadtxt("logs/anionPiLigandFullExtracted.log", usecols = (5, 6), skiprows = 1)
 distances = data[:, 0]
 angles = data[:, 1]
 

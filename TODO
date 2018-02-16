@@ -1,3 +1,11 @@
 -Rozwazyc lepsze obliczanie wektora normalnego plaszczyzny pierscienia.
 -Uwzglednic oddzialywania anion (ligand) - Pi (bialko)
 -Czy mostki disulfidowe sa ok?
+-A co z fenolami?
+-Rozdzielczosc
+-Kwestia grupy karbonylowej w estrach
+
+Do zrobienia mozliwie szybko:
+-selekcja znalezionych anionow (wyniki z ligprepa)
+-wyciecie geometrii zakwalifikowanych ligandow (pikwasow)
+-wyciecie liganda wraz z otoczeniem
