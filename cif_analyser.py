@@ -255,7 +255,7 @@ def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extra
         xyz.write("PDBCode: "+PDBcode+"Ligand Code: "+ligandCode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
         for atom in atomsList:
             coord = atom.get_coord()
-            xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+            xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
             
         normVec = centroid["normVec"]
         centroidVec = np.array(centroid["coords"])
@@ -281,7 +281,7 @@ def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
     xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
     for atom in ligandAtoms:
         coord = atom.get_coord()
-        xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+        xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
         
     xyz.close()
     
@@ -326,7 +326,7 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns):
     xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
     for atom in atomsList:
         coord = atom.get_coord()
-        xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+        xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
         
     for centroid in centroids:
         normVec = centroid["normVec"]
