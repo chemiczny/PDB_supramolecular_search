@@ -8,4 +8,10 @@
 Do zrobienia mozliwie szybko:
 -selekcja znalezionych anionow (wyniki z ligprepa)
 -wyciecie geometrii zakwalifikowanych ligandow (pikwasow)
--wyciecie gometrii wraz z kolejnymi anionami
+-jak dodac wodory do struktur?
+-obliczyc mapy esp
+
+Kolejne kroki:
+-zczytac wiecej danych z sdfa
+-mapowanie atomow z sda i cifa,
+-rozpoznawanie anionow

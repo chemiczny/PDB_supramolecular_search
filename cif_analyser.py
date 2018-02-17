@@ -252,17 +252,17 @@ def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extra
         
         xyz = open(xyzName, 'a+')
         xyz.write( str(atomNo)+"\n" )
-        xyz.write("PDBCode: "+PDBcode+" ModelNo: "+str(modelIndex)+" Structure:"+str(structureNo)+"\n")
+        xyz.write("PDBCode: "+PDBcode+"Ligand Code: "+ligandCode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
         for atom in atomsList:
             coord = atom.get_coord()
             xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
             
         normVec = centroid["normVec"]
-        centroid = np.array(centroid["coords"])
+        centroidVec = np.array(centroid["coords"])
         
-        newGhost = centroid+normVec
+        newGhost = centroidVec+normVec
         
-        xyz.write("X "+str(centroid[0])+" "+str(centroid[1])+" "+str(centroid[2])+"\n")
+        xyz.write("X "+str(centroidVec[0])+" "+str(centroidVec[1])+" "+str(centroidVec[2])+"\n")
         xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
             
         xyz.close()
@@ -278,7 +278,7 @@ def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
     
     xyz = open(xyzName, 'a+')
     xyz.write( str(atomNo)+"\n" )
-    xyz.write("PDBCode: "+PDBcode+" ModelNo: "+str(modelIndex)+" Structure:"+str(structureNo)+"\n")
+    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
     for atom in ligandAtoms:
         coord = atom.get_coord()
         xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
@@ -323,7 +323,7 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns):
     
     xyz = open(xyzName, 'a+')
     xyz.write( str(atomNo)+"\n" )
-    xyz.write("PDBCode: "+PDBcode+" ModelNo: "+str(modelIndex)+" Structure:"+str(structureNo)+"\n")
+    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
     for atom in atomsList:
         coord = atom.get_coord()
         xyz.write(atom.get_name()[0]+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
