@@ -61,7 +61,7 @@ def getAverageCoords ( allAtomsList, atomsIndList ):
         
     return averageCoords
     
-def isFlat(allAtomsList, atomsIndList):
+def isFlat(allAtomsList, atomsIndList, substituents):
     """
     Sprawdz czy wybrane atomy leza w jednej plaszczyznie.
     Procedura: na podstawie polozen trzech pierwszych atomow wyznacza sie 
@@ -109,6 +109,13 @@ def isFlat(allAtomsList, atomsIndList):
     for i in range( 3, len(atomsIndList)  ):
         atomInd = atomsIndList[i]
         D = np.array( allAtomsList[ atomInd ].get_coord() )
+        new_vec = normalize( lastAtom - D )
+        
+        if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
+            return verdict
+            
+    for substituent in substituents:
+        D = np.array( allAtomsList[ substituent ].get_coord() )
         new_vec = normalize( lastAtom - D )
         
         if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
@@ -165,13 +172,25 @@ def getRingsCentroids( molecule ):
         if len(cycle) > 6:
             continue
         
-        flatAnalyse = isFlat(atoms, cycle)
+        substituents = getSubstituents( G, cycle )        
+        flatAnalyse = isFlat(atoms, cycle, substituents)
         if not flatAnalyse['isFlat']:
             continue
         
         centroids.append({ "coords" : getAverageCoords( atoms, cycle), "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) })
         
     return centroids
+    
+def getSubstituents( graphMolecule, cycle ):
+    substituents = []
+    
+    for atom in cycle:
+        candidates = graphMolecule.neighbors( atom )
+        for candidate in candidates:
+            if not candidate in cycle:
+                substituents.append(candidate)
+                
+    return substituents
         
 
 def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData = None ):
@@ -210,6 +229,7 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData =
             centroids = getRingsCentroids( ligand )
             #print(centroids)
             ligandWithAnions = False
+            allExtractedAtomsForLigand =[]
             
             for centroid in centroids:
                 distance = 4.5
@@ -224,11 +244,21 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData =
                 if len(extractedAtoms) > 0:
                     supramolecularFound = True
                     ligandWithAnions = True
+                    allExtractedAtomsForLigand += extractedAtoms
                     saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms)
                 
             if ligandWithAnions:
+                anionsAtoms = []
+                for atomData in allExtractedAtomsForLigand:
+                    anionsAtoms.append(atomData["Atom"])
+                allAnions = Selection.unfold_entities(anionsAtoms, 'R')   
+                anionsNames = []
+                
+                for anion in allAnions:
+                    anionsNames.append( anion.get_resname() )
+                
                 saveLigand(ligand, ligandCode, PDBcode, modelIndex )
-                saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns)
+                saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns)
             
     return supramolecularFound
     
@@ -300,7 +330,7 @@ def countStructures(xyzName):
     
     return structures
 
-def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns):
+def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns):
     ligandAtoms = Selection.unfold_entities(ligand, 'A')  
     neighbors = []
     distance = 4.5
@@ -323,7 +353,7 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, ns):
     
     xyz = open(xyzName, 'a+')
     xyz.write( str(atomNo)+"\n" )
-    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
+    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Anions: "+", ".join(anionsNames)+"_Structure:"+str(structureNo)+"\n")
     for atom in atomsList:
         coord = atom.get_coord()
         xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
@@ -766,8 +796,9 @@ def molecule2graph( atom, atoms ):
 if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
-    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
-    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
+    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
+#    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+#    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
 #    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
 #    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
 #    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )

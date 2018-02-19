@@ -98,7 +98,6 @@ for record in data:
     if dataProcessed % 10 == 0:
         writeProgres(dataProcessed, dataLen)
         
-    break
 
 timeStop = time.time()            
 print("Kody PDB, ktorych nie udao sie pobrac: ", len(notFoundList))

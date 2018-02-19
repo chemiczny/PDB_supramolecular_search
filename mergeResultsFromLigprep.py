@@ -29,7 +29,7 @@ tolerances = tolerances.drop_duplicates(subset = "PDB Code")
 logData = logData.merge(tolerances, on = "PDB Code")
 
 
-logData = logData[  logData["RESOLUTION"] < 3.5  ]
+logData = logData[  logData["RESOLUTION"] < 2.5  ]
 
 logData = logData.sort_values( by = [ "PDB Code" ] )
 logData.to_csv( "logs/MergeResultsFromLigprep.log", sep = ":", columns = [ "Ligand Code" , "PDB Code" ] , header = False, index = False )
