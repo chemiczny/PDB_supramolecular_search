@@ -37,6 +37,7 @@ class myAtom:
     def __init__(self, name, coord):
         self.coord = coord
         self.name = name
+        self.element = name
         
     def getCoord(self):
         return self.coord
@@ -86,7 +87,7 @@ myRes = myResidue()
 #myRes.read_xyz("peptyd.xyz", False)
 #centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
-myRes.read_xyz("xyz/cit_check.xyz", False)
+myRes.read_xyz("xyz/ligands/HEM.xyz", False)
 centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
 #myRes.read_xyz("antracen.xyz", False)

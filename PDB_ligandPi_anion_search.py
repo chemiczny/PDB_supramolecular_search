@@ -51,21 +51,12 @@ writeSupramolecularSearchHeader()
 data = getLigandCodePDBcodeFromLog(logInput)
 pdbl = PDBList()
 notFoundList = []
+necessary_dirs = [ "cif", "xyz", "xyz/ligands", "xyz/ligands_ENV", "xyz/anions" ]
 
-if not isdir("cif"):
-    makedirs("cif")
+for project_dir in necessary_dirs:
+    if not isdir(project_dir):
+        makedirs(project_dir)
     
-if not isdir("xyz"):
-    makedirs("xyz")
-    
-if not isdir("xyz/ligands"):
-    makedirs("xyz/ligands")
-
-if not isdir("xyz/ligands_ENV"):
-    makedirs("xyz/ligands_ENV")
-
-if not isdir("xyz/anions"):
-    makedirs("xyz/anions")
     
 dataLen = float(len(data))
 dataProcessed = 0
@@ -91,12 +82,14 @@ for record in data:
     
     supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData )
     
-    #if not supramolecularFound:
+    if supramolecularFound:
+        break
     
     previousPDBCode = PDBcode        
     
     if dataProcessed % 10 == 0:
         writeProgres(dataProcessed, dataLen)
+        
         
 
 timeStop = time.time()            

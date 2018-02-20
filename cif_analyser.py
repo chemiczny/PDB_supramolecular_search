@@ -118,7 +118,7 @@ def isFlat(allAtomsList, atomsIndList, substituents):
         D = np.array( allAtomsList[ substituent ].get_coord() )
         new_vec = normalize( lastAtom - D )
         
-        if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
+        if abs( np.inner( new_vec, norm_vec ) ) > 0.17:
             return verdict
             
     verdict['isFlat'] = True
@@ -149,22 +149,7 @@ def getRingsCentroids( molecule ):
         normVec (wektor normalnych plaszczyzny pierscienia)
     """
     atoms = list(molecule.get_atoms())
-    G = nx.Graph()
-    
-    for atom1Ind in range(len(atoms)):
-        atom1 = atoms[atom1Ind]
-        if atom1.get_name() == "H":
-            continue
-        
-        for atom2Ind in range(atom1Ind+1, len(atoms)):
-            atom2 = atoms[atom2Ind]            
-            if atom2.get_name() == "H":
-                continue
-            
-            distance = atom1 - atom2
-            
-            if distance < 1.8 :
-                G.add_edge(atom1Ind, atom2Ind)
+    G = molecule2graph(atoms)
                 
     cycles = list(nx.cycle_basis(G))
     centroids = []
@@ -220,101 +205,74 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData =
         atoms = Selection.unfold_entities(model, 'A')  
         ns = NeighborSearch(atoms)
            
-        
-        ligands = []
         for residue in model.get_residues():
             if ligandCode == residue.get_resname():
-                ligands.append(residue)
-        for ligand in ligands:
-            centroids = getRingsCentroids( ligand )
-            #print(centroids)
-            ligandWithAnions = False
-            allExtractedAtomsForLigand =[]
-            
-            for centroid in centroids:
-                distance = 4.5
-                neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-                extractedAtoms = extractNeighbours( neighbors, ligandCode )
-                    
-                if ligprepData:
-                    extractedAtoms = anionScreening( extractedAtoms, ligprepData )
-                
-                extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex)
-                
-                if len(extractedAtoms) > 0:
-                    supramolecularFound = True
-                    ligandWithAnions = True
-                    allExtractedAtomsForLigand += extractedAtoms
-                    saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms)
-                
-            if ligandWithAnions:
-                anionsAtoms = []
-                for atomData in allExtractedAtomsForLigand:
-                    anionsAtoms.append(atomData["Atom"])
-                allAnions = Selection.unfold_entities(anionsAtoms, 'R')   
-                anionsNames = []
-                
-                for anion in allAnions:
-                    anionsNames.append( anion.get_resname() )
-                
-                saveLigand(ligand, ligandCode, PDBcode, modelIndex )
-                saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns)
+                supramolecularFound = supramolecularFound or analyseLigand(residue, PDBcode, modelIndex, ns, ligprepData)
             
     return supramolecularFound
     
-def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms):
-    anionsAtoms = []
-    for atomData in extractedAtoms:
-        anionsAtoms.append(atomData["Atom"])
+def analyseLigand(ligand, PDBcode, modelIndex, ns, ligprepData):
+    centroids = getRingsCentroids( ligand )
+    ligandCode = ligand.get_resname()
+
+    ligandWithAnions = False
+    allExtractedAtomsForLigand =[]
+    
+    for centroid in centroids:
+        distance = 4.5
+        neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
+        extractedAtoms = extractNeighbours( neighbors, ligandCode )
+            
+        if ligprepData:
+            extractedAtoms = anionScreening( extractedAtoms, ligprepData )
         
-    anions = Selection.unfold_entities(anionsAtoms, 'R')  
+        extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex)
+        
+        if len(extractedAtoms) > 0:
+            ligandWithAnions = True
+            allExtractedAtomsForLigand += extractedAtoms
+            saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms)
+        
+    if ligandWithAnions:
+        allAnions = getResiduesListFromAtomData( allExtractedAtomsForLigand ) 
+        anionsNames = []
+        
+        for anion in allAnions:
+            anionsNames.append( anion.get_resname() )
+        
+        saveLigand(ligand, ligandCode, PDBcode, modelIndex )
+        saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns)
+        
+    return ligandWithAnions
+    
+def getResiduesListFromAtomData( atomDataList ):
+    atomsList = []
+    for atomData in atomDataList:
+        atomsList.append(atomData["Atom"])
+    return Selection.unfold_entities(atomsList, 'R')  
+    
+def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms):        
+    anions = getResiduesListFromAtomData( extractedAtoms )
     ligandAtoms = Selection.unfold_entities(ligand, 'A')  
     
     for anion in anions:     
         atomsList = Selection.unfold_entities(anion, 'A') +  ligandAtoms
-        atomNo = len(atomsList)+2
         
         anionName = anion.get_resname()
         xyzName = "xyz/anions/"+anionName+"_ANION.xyz"
-        structureNo = 1    
-        if isfile(xyzName):
-            structureNo = countStructures(xyzName)
-        
-        xyz = open(xyzName, 'a+')
-        xyz.write( str(atomNo)+"\n" )
-        xyz.write("PDBCode: "+PDBcode+"Ligand Code: "+ligandCode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
-        for atom in atomsList:
-            coord = atom.get_coord()
-            xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
+
+        comment = "PDBCode: "+PDBcode+"Ligand Code: "+ligandCode+"_ModelNo: "+str(modelIndex)
+        appendXYZ( xyzName, atomsList, comment, [ centroid ] )
             
-        normVec = centroid["normVec"]
-        centroidVec = np.array(centroid["coords"])
         
-        newGhost = centroidVec+normVec
-        
-        xyz.write("X "+str(centroidVec[0])+" "+str(centroidVec[1])+" "+str(centroidVec[2])+"\n")
-        xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
-            
-        xyz.close()
 
 def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
     ligandAtoms = Selection.unfold_entities(ligand, 'A')  
-    atomNo = len(ligandAtoms)
     
     xyzName = "xyz/ligands/"+ligandCode+".xyz"
-    structureNo = 1    
-    if isfile(xyzName):
-        structureNo = countStructures(xyzName)
-    
-    xyz = open(xyzName, 'a+')
-    xyz.write( str(atomNo)+"\n" )
-    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Structure:"+str(structureNo)+"\n")
-    for atom in ligandAtoms:
-        coord = atom.get_coord()
-        xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
-        
-    xyz.close()
-    
+    comment = "PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)
+    appendXYZ( xyzName, ligandAtoms, comment )
+
 def countStructures(xyzName):
     xyz = open(xyzName, 'r')
     line = xyz.readline()
@@ -344,16 +302,21 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsName
         if not neighbor.get_resname() in [ "HOH", "DOD" ]:
             atomsList += Selection.unfold_entities(neighbor, 'A') 
          
+    xyzName = "xyz/ligands_ENV/"+ligandCode+"_ENV.xyz"
+    comment = "PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Anions: "+", ".join(anionsNames)
+    
+    appendXYZ( xyzName, atomsList, comment, centroids )
+    
+def appendXYZ( xyzName, atomsList, comment = "", centroids = [] ):
     atomNo = len(atomsList)+len(centroids)*2
     
-    xyzName = "xyz/ligands_ENV/"+ligandCode+"_ENV.xyz"
     structureNo = 1    
     if isfile(xyzName):
         structureNo = countStructures(xyzName)
     
     xyz = open(xyzName, 'a+')
     xyz.write( str(atomNo)+"\n" )
-    xyz.write("PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Anions: "+", ".join(anionsNames)+"_Structure:"+str(structureNo)+"\n")
+    xyz.write(comment+"_Structure:"+str(structureNo)+"\n")
     for atom in atomsList:
         coord = atom.get_coord()
         xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
@@ -368,8 +331,6 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsName
         xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
         
     xyz.close()
-    
-    
     
 def anionScreening( atoms, ligprepData ):
     selectedAtoms = []
@@ -580,7 +541,7 @@ def handleOxygen( atom ):
                             anionu (string)
     """
     atoms = list(atom.get_parent().get_atoms())
-    graph, oxygenInd = molecule2graph(atom, atoms )
+    graph, oxygenInd = molecule2graph( atoms, atom )
     
     oxygen_neighbors = []
     oxygen_neighbors = graph.neighbors(oxygenInd)
@@ -627,7 +588,7 @@ def handleHalogens( atom):
     if len(atoms) == 1:
         return True, atom.element
         
-    graph, halogenInd = molecule2graph(atom, atoms )
+    graph, halogenInd = molecule2graph( atoms, atom )
     halogen_neighbors = graph.neighbors(halogenInd)
     
     if len(halogen_neighbors) == 0:
@@ -653,7 +614,7 @@ def handleChalcogens(atom):
     if len(atoms) == 1:
         return True, atom.element
         
-    graph, chalcogenInd = molecule2graph(atom, atoms )
+    graph, chalcogenInd = molecule2graph( atoms, atom )
     chalcogen_neighbors = graph.neighbors(chalcogenInd)
     
     if len(chalcogen_neighbors) == 0:
@@ -740,7 +701,7 @@ def handleOthers(atom):
     """
     return False, atom.element
 
-def molecule2graph( atom, atoms ):
+def molecule2graph( atoms, atom = None ):
     """
     Konwersja czasteczki na graf (networkx)
     
@@ -751,7 +712,11 @@ def molecule2graph( atom, atoms ):
     Wyjscie:
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
-    atomName = atom.get_fullname()    
+    atomName = ""
+    
+    if atom:
+        atomName = atom.get_fullname()    
+        
     thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
                   "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
     
@@ -766,8 +731,9 @@ def molecule2graph( atom, atoms ):
         if atom1.element in thresholds.keys():
             threshold1 = thresholds[atom1.element]
         
-        if atom1.get_fullname() == atomName:
-            atoms_found.append(atom1Ind)
+        if atom:
+            if atom1.get_fullname() == atomName:
+                atoms_found.append(atom1Ind)
         
         for atom2Ind in range(atom1Ind+1, len(atoms)):
             threshold2 = 2.2
@@ -784,14 +750,17 @@ def molecule2graph( atom, atoms ):
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
-    if len(atoms_found) != 1:
-        print("WTF!? ", atoms_found)
+    if atom:
+        if len(atoms_found) != 1 :
+            print("WTF!? ", atoms_found)
+            
+        if not atoms_found[0] in G.nodes():
+            print("Nie znalazlem "+ atom.element+" w grafie!")
+            G.add_node( atoms_found[0] )
+            
+        return G, atoms_found[0]
         
-    if not atoms_found[0] in G.nodes():
-        print("Nie znalazlem "+ atom.element+" w grafie!")
-        G.add_node( atoms_found[0] )
-        
-    return G, atoms_found[0]
+    return G
 
 if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
