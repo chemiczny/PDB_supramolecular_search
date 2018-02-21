@@ -15,3 +15,10 @@ Kolejne kroki:
 -zczytac wiecej danych z sdfa
 -mapowanie atomow z sda i cifa,
 -rozpoznawanie anionow
+-ogarnac aminokwasy aromatyczne
+-zmienic sposob zczytywania pdbcodow, rozdielczosci i metody
+
+Dowiedziec sie:
+-co tak naprawde robi ligprep?
+-przykladowy output z esp
+-przykladowy skrypt z uruchomieniem esp

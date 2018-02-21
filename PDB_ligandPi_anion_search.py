@@ -66,6 +66,8 @@ timeStart = time.time()
 previousPDBcode = ""
 cifFile = ""
 
+structure_saved = 0
+
 for record in data:
     ligandCode = record["ligandCode"]
     PDBcode = record["PDBcode"]
@@ -83,6 +85,9 @@ for record in data:
     supramolecularFound = findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData )
     
     if supramolecularFound:
+        structure_saved += 1
+        
+    if structure_saved == 10:
         break
     
     previousPDBCode = PDBcode        

@@ -114,11 +114,12 @@ def isFlat(allAtomsList, atomsIndList, substituents):
         if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
             return verdict
             
-    for substituent in substituents:
-        D = np.array( allAtomsList[ substituent ].get_coord() )
-        new_vec = normalize( lastAtom - D )
+    for substituentKey in substituents:
+        D = np.array( allAtomsList[ substituentKey ].get_coord() )
+        E = np.array( allAtomsList[ substituents[substituentKey ] ].get_coord() )
+        new_vec = normalize( E - D )
         
-        if abs( np.inner( new_vec, norm_vec ) ) > 0.17:
+        if abs( np.inner( new_vec, norm_vec ) ) > 0.20:
             return verdict
             
     verdict['isFlat'] = True
@@ -167,13 +168,13 @@ def getRingsCentroids( molecule ):
     return centroids
     
 def getSubstituents( graphMolecule, cycle ):
-    substituents = []
+    substituents = {}
     
     for atom in cycle:
         candidates = graphMolecule.neighbors( atom )
         for candidate in candidates:
             if not candidate in cycle:
-                substituents.append(candidate)
+                substituents[atom] = candidate
                 
     return substituents
         
@@ -207,11 +208,47 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData =
            
         for residue in model.get_residues():
             if ligandCode == residue.get_resname():
-                supramolecularFound = supramolecularFound or analyseLigand(residue, PDBcode, modelIndex, ns, ligprepData)
+                supramolecularFound = supramolecularFound or analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData)
             
     return supramolecularFound
     
-def analyseLigand(ligand, PDBcode, modelIndex, ns, ligprepData):
+def findSupramolecularAnionPiAllLigands( cifFile, PDBcode, ligprepData = None ):
+    """
+    Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
+    zwiazanych z konkretnym ligandem
+    
+    Wejscie:
+    ligandCode - kod liganda
+    cifFile    - plik cif pobrany z bazy PDB
+    
+    Wyjscie:
+    Hehehe, czas pokaze...
+    """
+    parser = FastMMCIFParser()
+    
+    try:
+        structure = parser.get_structure('temp', cifFile)
+    except:
+        print("Biopytong nie ogarnia!", cifFile)
+        #Zeby zobaczyc co sie dzieje
+        return True        
+        
+    supramolecularFound = False 
+    notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
+        "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
+    
+    for modelIndex, model in enumerate(structure):
+        atoms = Selection.unfold_entities(model, 'A')  
+        ns = NeighborSearch(atoms)
+           
+        for residue in model.get_residues():
+            residueName = residue.get_resname().upper()
+            if not residueName in notPiacids  :
+                supramolecularFound = supramolecularFound or analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData)
+            
+    return supramolecularFound
+    
+def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData):
     centroids = getRingsCentroids( ligand )
     ligandCode = ligand.get_resname()
 
@@ -255,11 +292,16 @@ def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extra
     anions = getResiduesListFromAtomData( extractedAtoms )
     ligandAtoms = Selection.unfold_entities(ligand, 'A')  
     
+    directory = "xyz/ligands_anions/"
+    
+    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
+        directory = "xyz/aminoacids_anions/"
+        
     for anion in anions:     
         atomsList = Selection.unfold_entities(anion, 'A') +  ligandAtoms
         
         anionName = anion.get_resname()
-        xyzName = "xyz/anions/"+anionName+"_ANION.xyz"
+        xyzName = directory+anionName+"_ANION.xyz"
 
         comment = "PDBCode: "+PDBcode+"Ligand Code: "+ligandCode+"_ModelNo: "+str(modelIndex)
         appendXYZ( xyzName, atomsList, comment, [ centroid ] )
@@ -269,7 +311,12 @@ def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extra
 def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
     ligandAtoms = Selection.unfold_entities(ligand, 'A')  
     
-    xyzName = "xyz/ligands/"+ligandCode+".xyz"
+    directory = "xyz/ligands/"
+    
+    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
+        directory = "xyz/aminoacids/"
+        
+    xyzName = directory+ligandCode+".xyz"
     comment = "PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)
     appendXYZ( xyzName, ligandAtoms, comment )
 
@@ -302,7 +349,11 @@ def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsName
         if not neighbor.get_resname() in [ "HOH", "DOD" ]:
             atomsList += Selection.unfold_entities(neighbor, 'A') 
          
-    xyzName = "xyz/ligands_ENV/"+ligandCode+"_ENV.xyz"
+    directory = "xyz/ligands_ENV/"
+    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
+        directory = "xyz/aminoacids_ENV/"
+        
+    xyzName = directory+ligandCode+"_ENV.xyz"
     comment = "PDBCode: "+PDBcode+"_ModelNo: "+str(modelIndex)+"_Anions: "+", ".join(anionsNames)
     
     appendXYZ( xyzName, atomsList, comment, centroids )
@@ -714,7 +765,7 @@ def molecule2graph( atoms, atom = None ):
     """
     atomName = ""
     
-    if atom:
+    if atom != None: 
         atomName = atom.get_fullname()    
         
     thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
@@ -731,7 +782,7 @@ def molecule2graph( atoms, atom = None ):
         if atom1.element in thresholds.keys():
             threshold1 = thresholds[atom1.element]
         
-        if atom:
+        if atom != None:
             if atom1.get_fullname() == atomName:
                 atoms_found.append(atom1Ind)
         
@@ -750,7 +801,7 @@ def molecule2graph( atoms, atom = None ):
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
-    if atom:
+    if atom != None:
         if len(atoms_found) != 1 :
             print("WTF!? ", atoms_found)
             
