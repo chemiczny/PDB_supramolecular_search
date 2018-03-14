@@ -5,57 +5,8 @@ Created on Tue Dec 19 18:24:14 2017
 @author: michal
 """
 from cif_analyser import getRingsCentroids
-from math import sqrt
 import numpy as np
-
-class myResidue:
-    def __init__(self):
-        self.atoms =[]
-        
-    def get_atoms(self):
-        return self.atoms
-        
-    def read_xyz(self, xyzFilename, onlyHeavyAtoms = True):
-        self.atoms = []
-        xyz = open(xyzFilename, 'r')
-        atomsNo = int(xyz.readline())
-        xyz.readline()
-        
-        for i in range(atomsNo):
-            line = xyz.readline()
-            line = line.split()
-            atomName = line[0]
-            atomCoord = [ float(line[1]), float(line[2]), float(line[3])  ]
-            if onlyHeavyAtoms and atomName == "H":
-                continue
-            self.atoms.append( myAtom( atomName, atomCoord ) )
-        
-        xyz.close()
-        
-    
-class myAtom:
-    def __init__(self, name, coord):
-        self.coord = coord
-        self.name = name
-        self.element = name
-        
-    def getCoord(self):
-        return self.coord
-        
-    def get_coord(self):
-        return self.coord
-        
-    def get_name(self):
-        return self.name
-        
-    
-    def __sub__(self, otherAtom):
-        dist = 0.0
-        
-        for coord1, coord2 in zip( self.coord, otherAtom.getCoord() ):
-            dist+= (coord1-coord2)*(coord1-coord2)
-            
-        return sqrt(dist)
+from fakeBiopython import  myResidue
         
 def writeLigandAndCentorids( ligandAtoms, centroids ):
     atomNo = len(ligandAtoms) + len(centroids)*2
@@ -87,7 +38,7 @@ myRes = myResidue()
 #myRes.read_xyz("peptyd.xyz", False)
 #centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
-myRes.read_xyz("xyz/ligands/FAD.xyz", False)
+myRes.read_xyz("xyz/ligands/UMP.xyz", False)
 centroids = getRingsCentroids( myRes )
 #writeLigandAndCentorids( myRes.get_atoms(), centroids )
 #myRes.read_xyz("antracen.xyz", False)

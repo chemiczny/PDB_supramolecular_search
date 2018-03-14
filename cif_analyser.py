@@ -773,9 +773,9 @@ def molecule2graph( atoms, atom = None ):
     
     G = nx.Graph()
     atoms_found = []
-    for atom1Ind in range(len(atoms)):
+    for atom1Ind, atom1 in enumerate(atoms):
         threshold1 = 2.2
-        atom1 = atoms[atom1Ind]
+
         if atom1.element == "H":
             continue
         
@@ -786,9 +786,9 @@ def molecule2graph( atoms, atom = None ):
             if atom1.get_fullname() == atomName:
                 atoms_found.append(atom1Ind)
         
-        for atom2Ind in range(atom1Ind+1, len(atoms)):
+        for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
             threshold2 = 2.2
-            atom2 = atoms[atom2Ind]            
+          
             if atom2.element == "H":
                 continue
             
@@ -800,6 +800,8 @@ def molecule2graph( atoms, atom = None ):
             threshold = max( threshold1, threshold2 )
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
+                G.node[atom1Ind]["element"] = atom1.element
+                G.node[atom2Ind]["element"] = atom2.element
                 
     if atom != None:
         if len(atoms_found) != 1 :
