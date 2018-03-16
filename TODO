@@ -3,19 +3,19 @@
 -Czy mostki disulfidowe sa ok?
 -A co z fenolami?
 -Rozdzielczosc (co z NMR?- bierzemy, duplikaty- uznajemy, ze maja zblizone rozdzielczosci)
--Kwestia grupy karbonylowej w estrach
+-Kwestia grupy karbonylowej w estrach - zrobione, trzeba sprawdzic czy dziala, podobnie grupy nitrowe
 
 Do zrobienia mozliwie szybko:
 -selekcja znalezionych anionow (wyniki z ligprepa)
 -wyciecie geometrii zakwalifikowanych ligandow (pikwasow)
 -jak dodac wodory do struktur?
 -obliczyc mapy esp
+-zrownoleglenie?
 
 Kolejne kroki:
 -zczytac wiecej danych z sdfa
 -mapowanie atomow z sda i cifa,
 -rozpoznawanie anionow
--ogarnac aminokwasy aromatyczne
 -zmienic sposob zczytywania pdbcodow, rozdielczosci i metody
 
 Dowiedziec sie:

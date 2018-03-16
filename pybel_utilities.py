@@ -45,6 +45,7 @@ def pybel_molecule2graph(molecule):
         threshold1 = 2.2
         
         element1 = elements[ atom1.atomicnum ]
+        print(element1, atom1.formalcharge, atom1.partialcharge)
         if element1 == "H":
             continue
         
@@ -70,7 +71,6 @@ def pybel_molecule2graph(molecule):
             
             threshold = max( threshold1, threshold2 )
             if dist < threshold :
-                print(dist)
                 G.add_edge(atom1Ind, atom2Ind)
                 G.node[atom1Ind]["element"] = element1
                 G.node[atom2Ind]["element"] = element2
@@ -80,8 +80,9 @@ def pybel_molecule2graph(molecule):
 if __name__ == "__main__":
     ligprepFile = "sdf/ligprep_2-out_cutted.sdf"
     
-    molecules = sdf_get_molecule(ligprepFile, "PYR")
+    molecules = sdf_get_molecule(ligprepFile, "CIT")
     print("znalazlem: ", len(molecules))
-    G = pybel_molecule2graph(molecules[0])
-    for node in G.nodes():
-        print(G.node[node]["element"])
+    molecules[0].draw()
+#    G = pybel_molecule2graph(molecules[0])
+#    for node in G.nodes():
+#        print(G.node[node]["element"])

@@ -615,10 +615,58 @@ def handleOxygen( atom ):
             
     if oxygen_neighbor_symbol == "C" and oxygens_found < 2:
         return False, oxygen_neighbor_symbol+str(oxygens_found)+"O"
+    elif oxygen_neighbor_symbol == "C" and oxygens_found == 2:
+        return oxygenInCarboxylicGroup( oxygenInd, graph ), oxygen_neighbor_symbol+str(oxygens_found)+"O"
+    elif oxygen_neighbor_symbol == "N" and oxygens_found == 2:
+        isNitro = oxygenInNitroGroup( oxygenInd, graph )
+        return not isNitro, oxygen_neighbor_symbol+str(oxygens_found)+"O"
     
     return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
+def oxygenInCarboxylicGroup( atomNode , graph ):
+    neighbors = graph.neighbors[atomNode]
     
+    if len(neighbors) != 1:
+        return False
+        
+    if graph.node[ neighbors[0] ] != "C" :
+        return False
+        
+    neighborsC = graph.neighbors[ neighbors[0] ]
+    
+    if len(neighborsC) < 2:
+        return False
+        
+    for potentiallyOxygen in neighborsC:
+        if graph.node[potentiallyOxygen]["element"] == "O":
+            oxygenNeigh = graph.neighbors[ potentiallyOxygen ]
+            if len( oxygenNeigh ) != 1:
+                return False
+                
+    return True
+
+def oxygenInNitroGroup( atomNode, graph ):
+    neighbors = graph.neighbors[atomNode]
+    
+    if len(neighbors) != 1:
+        return False
+        
+    if graph.node[ neighbors[0] ] != "N" :
+        return False
+        
+    neighborsN = graph.neighbors[ neighbors[0] ]
+    
+    if len(neighborsN) < 3:
+        return False
+        
+    elements = []
+    for n in neighborsN:
+        elements.append(graph.node[n]["element"])
+                
+    if elements.count("O") == 2 and elements.count("C") == 1:
+        return True 
+        
+    return False
 
 def handleHalogens( atom):
     """
@@ -818,8 +866,8 @@ def molecule2graph( atoms, atom = None ):
 if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
-    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
-#    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+#    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
+    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
 #    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
 #    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
 #    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
