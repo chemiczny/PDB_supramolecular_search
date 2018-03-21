@@ -45,15 +45,18 @@ writeSupramolecularSearchHeader()
 
 cif_files = glob.glob( "cif/*.cif" )
 
-necessary_dirs = [ "xyz", "xyz/ligands", "xyz/ligands_ENV", "xyz/ligands_anions", "xyz/aminoacids", "xyz/aminoacids_ENV", "xyz/aminoacids_anions" ]
+necessary_dirs_xyz = [ "xyz", "xyz/ligands", "xyz/ligands_ENV", "xyz/ligands_anions", "xyz/aminoacids", "xyz/aminoacids_ENV", "xyz/aminoacids_anions" ]
 
-for project_dir in necessary_dirs:
+for project_dir in necessary_dirs_xyz:
     if not isdir(project_dir):
         makedirs(project_dir)
     else:
         xyz2delete = glob.glob(project_dir+"/*.xyz")
         for xyz in xyz2delete:
             remove(xyz)
+            
+if not isdir("logs"):
+        makedirs("logs")
     
 
 dataProcessed = 0
