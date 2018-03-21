@@ -12,6 +12,7 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from math import sqrt, acos, degrees, sin, cos, radians
 import time
 import networkx as nx
@@ -90,14 +91,7 @@ def isFlat(allAtomsList, atomsIndList, substituents):
         print("Znaleziono 2-wu elementowy cykl!!!")
         return verdict
     
-    A = np.array( allAtomsList[ atomsIndList[0] ].get_coord() )
-    B = np.array( allAtomsList[ atomsIndList[1] ].get_coord() )
-    C = np.array( allAtomsList[ atomsIndList[2] ].get_coord() )
-    
-    vec1 = A-B
-    vec2 = B-C
-    
-    norm_vec = normalize(np.cross(vec1, vec2))
+    norm_vec = getNormVec( allAtomsList, atomsIndList)
     
     if len(atomsIndList) <= 3:
 #        print("LOL strasznie krotki pierscien")
@@ -105,11 +99,11 @@ def isFlat(allAtomsList, atomsIndList, substituents):
         verdict['normVec'] = norm_vec
         return verdict    
     
-    lastAtom = C    
-    for i in range( 3, len(atomsIndList)  ):
+    centroid = getAverageCoords(allAtomsList, atomsIndList) 
+    for i in range(1, len(atomsIndList)  ):
         atomInd = atomsIndList[i]
-        D = np.array( allAtomsList[ atomInd ].get_coord() )
-        new_vec = normalize( lastAtom - D )
+        D = np.array(allAtomsList[ atomInd ].get_coord() )
+        new_vec = normalize( centroid - D )
         
         if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
             return verdict
@@ -124,7 +118,23 @@ def isFlat(allAtomsList, atomsIndList, substituents):
             
     verdict['isFlat'] = True
     verdict['normVec'] = norm_vec
+    verdict['coords'] = centroid
     return verdict
+    
+def getNormVec( allAtomsList, atomsIndList ):
+    norm_vec = np.array([0. , 0. , 0.])
+    expanded_list = atomsIndList + atomsIndList[:2]
+    for i in range( len(expanded_list) - 2 ):
+        A = np.array( allAtomsList[ expanded_list[i] ].get_coord() )
+        B = np.array( allAtomsList[ expanded_list[i+1] ].get_coord() )
+        C = np.array( allAtomsList[ expanded_list[i+2] ].get_coord() )
+        
+        vec1 = A-B
+        vec2 = B-C
+        
+        norm_vec += normalize(np.cross(vec1, vec2))
+        
+    return normalize(norm_vec)
 
 def getRingsCentroids( molecule ):
     """
@@ -153,6 +163,7 @@ def getRingsCentroids( molecule ):
     G = molecule2graph(atoms)
                 
     cycles = list(nx.cycle_basis(G))
+#    print("Znalazlem cykli: ", len(cycles))
     centroids = []
     for cycle in cycles:
         if len(cycle) > 6:
@@ -161,9 +172,12 @@ def getRingsCentroids( molecule ):
         substituents = getSubstituents( G, cycle )        
         flatAnalyse = isFlat(atoms, cycle, substituents)
         if not flatAnalyse['isFlat']:
+#            print("cykl nie jest plaski")
             continue
+#        else:
+#            print("cykl jest plaski")
         
-        centroids.append({ "coords" : getAverageCoords( atoms, cycle), "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) })
+        centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) })
         
     return centroids
     
@@ -236,7 +250,9 @@ def findSupramolecularAnionPiAllLigands( cifFile, PDBcode, ligprepData = None ):
     supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
-    
+        
+    resolution = readResolution(cifFile)
+#    print("jade z pliku: ", cifFile)
     for modelIndex, model in enumerate(structure):
         atoms = Selection.unfold_entities(model, 'A')  
         ns = NeighborSearch(atoms)
@@ -244,14 +260,41 @@ def findSupramolecularAnionPiAllLigands( cifFile, PDBcode, ligprepData = None ):
         for residue in model.get_residues():
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
-                supramolecularFound = supramolecularFound or analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData)
+#                print("Analizuje: ", residueName)
+                if analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData, resolution):
+                    supramolecularFound = True
             
     return supramolecularFound
     
-def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData):
+def readResolution( cifFile ):
+    mmcif_dict = MMCIF2Dict(cifFile)
+    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
+    res_list = []
+    for key in res_keys:
+        if key in mmcif_dict:
+            resolution = list(mmcif_dict[key])
+            if len(resolution) > 1:
+                return -2
+            try:
+                res_list.append(float(resolution[0]))
+            except:
+                print("jakis syf: ", cifFile, key, mmcif_dict[key])
+                
+    if not res_list:
+        return -1
+                
+    variance = np.var(res_list)
+    if variance < 0.001:
+        return res_list[0]
+    else:
+        return -3
+        
+    
+def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
     centroids = getRingsCentroids( ligand )
     ligandCode = ligand.get_resname()
-
+#    print("Znalazlem pierscienie w ilosci: ", len(centroids))
+    
     ligandWithAnions = False
     allExtractedAtomsForLigand =[]
     
@@ -263,7 +306,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData):
         if ligprepData:
             extractedAtoms = anionScreening( extractedAtoms, ligprepData )
         
-        extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex)
+        extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution)
         
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
@@ -406,11 +449,12 @@ def writeSupramolecularSearchHeader( ):
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Model No\tDisordered\t")
-    resultsFile.write("Ring size\n")
+    resultsFile.write("Ring size\t")
+    resultsFile.write("Resolution\n")
     resultsFile.close()
     
             
-def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms, modelIndex ):
+def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -457,7 +501,8 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
             
             resultsFile.write(str(modelIndex)+"\t")
             resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
-            resultsFile.write(str(centroid["ringSize"])+"\n")
+            resultsFile.write(str(centroid["ringSize"])+"\t")
+            resultsFile.write(str(resolution)+"\n")
     
     resultsFile.close()
     
@@ -616,7 +661,8 @@ def handleOxygen( atom ):
     if oxygen_neighbor_symbol == "C" and oxygens_found < 2:
         return False, oxygen_neighbor_symbol+str(oxygens_found)+"O"
     elif oxygen_neighbor_symbol == "C" and oxygens_found == 2:
-        return oxygenInCarboxylicGroup( oxygenInd, graph ), oxygen_neighbor_symbol+str(oxygens_found)+"O"
+        acid = oxygenInCarboxylicGroup( oxygenInd, graph )
+        return acid, oxygen_neighbor_symbol+str(oxygens_found)+"O"
     elif oxygen_neighbor_symbol == "N" and oxygens_found == 2:
         isNitro = oxygenInNitroGroup( oxygenInd, graph )
         return not isNitro, oxygen_neighbor_symbol+str(oxygens_found)+"O"
@@ -624,37 +670,37 @@ def handleOxygen( atom ):
     return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
 def oxygenInCarboxylicGroup( atomNode , graph ):
-    neighbors = graph.neighbors[atomNode]
-    
+    neighbors = graph.neighbors(atomNode)
+
     if len(neighbors) != 1:
         return False
         
-    if graph.node[ neighbors[0] ] != "C" :
+    if graph.node[ neighbors[0] ]["element"] != "C" :
         return False
         
-    neighborsC = graph.neighbors[ neighbors[0] ]
+    neighborsC = graph.neighbors( neighbors[0] )
     
     if len(neighborsC) < 2:
         return False
         
     for potentiallyOxygen in neighborsC:
         if graph.node[potentiallyOxygen]["element"] == "O":
-            oxygenNeigh = graph.neighbors[ potentiallyOxygen ]
+            oxygenNeigh = graph.neighbors( potentiallyOxygen )
             if len( oxygenNeigh ) != 1:
                 return False
                 
     return True
 
 def oxygenInNitroGroup( atomNode, graph ):
-    neighbors = graph.neighbors[atomNode]
+    neighbors = graph.neighbors(atomNode)
     
     if len(neighbors) != 1:
         return False
         
-    if graph.node[ neighbors[0] ] != "N" :
+    if graph.node[ neighbors[0] ]["element"] != "N" :
         return False
         
-    neighborsN = graph.neighbors[ neighbors[0] ]
+    neighborsN = graph.neighbors( neighbors[0] )
     
     if len(neighborsN) < 3:
         return False
@@ -867,7 +913,9 @@ if __name__ == "__main__":
     writeSupramolecularSearchHeader( )
     timeStart = time.time()
 #    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
-    findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+    #findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+    findSupramolecularAnionPiAllLigands( "cif/1bp0.cif", "1BP0")
+    findSupramolecularAnionPiAllLigands( "cif/3bdj.cif", "3BDJ")
 #    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
 #    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
 #    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
