@@ -37,6 +37,10 @@ if isfile( sdfFromLigprep ):
     ligprepData = { "anionNames" : anionsCodes }
 
 #write header
+            
+if not isdir("logs"):
+        makedirs("logs")
+        
 log_file = "logs/MergeResultsFromLigprepOutput.log"
 if isfile(log_file):
     remove(log_file)
@@ -54,9 +58,6 @@ for project_dir in necessary_dirs_xyz:
         xyz2delete = glob.glob(project_dir+"/*.xyz")
         for xyz in xyz2delete:
             remove(xyz)
-            
-if not isdir("logs"):
-        makedirs("logs")
     
 
 dataProcessed = 0
