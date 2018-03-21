@@ -27,12 +27,14 @@ def writeProgres(dataProcessed, allData, time_start):
     
 #Prepare anions data
 sdfFromLigprep = "sdf/ligprep_2-out_cutted.sdf"
+ligprepData = {}
 
-anionsCodes = getLigandCodeFromSdf(sdfFromLigprep)
-anionsCodes = list(set(anionsCodes))
-anionsCodes.append("CL")
-
-ligprepData = { "anionNames" : anionsCodes }
+if isfile( sdfFromLigprep ):
+    anionsCodes = getLigandCodeFromSdf(sdfFromLigprep)
+    anionsCodes = list(set(anionsCodes))
+    anionsCodes.append("CL")
+    
+    ligprepData = { "anionNames" : anionsCodes }
 
 #write header
 log_file = "logs/MergeResultsFromLigprepOutput.log"
