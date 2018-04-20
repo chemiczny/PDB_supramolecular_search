@@ -301,12 +301,16 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
     for centroid in centroids:
         distance = 4.5
         neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-        extractedAtoms = extractNeighbours( neighbors, ligandCode )
+        extractedAtoms = extractNeighbours( neighbors, ligandCode, ns )
             
         if ligprepData:
             extractedAtoms = anionScreening( extractedAtoms, ligprepData )
+            
+        cationNear = []
+        if len(extractedAtoms) > 0:
+            cationNear = searchForCation( centroid["coords"], ns )
         
-        extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution)
+        extractedAtoms =  writeSupramolecularSearchResults(ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear)
         
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
@@ -324,6 +328,25 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
         saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns)
         
     return ligandWithAnions
+
+def searchForCation ( point, ns  ):
+    distance = 10
+    neighbors = ns.search(np.array(point), distance, 'A')
+    
+    metalCationsFound = []
+    metalCations =  [
+        "Li", "Be", 
+        "Na", "Mg", "Al", 
+        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", 
+        "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", 
+        "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", 
+        "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg"]
+    
+    for atom in neighbors:
+        if atom.element.upper() in [ element.upper() for element in metalCations ]:
+            metalCationsFound.append( atom.element.upper() )
+    
+    return metalCationsFound
     
 def getResiduesListFromAtomData( atomDataList ):
     atomsList = []
@@ -450,11 +473,12 @@ def writeSupramolecularSearchHeader( ):
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Model No\tDisordered\t")
     resultsFile.write("Ring size\t")
-    resultsFile.write("Resolution\n")
+    resultsFile.write("Resolution\t")
+    resultsFile.write("Metal cations\n")
     resultsFile.close()
     
             
-def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution ):
+def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -469,40 +493,44 @@ def writeSupramolecularSearchResults( ligandCode, PDBcode, centroid, extractedAt
         h = cos(radians( angle ))*distance
         x = sin(radians( angle ))*distance
         
-        angleOK = angle <= 45 or angle >= 135
-        xOK = x < 1.6
-        hOK = h >= 1.5 and h <= 4
-        if angleOK and xOK and hOK:
-            newAtoms.append(atomData)
+#        angleOK = angle <= 45 or angle >= 135
+#        xOK = x < 1.6
+#        hOK = h >= 1.5 and h <= 4
+#        if angleOK and xOK and hOK:
+        newAtoms.append(atomData)
             
-            atomCoords = atomData["Atom"].get_coord()
-            centroidCoords = centroid["coords"]        
-            
-            residueName = atomData["Atom"].get_parent().get_resname()
-            resultsFile.write(PDBcode+"\t")
-            resultsFile.write(ligandCode+"\t")
-            resultsFile.write(residueName+"\t")
-            resultsFile.write(atomData["AnionType"]+"\t")
-            resultsFile.write(atomData["Atom"].element+"\t")
-            
-            resultsFile.write(str(distance)+"\t")
-            resultsFile.write(str(angle)+"\t")
-            
-            resultsFile.write(str(x)+"\t")
-            resultsFile.write(str(h)+"\t")
-            
-            resultsFile.write(str(centroidCoords[0])+"\t")
-            resultsFile.write(str(centroidCoords[1])+"\t")
-            resultsFile.write(str(centroidCoords[2])+"\t")
-            
-            resultsFile.write(str(atomCoords[0])+"\t")
-            resultsFile.write(str(atomCoords[1])+"\t")
-            resultsFile.write(str(atomCoords[2])+"\t")
-            
-            resultsFile.write(str(modelIndex)+"\t")
-            resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
-            resultsFile.write(str(centroid["ringSize"])+"\t")
-            resultsFile.write(str(resolution)+"\n")
+        atomCoords = atomData["Atom"].get_coord()
+        centroidCoords = centroid["coords"]        
+        
+        residueName = atomData["Atom"].get_parent().get_resname()
+        resultsFile.write(PDBcode+"\t")
+        resultsFile.write(ligandCode+"\t")
+        resultsFile.write(residueName+"\t")
+        resultsFile.write(atomData["AnionType"]+"\t")
+        resultsFile.write(atomData["Atom"].element+"\t")
+        
+        resultsFile.write(str(distance)+"\t")
+        resultsFile.write(str(angle)+"\t")
+        
+        resultsFile.write(str(x)+"\t")
+        resultsFile.write(str(h)+"\t")
+        
+        resultsFile.write(str(centroidCoords[0])+"\t")
+        resultsFile.write(str(centroidCoords[1])+"\t")
+        resultsFile.write(str(centroidCoords[2])+"\t")
+        
+        resultsFile.write(str(atomCoords[0])+"\t")
+        resultsFile.write(str(atomCoords[1])+"\t")
+        resultsFile.write(str(atomCoords[2])+"\t")
+        
+        resultsFile.write(str(modelIndex)+"\t")
+        resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
+        resultsFile.write(str(centroid["ringSize"])+"\t")
+        resultsFile.write(str(resolution)+"\t")
+        if cationNear:
+            resultsFile.write(str(cationNear)+"\n")
+        else:
+            resultsFile.write("None\n")
     
     resultsFile.close()
     
@@ -551,7 +579,7 @@ def atomAngleNomVecCentroid( atom, centroid ):
     return degrees( acos(inner_prod) )
     
             
-def extractNeighbours( atomList, ligandCode ):
+def extractNeighbours( atomList, ligandCode, ns ):
     """
     Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
     
@@ -579,7 +607,7 @@ def extractNeighbours( atomList, ligandCode ):
         elif element_symbol in [ "F", "CL", "BR", "I" ]:
             potentiallySupramolecular, anionType = handleHalogens(atom)
         elif element_symbol in [ "S", "SE" ]:
-            potentiallySupramolecular, anionType = handleChalcogens(atom)
+            potentiallySupramolecular, anionType = handleChalcogens(atom, ns)
         elif element_symbol in [ "N", "P" ]:
             potentiallySupramolecular, anionType = handlePnictogens(atom)
         else:
@@ -640,7 +668,7 @@ def handleOxygen( atom ):
     graph, oxygenInd = molecule2graph( atoms, atom )
     
     oxygen_neighbors = []
-    oxygen_neighbors = graph.neighbors(oxygenInd)
+    oxygen_neighbors = list(graph.neighbors(oxygenInd))
     
     if len(oxygen_neighbors) == 0:
         return True, "Complex-O?"
@@ -651,7 +679,7 @@ def handleOxygen( atom ):
     oxygen_neighbor_index = oxygen_neighbors[0]
     oxygen_neighbor_symbol = atoms[ oxygen_neighbor_index ].element
     
-    center_neighbors = graph.neighbors( oxygen_neighbor_index )
+    center_neighbors = list(graph.neighbors( oxygen_neighbor_index ))
     
     oxygens_found = 0
     for unknown_atom in center_neighbors:
@@ -659,18 +687,18 @@ def handleOxygen( atom ):
             oxygens_found+=1
             
     if oxygen_neighbor_symbol == "C" and oxygens_found < 2:
-        return False, oxygen_neighbor_symbol+str(oxygens_found)+"O"
+        return False, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     elif oxygen_neighbor_symbol == "C" and oxygens_found == 2:
         acid = oxygenInCarboxylicGroup( oxygenInd, graph )
-        return acid, oxygen_neighbor_symbol+str(oxygens_found)+"O"
+        return acid, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     elif oxygen_neighbor_symbol == "N" and oxygens_found == 2:
         isNitro = oxygenInNitroGroup( oxygenInd, graph )
-        return not isNitro, oxygen_neighbor_symbol+str(oxygens_found)+"O"
+        return not isNitro, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
     return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
 def oxygenInCarboxylicGroup( atomNode , graph ):
-    neighbors = graph.neighbors(atomNode)
+    neighbors = list(graph.neighbors(atomNode))
 
     if len(neighbors) != 1:
         return False
@@ -678,21 +706,21 @@ def oxygenInCarboxylicGroup( atomNode , graph ):
     if graph.node[ neighbors[0] ]["element"] != "C" :
         return False
         
-    neighborsC = graph.neighbors( neighbors[0] )
+    neighborsC = list(graph.neighbors( neighbors[0] ))
     
     if len(neighborsC) < 2:
         return False
         
     for potentiallyOxygen in neighborsC:
         if graph.node[potentiallyOxygen]["element"] == "O":
-            oxygenNeigh = graph.neighbors( potentiallyOxygen )
+            oxygenNeigh = list(graph.neighbors( potentiallyOxygen ))
             if len( oxygenNeigh ) != 1:
                 return False
                 
     return True
 
 def oxygenInNitroGroup( atomNode, graph ):
-    neighbors = graph.neighbors(atomNode)
+    neighbors = list(graph.neighbors(atomNode))
     
     if len(neighbors) != 1:
         return False
@@ -700,7 +728,7 @@ def oxygenInNitroGroup( atomNode, graph ):
     if graph.node[ neighbors[0] ]["element"] != "N" :
         return False
         
-    neighborsN = graph.neighbors( neighbors[0] )
+    neighborsN = list(graph.neighbors( neighbors[0] ))
     
     if len(neighborsN) < 3:
         return False
@@ -734,7 +762,7 @@ def handleHalogens( atom):
         return True, atom.element
         
     graph, halogenInd = molecule2graph( atoms, atom )
-    halogen_neighbors = graph.neighbors(halogenInd)
+    halogen_neighbors = list(graph.neighbors(halogenInd))
     
     if len(halogen_neighbors) == 0:
         return True, "Complex-"+atom.element+"?"
@@ -742,7 +770,7 @@ def handleHalogens( atom):
     return False, atom.element
     
 
-def handleChalcogens(atom):
+def handleChalcogens(atom, ns):
     """
     Zweryfikuj pozostale tlenowce (oprocz tlenu) jako potencjalne aniony.
     Podobnie jak w przypadku fluorowcow. W ten sposob ogarniamy tylko S2-
@@ -760,7 +788,7 @@ def handleChalcogens(atom):
         return True, atom.element
         
     graph, chalcogenInd = molecule2graph( atoms, atom )
-    chalcogen_neighbors = graph.neighbors(chalcogenInd)
+    chalcogen_neighbors = list(graph.neighbors(chalcogenInd))
     
     if len(chalcogen_neighbors) == 0:
         return True, "Complex-"+atom.element+"?"
@@ -768,7 +796,15 @@ def handleChalcogens(atom):
         #tiol
         atom_neighbor = atoms[chalcogen_neighbors[0]]
         if atom.element == "S" and atom_neighbor.element == "C":
-            return True, "RSH"
+            neighbors = ns.search( atom.get_coord(), 2.15, 'A')
+            neighborsElements = [ neighbor.element.upper() for neighbor in neighbors ]
+            carbons = neighborsElements.count("C")
+            sulfurs = neighborsElements.count("S")
+            if len(neighbors) == 2 and carbons == 1 and sulfurs == 1 :
+                return True, "RSH"
+            elif len(neighbors) == 3 and carbons == 1 and sulfurs == 2 :
+                return True, "S~S"
+                
         elif atom.element == "S" and atom_neighbor.element == "S":  
             #mostek disulfidowy
             return True, "S~S?"
