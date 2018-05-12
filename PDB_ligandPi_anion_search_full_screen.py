@@ -10,21 +10,8 @@ from PDB_requests import getLigandCodeFromSdf
 from os.path import isdir, basename, isfile
 from os import makedirs, remove
 import glob
-import time, datetime
+import time
 from multiprocessing import Pool, Lock
-    
-def writeProgres(dataProcessed, allData, time_start):
-    progressFile = open("logs/progress.log", "w")
-    progressFile.write("Postep: "+ str(dataProcessed)+" / "+str(dataLen)+" "+ str(dataProcessed*100.0/dataLen)[0:5]+"%\n")
-    
-    timeActual = time.time()
-    timeTaken = timeActual - timeStart
-    timeEstimated = timeTaken/dataProcessed * (allData  - dataProcessed)
-    prettyTimeTaken = str(datetime.timedelta(seconds = timeTaken))
-    progressFile.write("Czas pracy: "+prettyTimeTaken+"\n")
-    prettyTimeEstimated = str( datetime.timedelta(seconds = timeEstimated) )
-    progressFile.write("Estymowany pozostaly czas: "+prettyTimeEstimated+"\n")
-    progressFile.close()
     
 #Prepare anions data
 sdfFromLigprep = "sdf/ligprep_2-out_cutted.sdf"
@@ -43,6 +30,7 @@ if not isdir("logs"):
         makedirs("logs")
         
 log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")
+log_files += glob.glob("logs/partialProgress*")
 for log_file in log_files:
     remove(log_file)
     
@@ -70,9 +58,15 @@ def prepareArgumentsList(cifFiles, lockObject):
 argumentsList = prepareArgumentsList( cif_files, lock )
 
 timeStart = time.time()
+timeFile = open("logs/timeStart.log", 'w')
+timeFile.write(str(timeStart))
+timeFile.close()
+
+cifNoFile = open("logs/cif2process.log", 'w')
+cifNoFile.write(str(len(cif_files)))
+cifNoFile.close()
+
 pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
-        
-writeProgres(dataLen, dataLen, timeStart)
 
 final_log = open("logs/MergeResultsFromLigprepOutput.log", "a+")
 log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")

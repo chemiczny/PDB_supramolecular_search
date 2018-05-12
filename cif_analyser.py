@@ -15,7 +15,7 @@ from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 import time
 import numpy as np
-from supramolecularLogging import writeSupramolecularSearchHeader, writeSupramolecularSearchResults
+from supramolecularLogging import writeSupramolecularSearchHeader, writeSupramolecularSearchResults, incrementPartialProgress
 from ringDetection import getRingsCentroids
 from anionRecogniser import extractNeighbours
 from multiprocessing import current_process
@@ -134,6 +134,8 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
                 if analysePiacidMultiProcess(residue, PDBcode, modelIndex, ns, resolution):
                     supramolecularFound = True
             
+    fileId = current_process()
+    incrementPartialProgress(fileId)
     return supramolecularFound
     
 def readResolution( cifFile ):

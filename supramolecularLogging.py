@@ -9,6 +9,7 @@ Created on Sat Apr 21 13:44:59 2018
 from math import  sin, cos, radians, sqrt, acos, degrees
 import numpy as np
 from numpy_utilities import normalize
+from os.path import isfile
 
 def writeSupramolecularSearchHeader( ):
     """
@@ -139,3 +140,20 @@ def atomAngleNomVecCentroid( atom, centroid ):
     inner_prod = np.inner( normVec, centrAtomVec )
     
     return degrees( acos(inner_prod) )
+
+def incrementPartialProgress( fileId ):
+    fileName = "logs/partialProgress"+str(fileId)+".log"
+    if not isfile(fileName):
+        partialProgressFile = open(fileName, 'w')
+        partialProgressFile.write("1")
+        partialProgressFile.close()
+        
+    else:
+        partialProgressFile = open(fileName, 'r')
+        actualNo = int(partialProgressFile.readline())
+        partialProgressFile.close()
+        
+        actualNo += 1
+        partialProgressFile = open(fileName, 'w')
+        partialProgressFile.write(str(actualNo))
+        partialProgressFile.close()
