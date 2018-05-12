@@ -18,6 +18,7 @@ import numpy as np
 from supramolecularLogging import writeSupramolecularSearchHeader, writeSupramolecularSearchResults
 from ringDetection import getRingsCentroids
 from anionRecogniser import extractNeighbours
+from multiprocessing import current_process
         
 
 def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData = None ):
@@ -92,6 +93,48 @@ def findSupramolecularAnionPiAllLigands( cifFile, PDBcode, ligprepData = None ):
                     supramolecularFound = True
             
     return supramolecularFound
+
+def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
+    """
+    Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
+    zwiazanych z konkretnym ligandem
+    
+    Wejscie:
+    ligandCode - kod liganda
+    cifFile    - plik cif pobrany z bazy PDB
+    
+    Wyjscie:
+    Hehehe, czas pokaze...
+    """
+    cifFile = cifData[0]
+    PDBcode = cifData[1]
+    parser = FastMMCIFParser()
+    
+    try:
+        structure = parser.get_structure('temp', cifFile)
+    except:
+        print("Biopytong nie ogarnia!", cifFile)
+        #Zeby zobaczyc co sie dzieje
+        return True        
+        
+    supramolecularFound = False 
+    notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
+        "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
+        
+    resolution = readResolution(cifFile)
+#    print("jade z pliku: ", cifFile)
+    for modelIndex, model in enumerate(structure):
+        atoms = Selection.unfold_entities(model, 'A')  
+        ns = NeighborSearch(atoms)
+           
+        for residue in model.get_residues():
+            residueName = residue.get_resname().upper()
+            if not residueName in notPiacids  :
+#                print("Analizuje: ", residueName)
+                if analysePiacidMultiProcess(residue, PDBcode, modelIndex, ns, resolution):
+                    supramolecularFound = True
+            
+    return supramolecularFound
     
 def readResolution( cifFile ):
     mmcif_dict = MMCIF2Dict(cifFile)
@@ -123,7 +166,6 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
-    allExtractedAtomsForLigand =[]
     
     for centroid in centroids:
         distance = 4.5
@@ -141,18 +183,30 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
         
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
-            allExtractedAtomsForLigand += extractedAtoms
-            saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms)
         
-    if ligandWithAnions:
-        allAnions = getResiduesListFromAtomData( allExtractedAtomsForLigand ) 
-        anionsNames = []
+    return ligandWithAnions
+
+def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution):
+    centroids = getRingsCentroids( ligand )
+    ligandCode = ligand.get_resname()
+#    print("Znalazlem pierscienie w ilosci: ", len(centroids))
+    
+    ligandWithAnions = False
+    
+    for centroid in centroids:
+        distance = 4.5
+        neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
+        extractedAtoms = extractNeighbours( neighbors, ligandCode, ns )
+            
+        cationNear = []
+        if len(extractedAtoms) > 0:
+            cationNear = searchForCation( centroid["coords"], ns )
+        fileId = current_process()
+        extractedAtoms =  writeSupramolecularSearchResults(ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, fileId)
+
         
-        for anion in allAnions:
-            anionsNames.append( anion.get_resname() )
-        
-        saveLigand(ligand, ligandCode, PDBcode, modelIndex )
-        saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns)
+        if len(extractedAtoms) > 0:
+            ligandWithAnions = True
         
     return ligandWithAnions
 

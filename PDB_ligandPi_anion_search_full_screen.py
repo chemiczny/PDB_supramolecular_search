@@ -5,12 +5,13 @@ Created on Mon Jan  1 18:00:25 2018
 @author: michal
 """
 
-from cif_analyser import writeSupramolecularSearchHeader, findSupramolecularAnionPiAllLigands
+from cif_analyser import writeSupramolecularSearchHeader, findSupramolecularAnionPiAllLigandsMultiProcess
 from PDB_requests import getLigandCodeFromSdf
 from os.path import isdir, basename, isfile
 from os import makedirs, remove
 import glob
 import time, datetime
+from multiprocessing import Pool, Lock
     
 def writeProgres(dataProcessed, allData, time_start):
     progressFile = open("logs/progress.log", "w")
@@ -41,8 +42,8 @@ if isfile( sdfFromLigprep ):
 if not isdir("logs"):
         makedirs("logs")
         
-log_file = "logs/MergeResultsFromLigprepOutput.log"
-if isfile(log_file):
+log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")
+for log_file in log_files:
     remove(log_file)
     
 writeSupramolecularSearchHeader()
@@ -64,22 +65,40 @@ dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
 
-timeStart = time.time()
-for cif_file in cif_files:
-    PDBcode = basename(cif_file).split(".")[0].upper()
+numberOfProcesses = 6
+pool = Pool(numberOfProcesses)
+lock = Lock()
 
-    dataProcessed += 1
+def prepareArgumentsList(cifFiles, lockObject):
+    arguments = []
     
-    supramolecularFound = findSupramolecularAnionPiAllLigands( cif_file, PDBcode, ligprepData )
-    
-    if supramolecularFound:
-        structure_saved += 1
+    for cif in cifFiles:
+        PDBcode = basename(cif).split(".")[0].upper()
+        arguments.append( ( cif, PDBcode ) )
         
-    if structure_saved == 10:
-        break      
-    
-    if dataProcessed % 10 == 0:
-        writeProgres(dataProcessed, dataLen, timeStart)
+    return arguments
+
+argumentsList = prepareArgumentsList( cif_files, lock )
+
+timeStart = time.time()
+pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
         
         
 writeProgres(dataLen, dataLen, timeStart)
+
+final_log = open("logs/MergeResultsFromLigprepOutput.log", "a+")
+log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")
+for log_file in log_files:
+    if log_file == "logs/MergeResultsFromLigprepOutput.log":
+        continue
+    
+    new_log = open(log_file, 'r')
+    
+    line = new_log.readline()
+    while line:
+        final_log.write(line)
+        line = new_log.readline()
+    
+    new_log.close()
+
+final_log.close()

@@ -29,11 +29,13 @@ def writeSupramolecularSearchHeader( ):
     resultsFile.close()
     
             
-def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear ):
+def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
     resultsFileName = "logs/MergeResultsFromLigprepOutput.log"
+    if fileId != None:
+        resultsFileName = "logs/MergeResultsFromLigprepOutput"+str(fileId)+".log"
     ligandCode = ligand.get_resname()
     ligandId = str(ligand.get_id()[1])
     ligandChain = ligand.get_parent().get_id()
