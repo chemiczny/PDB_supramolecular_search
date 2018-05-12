@@ -139,7 +139,10 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
     return supramolecularFound
     
 def readResolution( cifFile ):
-    mmcif_dict = MMCIF2Dict(cifFile)
+    try:
+        mmcif_dict = MMCIF2Dict(cifFile)
+    except:
+        return -1
     res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
     res_list = []
     for key in res_keys:
