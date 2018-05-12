@@ -49,18 +49,7 @@ for log_file in log_files:
 writeSupramolecularSearchHeader()
 
 cif_files = glob.glob( "cif/*.cif" )
-
-necessary_dirs_xyz = [ "xyz", "xyz/ligands", "xyz/ligands_ENV", "xyz/ligands_anions", "xyz/aminoacids", "xyz/aminoacids_ENV", "xyz/aminoacids_anions" ]
-
-for project_dir in necessary_dirs_xyz:
-    if not isdir(project_dir):
-        makedirs(project_dir)
-    else:
-        xyz2delete = glob.glob(project_dir+"/*.xyz")
-        for xyz in xyz2delete:
-            remove(xyz)
     
-
 dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
@@ -82,7 +71,6 @@ argumentsList = prepareArgumentsList( cif_files, lock )
 
 timeStart = time.time()
 pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
-        
         
 writeProgres(dataLen, dataLen, timeStart)
 
