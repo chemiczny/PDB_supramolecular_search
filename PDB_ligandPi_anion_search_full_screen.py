@@ -4,25 +4,12 @@ Created on Mon Jan  1 18:00:25 2018
 
 @author: michal
 """
-
 from cif_analyser import writeSupramolecularSearchHeader, findSupramolecularAnionPiAllLigandsMultiProcess
-from PDB_requests import getLigandCodeFromSdf
-from os.path import isdir, basename, isfile
+from os.path import isdir, basename
 from os import makedirs, remove
 import glob
 import time
-from multiprocessing import Pool, Lock
-    
-#Prepare anions data
-sdfFromLigprep = "sdf/ligprep_2-out_cutted.sdf"
-ligprepData = {}
-
-if isfile( sdfFromLigprep ):
-    anionsCodes = getLigandCodeFromSdf(sdfFromLigprep)
-    anionsCodes = list(set(anionsCodes))
-    anionsCodes.append("CL")
-    
-    ligprepData = { "anionNames" : anionsCodes }
+from multiprocessing import Pool
 
 #write header
             
@@ -44,9 +31,8 @@ dataLen = len(cif_files)
 
 numberOfProcesses = 6
 pool = Pool(numberOfProcesses)
-lock = Lock()
 
-def prepareArgumentsList(cifFiles, lockObject):
+def prepareArgumentsList(cifFiles):
     arguments = []
     
     for cif in cifFiles:
@@ -55,7 +41,7 @@ def prepareArgumentsList(cifFiles, lockObject):
         
     return arguments
 
-argumentsList = prepareArgumentsList( cif_files, lock )
+argumentsList = prepareArgumentsList( cif_files)
 
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
@@ -84,3 +70,8 @@ for log_file in log_files:
     new_log.close()
 
 final_log.close()
+
+timeStop = time.time()
+timeFile = open("logs/timeStop.log", 'w')
+timeFile.write(str(timeStop))
+timeFile.close()

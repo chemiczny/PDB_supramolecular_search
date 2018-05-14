@@ -122,6 +122,8 @@ def handleOxygen( atom ):
     elif oxygen_neighbor_symbol == "N" and oxygens_found == 2:
         isNitro = oxygenInNitroGroup( oxygenInd, graph )
         return not isNitro, oxygen_neighbor_symbol+"O"+str(oxygens_found)
+    elif oxygen_neighbor_symbol == "O":
+        return False, "OO"
     
     return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
