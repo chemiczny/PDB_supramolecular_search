@@ -26,11 +26,12 @@ def writeSupramolecularSearchHeader( ):
     resultsFile.write("Model No\tDisordered\t")
     resultsFile.write("Ring size\t")
     resultsFile.write("Resolution\t")
+    resultsFile.write("Method\t")
     resultsFile.write("Metal cations\n")
     resultsFile.close()
     
             
-def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, fileId = None ):
+def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, method, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -90,6 +91,7 @@ def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms,
         resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
         resultsFile.write(str(centroid["ringSize"])+"\t")
         resultsFile.write(str(resolution)+"\t")
+        resultsFile.write(str(method)+"\t")
         if cationNear:
             resultsFile.write(str(cationNear)+"\n")
         else:

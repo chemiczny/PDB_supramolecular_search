@@ -121,7 +121,7 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
-    resolution = readResolution(cifFile)
+    resolution, method = readResolutionAndMethod(cifFile)
 #    print("jade z pliku: ", cifFile)
     for modelIndex, model in enumerate(structure):
         atoms = Selection.unfold_entities(model, 'A')  
@@ -131,38 +131,44 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
 #                print("Analizuje: ", residueName)
-                if analysePiacidMultiProcess(residue, PDBcode, modelIndex, ns, resolution):
+                if analysePiacidMultiProcess(residue, PDBcode, modelIndex, ns, resolution, method):
                     supramolecularFound = True
             
     fileId = current_process()
     incrementPartialProgress(fileId)
     return supramolecularFound
     
-def readResolution( cifFile ):
+def readResolutionAndMethod( cifFile ):
     try:
         mmcif_dict = MMCIF2Dict(cifFile)
     except:
         return -1
+    
+    method = "Unknown"
+    if "_exptl.method" in mmcif_dict:
+        method = mmcif_dict["_exptl.method"]
     res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
     res_list = []
     for key in res_keys:
         if key in mmcif_dict:
-            resolution = list(mmcif_dict[key])
-            if len(resolution) > 1:
-                return -2
+            resolution = mmcif_dict[key]
+            
             try:
-                res_list.append(float(resolution[0]))
+                resolution = float(resolution)
             except:
-                print("jakis syf: ", cifFile, key, mmcif_dict[key])
+                return -2, method
+
+            res_list.append(resolution)
+
                 
     if not res_list:
-        return -1
+        return -1, method
                 
     variance = np.var(res_list)
     if variance < 0.001:
-        return res_list[0]
+        return res_list[0], method
     else:
-        return -3
+        return -3, method
         
     
 def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
@@ -191,7 +197,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
         
     return ligandWithAnions
 
-def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution):
+def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution, method):
     centroids = getRingsCentroids( ligand )
     ligandCode = ligand.get_resname()
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
@@ -207,7 +213,7 @@ def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution):
         if len(extractedAtoms) > 0:
             cationNear = searchForCation( centroid["coords"], ns )
         fileId = current_process()
-        extractedAtoms =  writeSupramolecularSearchResults(ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, fileId)
+        extractedAtoms =  writeSupramolecularSearchResults(ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, method, fileId)
 
         
         if len(extractedAtoms) > 0:
@@ -337,17 +343,21 @@ def anionScreening( atoms, ligprepData ):
     
 
 if __name__ == "__main__":
-    writeSupramolecularSearchHeader( )
-    timeStart = time.time()
-#    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
-    #findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
-    findSupramolecularAnionPiAllLigands( "cif/1bp0.cif", "1BP0")
-    findSupramolecularAnionPiAllLigands( "cif/3bdj.cif", "3BDJ")
-#    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
-#    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
-#    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
-#    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
-#    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
-    timeStop = time.time()
-    print("Calosc: ", timeStop-timeStart)
+#    writeSupramolecularSearchHeader( )
+#    timeStart = time.time()
+##    findSupramolecularAnionPiLigand( "MCY", "cif/106d.cif", "106D" )
+#    #findSupramolecularAnionPiLigand( "NCZ", "cif/1j5i.cif", "1J5I" )
+#    findSupramolecularAnionPiAllLigands( "cif/1bp0.cif", "1BP0")
+#    findSupramolecularAnionPiAllLigands( "cif/3bdj.cif", "3BDJ")
+##    findSupramolecularAnionPiLigand( "7NC", "cif/5wqk.cif", "5WQK" )
+##    findSupramolecularAnionPiLigand( "HPA", "cif/3nrz.cif", "3NRZ" )
+##    findSupramolecularAnionPiLigand( "LUM", "cif/1he5.cif", "1HE5" )
+##    findSupramolecularAnionPiLigand( "NAP", "cif/3bcj.cif", "3BCJ" )
+##    findSupramolecularAnionPiLigand( "NAP", "cif/4lbs.cif", "4LBS" )
+#    timeStop = time.time()
+#    print("Calosc: ", timeStop-timeStart)
+    print(readResolutionAndMethod("cif/1bp0.cif"))
+    print(readResolutionAndMethod("cif/1j5i.cif"))
+    print(readResolutionAndMethod("cif/2eet.cif"))
+    print(readResolutionAndMethod("cif/4c3y.cif"))
 #findSupramolecular( "LUM", 666 )
