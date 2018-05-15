@@ -8,6 +8,7 @@ Created on Sat May 12 14:46:55 2018
 
 import glob
 import time, datetime
+from os.path import isfile
     
 cifProcessed = 0
 log_files = glob.glob("logs/partialProgress*")
@@ -24,14 +25,25 @@ timeFile = open("logs/timeStart.log", 'r')
 timeStart = float(timeFile.readline())
 timeFile.close()
 
+timeStop = -1
+if isfile("logs/timeStop.log"):
+    timeFile = open("logs/timeStop.log", 'r')
+    timeStop = float(timeFile.readline())
+    timeFile.close()
+
 timeActual = time.time()
+
+progress = float(cifProcessed)/cifNo * 100
+if abs(progress-100) < 0.00001 and timeStop > timeStart:
+    print("lol")
+    timeActual = timeStop
+    
 timeTaken = timeActual - timeStart
 
 timeEstimated = timeTaken/cifProcessed * (cifNo  - cifProcessed)
 prettyTimeTaken = str(datetime.timedelta(seconds = timeTaken))
 prettyTimeEstimated = str( datetime.timedelta(seconds = timeEstimated) )
 
-progress = float(cifProcessed)/cifNo * 100
 print("##########################################")
 print("#################POSTEP###################")
 print("##########################################")

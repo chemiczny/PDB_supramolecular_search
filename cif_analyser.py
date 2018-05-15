@@ -142,7 +142,7 @@ def readResolutionAndMethod( cifFile ):
     try:
         mmcif_dict = MMCIF2Dict(cifFile)
     except:
-        return -1
+        return -666, -666
     
     method = "Unknown"
     if "_exptl.method" in mmcif_dict:
