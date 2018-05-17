@@ -57,26 +57,14 @@ def fetchdialog(simulation = False):
             tkMessageBox("Pandas cannot parse this file")
             
     def updateMenu():
-        piAcidCodes = logData["data"]["Pi acid Code"].unique()
-        piAcidCodes = sorted(piAcidCodes)
-        logData["piAcidCodesUnique"] = piAcidCodes
-        list_piAcid.delete(0, "end")
-        for piAcid in piAcidCodes:
-            list_piAcid.insert("end", piAcid)
+        for parameter in listParameters:
+            parametersData = logData["data"][ listParameters[parameter]["header"]  ].unique()
+            parametersData = sorted(parametersData)
+            logData[parameter] = parametersData
             
-        anionCodes = logData["data"]["Anion code"].unique()
-        anionCodes = sorted(anionCodes)
-        logData["anionCodesUnique"] = anionCodes
-        list_anions.delete(0, "end")
-        for anion in anionCodes:
-            list_anions.insert("end", anion)
-            
-        anionTypes = logData["data"]["Anion type"].unique()
-        anionTypes = sorted(anionTypes)
-        logData["anionTypesUnique"] = anionCodes
-        list_anionsTypes.delete(0, "end")
-        for anion in anionTypes:
-            list_anionsTypes.insert("end", anion)
+            listParameters[parameter]["listbox"].delete(0, "end")
+            for row in parametersData:
+                listParameters[parameter]["listbox"].insert("end", row)
         
     but_log = Tkinter.Button(self, text = "Load log file", command = getLogFile, width = 10)
     but_log.grid(row = 0, column = 0)
@@ -109,96 +97,87 @@ def fetchdialog(simulation = False):
         
         actualRow+=1
 
-    
-# Pi acids list
+    def listFilter(key):
+        template = listParameters[key]["entry"].get()
+        template = template.upper()
+        
+        templateLen = len(template)
+        listParameters[key]["listbox"].delete(0, "end")
+        
+        for row in logData[key]:
+            if template == row[:templateLen]:
+                listParameters[key]["listbox"].insert("end", row)
+                
     def piAcidFilter():
-        piAcidTemplate = ent_piAcid.get()
-        piAcidTemplate = piAcidTemplate.upper()
+        listFilter("Pi acid")
         
-        templateLen = len(piAcidTemplate)
-        list_piAcid.delete(0, "end")
-#        print(templateLen)
-        for piAcid in logData["piAcidCodesUnique"]:
-            if piAcidTemplate == piAcid[:templateLen]:
-                list_piAcid.insert("end", piAcid)
-    
-    lab_piAcid = Tkinter.Label(self, text = "Pi acid")
-    lab_piAcid.grid(row = 0, column = 4)
-    
-    checkboxVars["piAcid"] = Tkinter.IntVar()
-    
-    check_piAcid = Tkinter.Checkbutton(self, variable = checkboxVars["piAcid"] )
-    check_piAcid.grid(row = 0, column = 5)
-    
-    list_piAcid = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
-    list_piAcid.grid( row = 1, column = 4, rowspan = 10, columnspan = 2)
-    
-    ent_piAcid = Tkinter.Entry(self, width = 5)
-    ent_piAcid.grid(row = 15, column = 4)
-    
-    but_piAcid = Tkinter.Button(self, width = 1, text = "*", command = piAcidFilter)
-    but_piAcid.grid(row = 15, column = 5)
-    
-# Anions list
     def anionFilter():
-        anionTemplate = ent_anions.get()
-        anionTemplate = anionTemplate.upper()
+        listFilter("Anions")
         
-        list_anions.delete(0, "end")
-        templateLen = len(anionTemplate)
-        for anion in logData["anionCodesUnique"]:
-            if anionTemplate == anion[:templateLen]:
-                list_anions.insert("end", anion)
-        
-    
-    lab_anions = Tkinter.Label(self, text = "Anions")
-    lab_anions.grid(row = 0, column = 6)
-    
-    checkboxVars["anion"] = Tkinter.IntVar()
-    
-    check_anions = Tkinter.Checkbutton(self, variable = checkboxVars["anion"])
-    check_anions.grid(row = 0, column = 7)
-    
-    list_anions = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
-    list_anions.grid( row = 1, column = 6, rowspan = 10, columnspan = 2)
-    
-    ent_anions = Tkinter.Entry(self, width = 5)
-    ent_anions.grid(row = 15, column = 6)
-    
-    but_anions = Tkinter.Button(self, width = 1, text = "*", command = anionFilter)
-    but_anions.grid(row = 15, column = 7)
-    
-# Anions types list
-    
     def anionTypeFilter():
-        anionTemplate = ent_anionsTypes.get()
-        anionTemplate = anionTemplate.upper()
+        listFilter("Groups")
+
+    listParameters = { "Pi acid" : { "header" : "Pi acid Code", "filterFunc" : piAcidFilter }, 
+                      "Anions" : { "header" : "Anion code", "filterFunc" : anionFilter } , 
+                      "Groups" : { "header" : "Anion type", "filterFunc" : anionTypeFilter }  }
+                
+    actualColumn = 4
+    for parameter in listParameters:
+        listParameters[parameter]["label"] = Tkinter.Label(self, text = parameter)
+        listParameters[parameter]["label"].grid(row = 0, column = actualColumn)
         
-        list_anionsTypes.delete(0, "end")
-        templateLen = len(anionTemplate)
-        for anion in logData["anionTypesUnique"]:
-            if anionTemplate == anion[:templateLen]:
-                list_anionsTypes.insert("end", anion)
+        checkboxVars[parameter] = Tkinter.IntVar()
         
+        listParameters[parameter]["checkbox"] = Tkinter.Checkbutton(self, variable = checkboxVars[parameter] )
+        listParameters[parameter]["checkbox"].grid(row = 0, column = actualColumn+1)
+        
+        listParameters[parameter]["listbox"] = Tkinter.Listbox(self, width =10, height = 15, exportselection = False)
+        listParameters[parameter]["listbox"].grid(row = 1, column = actualColumn, rowspan = 15, columnspan = 2)
+        
+        listParameters[parameter]["entry"] = Tkinter.Entry(self, width = 5)
+        listParameters[parameter]["entry"].grid(row =20, column = actualColumn)
+        
+        listParameters[parameter]["button"] = Tkinter.Button(self, width = 1, text = "*", command = listParameters[parameter]["filterFunc"])
+        listParameters[parameter]["button"].grid(row = 20, column = actualColumn + 1)
+        
+        actualColumn += 2
+        
+    #SORTING
+    sorting_keys2header = {  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
+                         "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }
+    sorting_keys_col1 = [  "R" , "Angle" , "x" , "h" ,
+                         "res" , "Pi acid" ,"Anion" ]
+    sorting_keys_col2 = [ "Ascd", "Desc" ]
+    sortingMenu = []
     
-    lab_anionsTypes = Tkinter.Label(self, text = "Groups")
-    lab_anionsTypes.grid(row = 0, column = 8)
-    
-    checkboxVars["anionType"] = Tkinter.IntVar()
-    
-    check_anionsTypes = Tkinter.Checkbutton(self, variable = checkboxVars["anionType"])
-    check_anionsTypes.grid(row = 0, column = 9)
-    
-    list_anionsTypes = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
-    list_anionsTypes.grid( row = 1, column = 8, rowspan = 10, columnspan = 2)
-    
-    ent_anionsTypes = Tkinter.Entry(self, width = 5)
-    ent_anionsTypes.grid(row = 15, column = 8)
-    
-    but_anionsTypes = Tkinter.Button(self, width = 1, text = "*", command = anionFilter)
-    but_anionsTypes.grid(row = 15, column = 9)
-    
-# Anions types end
+    for i in range(4):
+        sortingMenu.append( { }  )
+        
+        sortingMenu[i]["label"] = Tkinter.Label(self, text = "Sorting"+str(i))
+        sortingMenu[i]["label"].grid(row = 0, column =  actualColumn)
+        
+        sortingMenu[i]["chk_value"] = Tkinter.IntVar()
+        
+        sortingMenu[i]["chk_butt"] = Tkinter.Checkbutton(self, variable = sortingMenu[i]["chk_value"])
+        sortingMenu[i]["chk_butt"] .grid(row = 0, column = actualColumn+1)
+        
+        sortingMenu[i]["sorting_key"] = Tkinter.IntVar()
+        
+        actual_row = 1
+        for value, key in enumerate(sorting_keys_col1):
+            sortingMenu[i][key] = Tkinter.Radiobutton(self, text = key, variable = sortingMenu[i]["sorting_key"], value = value, indicatoron=0, width = 8 )
+            sortingMenu[i][key].grid(row = actual_row, column = actualColumn, columnspan = 2)
+            actual_row += 1
+            
+        sortingMenu[i]["sortingTypeValue"] = Tkinter.IntVar()
+        
+        for value, key in enumerate(sorting_keys_col2):
+            sortingMenu[i][key]= Tkinter.Radiobutton(self, text = key, variable = sortingMenu[i]["sortingTypeValue"], value = value, indicatoron=0, width = 8 )
+            sortingMenu[i][key].grid(row = actual_row, column = actualColumn, columnspan = 2)
+            actual_row += 1
+            
+        actualColumn += 2
+        
     
     def applyFilter ():
         if logData["logFile"] == False:
@@ -208,20 +187,14 @@ def fetchdialog(simulation = False):
         actualData = logData["data"]
         for key in checkboxVars:
             if checkboxVars[key].get() > 0:
-#                print(key, "jest wybrany!")
                 anythingSet = True
                 
-                if key == "anion":
-                    anionCode = list_anions.get(list_anions.curselection())
-                    actualData = actualData[  actualData["Anion code"].str.match(anionCode) ]
-#                    print(anionCode)
-                elif key == "piAcid":
-                    piAcidCode = list_piAcid.get(list_piAcid.curselection())
-                    actualData = actualData[  actualData["Pi acid Code"].str.match(piAcidCode) ]
-#                    print(piAcidCode)
-                elif key == "anionType":
-                    anionType = list_anionsTypes.get(list_anionsTypes.curselection())
-                    actualData = actualData[  actualData["Anion type"].str.match(anionType) ]
+                if key in listParameters:
+                    listIndex = listParameters[key]["listbox"].curselection()
+                    if listIndex:
+                        query = listParameters[key]["listbox"].get(listIndex)
+                        actualData = actualData[  actualData[ listParameters[key]["header"] ].str.match(query) ]
+
                 elif key in numericalParameters:
                     minValue = numericalParameters[key]["entry_low"].get()
                     maxValue = numericalParameters[key]["entry_high"].get()
@@ -241,39 +214,63 @@ def fetchdialog(simulation = False):
                 
         if not anythingSet:
             tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
-        else:
-            recordsFound = str(len(actualData))
-            
-            ent_recordsFound.configure(state = "normal")
-            ent_recordsFound.delete(0,"end")
-            ent_recordsFound.insert(0, str(recordsFound))
-            ent_recordsFound.configure(state = "readonly")
-            logData["filtered"] = actualData
-            tree_data.delete(*tree_data.get_children())
-            
-            rowId = 0
-            for index, row in actualData.iterrows():
-                tree_data.insert('', "end" , values =  ( rowId, row["PDB Code"] , row["Pi acid Code"], 
-                                                        row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
-                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
-                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["Resolution"]) )
-                rowId += 1
-                if rowId >= 500:
-                    break
+
+        recordsFound = str(len(actualData))
+        
+        anySort = False
+        columns = []
+        ascending = []
+        for sortData in sortingMenu:
+           toSort =  sortData["chk_value"].get()
+           
+           if toSort > 0:
+               anySort = True
+               itemInd = sortData["sorting_key"].get()
+               sortingKey = sorting_keys_col1[itemInd]
+               header = sorting_keys2header[sortingKey]
+               if header in columns:
+                   continue
+               columns.append(header)
+               
+               ascendingActual = sortData["sortingTypeValue"].get()
+               if ascendingActual == 0:
+                   ascending.append(True)
+               else:
+                   ascending.append(False)
+               
+        
+        ent_recordsFound.configure(state = "normal")
+        ent_recordsFound.delete(0,"end")
+        ent_recordsFound.insert(0, str(recordsFound))
+        ent_recordsFound.configure(state = "readonly")
+        if anySort:
+            actualData = actualData.sort_values(by = columns, ascending = ascending)
+        logData["filtered"] = actualData
+        tree_data.delete(*tree_data.get_children())
+        
+        rowId = 0
+        for index, row in actualData.iterrows():
+            tree_data.insert('', "end" , values =  ( rowId, row["PDB Code"] , row["Pi acid Code"], 
+                                                    row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
+                                                    row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
+                                                    str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
+                                                    str(row["h"])[:3], row["Resolution"]) )
+            rowId += 1
+            if rowId >= 500:
+                break
             
             
             
     but_apply = Tkinter.Button(self, width = 10, command = applyFilter, text = "Search")
-    but_apply.grid(row = 7, column = 0)
+    but_apply.grid(row = 22, column = 0)
     
     ent_recordsFound = Tkinter.Entry(self, width =20)
     ent_recordsFound.configure(state = "readonly")
-    ent_recordsFound.grid(row = 15, column = 1, columnspan = 2)
+    ent_recordsFound.grid(row = 25, column = 1, columnspan = 2)
     
 # Records list
     lab_data = Tkinter.Label(self, width = 10, text = "Records found")
-    lab_data.grid(row = 15, column = 0)
+    lab_data.grid(row = 25, column = 0)
     
     headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res" ]
     
@@ -281,7 +278,7 @@ def fetchdialog(simulation = False):
     for header in headers:
         tree_data.heading(header, text = header)
         tree_data.column(header, width = 70)
-    tree_data.grid(row = 18, column = 0, columnspan = 40)
+    tree_data.grid(row = 30, column = 0, columnspan = 40)
     
     
     def showInteractions():
