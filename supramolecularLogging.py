@@ -47,9 +47,10 @@ def writeSupramolecularSearchResults( ligand, PDBcode, centroid, extractedAtoms,
         distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
         angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
         
-        h = cos(radians( angle ))*distance
+        h = abs(cos(radians( angle ))*distance)
         x = sin(radians( angle ))*distance
-        
+        if angle > 90.0 :
+            angle = 180 - angle
 #        angleOK = angle <= 45 or angle >= 135
 #        xOK = x < 1.6
 #        hOK = h >= 1.5 and h <= 4

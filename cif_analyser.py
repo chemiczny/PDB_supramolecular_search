@@ -114,6 +114,8 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
         structure = parser.get_structure('temp', cifFile)
     except:
         print("Biopytong nie ogarnia!", cifFile)
+        fileId = current_process()
+        incrementPartialProgress(fileId)
         #Zeby zobaczyc co sie dzieje
         return True        
         
