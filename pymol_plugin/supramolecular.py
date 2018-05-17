@@ -45,7 +45,7 @@ def fetchdialog(simulation = False):
     checkboxVars = {}
     
     def getLogFile():
-        logData["logFile"] = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Log files","*.log"), ("Txt files", "*.txt") ,("all files","*.*")) )
+        logData["logFile"] = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Log files","*.log"), ("Txt files", "*.txt") ,("CSV files","*.csv"), ("Dat files", "*.dat"), ("all files","*.*")) )
         ent_log.configure(state = "normal")
         ent_log.delete(0,"end")
         ent_log.insert(0, logData["logFile"])
@@ -70,6 +70,13 @@ def fetchdialog(simulation = False):
         list_anions.delete(0, "end")
         for anion in anionCodes:
             list_anions.insert("end", anion)
+            
+        anionTypes = logData["data"]["Anion type"].unique()
+        anionTypes = sorted(anionTypes)
+        logData["anionTypesUnique"] = anionCodes
+        list_anionsTypes.delete(0, "end")
+        for anion in anionTypes:
+            list_anionsTypes.insert("end", anion)
         
     but_log = Tkinter.Button(self, text = "Load log file", command = getLogFile, width = 10)
     but_log.grid(row = 0, column = 0)
@@ -102,6 +109,7 @@ def fetchdialog(simulation = False):
         
         actualRow+=1
 
+    
 # Pi acids list
     def piAcidFilter():
         piAcidTemplate = ent_piAcid.get()
@@ -122,7 +130,7 @@ def fetchdialog(simulation = False):
     check_piAcid = Tkinter.Checkbutton(self, variable = checkboxVars["piAcid"] )
     check_piAcid.grid(row = 0, column = 5)
     
-    list_piAcid = Tkinter.Listbox(self, selectmode = "EXTENDED", width =10, height = 10, exportselection = False)
+    list_piAcid = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
     list_piAcid.grid( row = 1, column = 4, rowspan = 10, columnspan = 2)
     
     ent_piAcid = Tkinter.Entry(self, width = 5)
@@ -151,7 +159,7 @@ def fetchdialog(simulation = False):
     check_anions = Tkinter.Checkbutton(self, variable = checkboxVars["anion"])
     check_anions.grid(row = 0, column = 7)
     
-    list_anions = Tkinter.Listbox(self, selectmode = "MULTIPLE", width =10, height = 10, exportselection = False)
+    list_anions = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
     list_anions.grid( row = 1, column = 6, rowspan = 10, columnspan = 2)
     
     ent_anions = Tkinter.Entry(self, width = 5)
@@ -159,6 +167,38 @@ def fetchdialog(simulation = False):
     
     but_anions = Tkinter.Button(self, width = 1, text = "*", command = anionFilter)
     but_anions.grid(row = 15, column = 7)
+    
+# Anions types list
+    
+    def anionTypeFilter():
+        anionTemplate = ent_anionsTypes.get()
+        anionTemplate = anionTemplate.upper()
+        
+        list_anionsTypes.delete(0, "end")
+        templateLen = len(anionTemplate)
+        for anion in logData["anionTypesUnique"]:
+            if anionTemplate == anion[:templateLen]:
+                list_anionsTypes.insert("end", anion)
+        
+    
+    lab_anionsTypes = Tkinter.Label(self, text = "Groups")
+    lab_anionsTypes.grid(row = 0, column = 8)
+    
+    checkboxVars["anionType"] = Tkinter.IntVar()
+    
+    check_anionsTypes = Tkinter.Checkbutton(self, variable = checkboxVars["anionType"])
+    check_anionsTypes.grid(row = 0, column = 9)
+    
+    list_anionsTypes = Tkinter.Listbox(self, width =10, height = 10, exportselection = False)
+    list_anionsTypes.grid( row = 1, column = 8, rowspan = 10, columnspan = 2)
+    
+    ent_anionsTypes = Tkinter.Entry(self, width = 5)
+    ent_anionsTypes.grid(row = 15, column = 8)
+    
+    but_anionsTypes = Tkinter.Button(self, width = 1, text = "*", command = anionFilter)
+    but_anionsTypes.grid(row = 15, column = 9)
+    
+# Anions types end
     
     def applyFilter ():
         if logData["logFile"] == False:
@@ -179,37 +219,25 @@ def fetchdialog(simulation = False):
                     piAcidCode = list_piAcid.get(list_piAcid.curselection())
                     actualData = actualData[  actualData["Pi acid Code"].str.match(piAcidCode) ]
 #                    print(piAcidCode)
+                elif key == "anionType":
+                    anionType = list_anionsTypes.get(list_anionsTypes.curselection())
+                    actualData = actualData[  actualData["Anion type"].str.match(anionType) ]
                 elif key in numericalParameters:
                     minValue = numericalParameters[key]["entry_low"].get()
                     maxValue = numericalParameters[key]["entry_high"].get()
+
+                    try: 
+                        minValue = float(minValue)
+                        actualData = actualData[  actualData[ numericalParameters[key]["header"]  ] > minValue ]
+                    except:
+                        pass
                     
-                    if key != "alpha":
-                        try: 
-                            minValue = float(minValue)
-                            actualData = actualData[  actualData[ numericalParameters[key]["header"]  ] > minValue ]
-                        except:
-                            pass
+                    try:
+                        maxValue = float(maxValue)
+                        actualData = actualData[  actualData[ numericalParameters[key]["header"]  ] < maxValue ]
                         
-                        try:
-                            maxValue = float(maxValue)
-                            actualData = actualData[  actualData[ numericalParameters[key]["header"]  ] < maxValue ]
-                            
-                        except:
-                            pass
-                    else:
-#                        print("cisne po kacie!")
-                        try: 
-                            minValue = float(minValue)
-                            actualData = actualData[ ( actualData[ numericalParameters[key]["header"]  ] > minValue) & ( actualData[ numericalParameters[key]["header"]  ] < (180 - minValue)) ]
-                        except:
-                            pass
-                        
-                        try:
-                            maxValue = float(maxValue)
-                            actualData = actualData[ ( actualData[ numericalParameters[key]["header"]  ] < maxValue) | (actualData[ numericalParameters[key]["header"]  ] > (180 - maxValue))  ]
-                            
-                        except:
-                            pass
+                    except:
+                        pass
                 
         if not anythingSet:
             tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
@@ -227,7 +255,8 @@ def fetchdialog(simulation = False):
             for index, row in actualData.iterrows():
                 tree_data.insert('', "end" , values =  ( rowId, row["PDB Code"] , row["Pi acid Code"], 
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
-                                                        row["Anion chain"] + str(row["Anion id"]), str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
+                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
+                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
                                                         str(row["h"])[:3], row["Resolution"]) )
                 rowId += 1
                 if rowId >= 500:
@@ -246,16 +275,18 @@ def fetchdialog(simulation = False):
     lab_data = Tkinter.Label(self, width = 10, text = "Records found")
     lab_data.grid(row = 15, column = 0)
     
-    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "R", "alpha", "x", "h", "res" ]
+    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res" ]
     
     tree_data = ttk.Treeview(self, columns = headers, show = "headings" )
     for header in headers:
         tree_data.heading(header, text = header)
-        tree_data.column(header, width = 60)
+        tree_data.column(header, width = 70)
     tree_data.grid(row = 18, column = 0, columnspan = 40)
     
     
     def showInteractions():
+        if not "filtered" in logData:
+            return
         currentSel = tree_data.focus()
         rowId = tree_data.item(currentSel)["values"][0] 
         data = logData["filtered"].iloc[[rowId]]
@@ -272,6 +303,17 @@ def fetchdialog(simulation = False):
     
     but_showInteraction = Tkinter.Button(self, width = 10, command = showInteractions, text = "Show interact")
     but_showInteraction.grid(row = 50, column =0)
+    
+    def saveFiltered():
+        if not "filtered" in logData:
+            return
+        
+        file2save = tkFileDialog.asksaveasfilename(defaultextension = ".log", filetypes = (("Log files","*.log"), ("Txt files", "*.txt") ,("CSV files","*.csv"), ("Dat files", "*.dat"), ("all files","*.*")) )
+        if file2save:
+            logData["filtered"].to_csv(file2save, sep = "\t")
+    
+    but_saveFiltered = Tkinter.Button(self, width = 10, command = saveFiltered, text = "Save filtered")
+    but_saveFiltered.grid(row = 50, column = 1)
     
     if simulation:
         self.mainloop()
