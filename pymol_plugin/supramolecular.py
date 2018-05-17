@@ -280,6 +280,7 @@ def fetchdialog(simulation = False):
         tree_data.column(header, width = 70)
     tree_data.grid(row = 30, column = 0, columnspan = 40)
     
+    currentMolecule = { "PdbCode" : None  }
     
     def showInteractions():
         if not "filtered" in logData:
@@ -288,14 +289,24 @@ def fetchdialog(simulation = False):
         rowId = tree_data.item(currentSel)["values"][0] 
         data = logData["filtered"].iloc[[rowId]]
         pdbCode = data["PDB Code"].values[0]
-        cmd.fetch(pdbCode)
+        
+        
+        if currentMolecule["PdbCode"] and currentMolecule["PdbCode"] != pdbCode:
+            cmd.delete(currentMolecule["PdbCode"])
+            
+        if currentMolecule["PdbCode"] != pdbCode:
+            cmd.fetch(pdbCode)
         
         res1Id = data["Piacid id"].values[0]
         res1Chain = data["Pi acid chain"].values[0]
         
         res2Id = data["Anion id"].values[0]
         res2Chain = data["Anion chain"].values[0]
-        cmd.select("resi " + str(res1Id) + "in chain "+res1Chain +" , resi "+str(res2Id)+" in chain " + res2Chain   )
+        cmd.hide("everything")
+        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
+        cmd.show( "sticks" , selection  )
+        cmd.center(selection)
+        currentMolecule["PdbCode"] = pdbCode
         
     
     but_showInteraction = Tkinter.Button(self, width = 10, command = showInteractions, text = "Show interact")
