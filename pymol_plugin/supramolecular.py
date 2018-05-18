@@ -8,6 +8,7 @@ Created on Mon May 14 12:18:08 2018
 
 import sys
 import pandas as pd
+from os import path
 if sys.version_info[0] < 3:
     import Tkinter
     from Tkinter import LEFT, RIGHT
@@ -41,7 +42,7 @@ def fetchdialog(simulation = False):
     self.minsize(500, 500)
     self.resizable(0,0)
     
-    logData = {"logFile": False, "data" : None, "anionCodesUnique" : [], "piAcidCodesUnique" : []}
+    logData = {"logFile": False, "data" : None, "anionCodesUnique" : [], "piAcidCodesUnique" : [], "cifDir" : None}
     checkboxVars = {}
     
     def getLogFile():
@@ -80,7 +81,7 @@ def fetchdialog(simulation = False):
     
     actualRow = 1
     
-    for parameter in numericalParameters:
+    for parameter in sorted(numericalParameters.keys()):
         numericalParameters[parameter]["entry_low"] = Tkinter.Entry(self, width = 10)
         numericalParameters[parameter]["entry_low"].grid(row = actualRow, column = 0)
         
@@ -122,7 +123,7 @@ def fetchdialog(simulation = False):
                       "Groups" : { "header" : "Anion type", "filterFunc" : anionTypeFilter }  }
                 
     actualColumn = 4
-    for parameter in listParameters:
+    for parameter in sorted(listParameters.keys()):
         listParameters[parameter]["label"] = Tkinter.Label(self, text = parameter)
         listParameters[parameter]["label"].grid(row = 0, column = actualColumn)
         
@@ -183,11 +184,11 @@ def fetchdialog(simulation = False):
         if logData["logFile"] == False:
             tkMessageBox.showwarning(title="Warning", message = "Log file not selected")
             
-        anythingSet = False
+#        anythingSet = False
         actualData = logData["data"]
         for key in checkboxVars:
             if checkboxVars[key].get() > 0:
-                anythingSet = True
+#                anythingSet = True
                 
                 if key in listParameters:
                     listIndex = listParameters[key]["listbox"].curselection()
@@ -212,8 +213,8 @@ def fetchdialog(simulation = False):
                     except:
                         pass
                 
-        if not anythingSet:
-            tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
+#        if not anythingSet:
+#            tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
 
         recordsFound = str(len(actualData))
         
@@ -286,6 +287,9 @@ def fetchdialog(simulation = False):
         if not "filtered" in logData:
             return
         currentSel = tree_data.focus()
+        if currentSel == "" :
+            return
+        
         rowId = tree_data.item(currentSel)["values"][0] 
         data = logData["filtered"].iloc[[rowId]]
         pdbCode = data["PDB Code"].values[0]
@@ -295,7 +299,18 @@ def fetchdialog(simulation = False):
             cmd.delete(currentMolecule["PdbCode"])
             
         if currentMolecule["PdbCode"] != pdbCode:
-            cmd.fetch(pdbCode)
+            if logData["cifDir"] != None:
+                potentialPaths = [ path.join( logData["cifDir"] ,  pdbCode.lower() +".cif" ), path.join( logData["cifDir"] ,  pdbCode.upper() +".cif" )  ]
+                cifFound = False
+                for filePath in potentialPaths:
+                    if path.isfile(filePath):
+                        cmd.load(filePath)
+                        cifFound = True
+                        break
+                if not cifFound:
+                    cmd.fetch(pdbCode)
+            else:    
+                cmd.fetch(pdbCode)
         
         res1Id = data["Piacid id"].values[0]
         res1Chain = data["Pi acid chain"].values[0]
@@ -306,6 +321,8 @@ def fetchdialog(simulation = False):
         selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
         cmd.show( "sticks" , selection  )
         cmd.center(selection)
+        cmd.zoom(selection)
+        cmd.select(selection)
         currentMolecule["PdbCode"] = pdbCode
         
     
@@ -322,6 +339,20 @@ def fetchdialog(simulation = False):
     
     but_saveFiltered = Tkinter.Button(self, width = 10, command = saveFiltered, text = "Save filtered")
     but_saveFiltered.grid(row = 50, column = 1)
+    
+    def selectCif():
+        logData["cifDir"] = tkFileDialog.askdirectory()
+        ent_cifDir.configure(state = "normal")
+        ent_cifDir.delete(0,"end")
+        ent_cifDir.insert(0, logData["cifDir"])
+        ent_cifDir.configure(state = "readonly")
+    
+    but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
+    but_cifDir.grid(row = 50, column = 2)
+    
+    ent_cifDir = Tkinter.Entry(self, width =17)
+    ent_cifDir.configure(state = "readonly")
+    ent_cifDir.grid(row = 50, column = 3, columnspan = 3)
     
     if simulation:
         self.mainloop()
