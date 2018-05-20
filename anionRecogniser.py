@@ -125,6 +125,9 @@ def handleOxygen( atom ):
     elif oxygen_neighbor_symbol == "O":
         return False, "OO"
     
+    if oxygens_found == 1:
+        return False, oxygen_neighbor_symbol+"O"+str(oxygens_found)
+    
     return True, oxygen_neighbor_symbol+"O"+str(oxygens_found)
     
 def oxygenInCarboxylicGroup( atomNode , graph ):
@@ -169,6 +172,9 @@ def oxygenInNitroGroup( atomNode, graph ):
                 
     if elements.count("O") == 2 and elements.count("C") == 1:
         return True 
+    
+    if elements.count("O") == 2 and elements.count("N") == 1:
+        return True 
         
     return False
 
@@ -212,6 +218,10 @@ def handleChalcogens(atom, ns):
     True/False, anionType - czy atom moze byc potencjalnym anionem?, rodzaj
                             anionu (string)
     """
+    
+    if atom.get_parent().get_resname().upper() == "SCN":
+        return True, "SCN"
+    
     atoms = list(atom.get_parent().get_atoms())
     
     if len(atoms) == 1:
@@ -237,7 +247,7 @@ def handleChalcogens(atom, ns):
                 
         elif atom.element == "S" and atom_neighbor.element == "S":  
             #mostek disulfidowy
-            return True, "S~S?"
+            return True, "S~Sn"
         
             
     elif len(chalcogen_neighbors) == 2:
@@ -247,9 +257,7 @@ def handleChalcogens(atom, ns):
         neighbors_element.append( atoms[chalcogen_neighbors[1]].element )
         
         if atom.element == "S" and "S" in neighbors_element and "C" in neighbors_element:
-            return True, "RS~SR"
-        elif atom.element == "S" and "C" in neighbors_element and "N" in neighbors_element:
-            return True, "SCN"
+            return True, "S~S"
             
     return False, atom.element
 
