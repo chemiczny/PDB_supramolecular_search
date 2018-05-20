@@ -108,7 +108,9 @@ def fetchdialog(simulation = False):
     self.minsize(500, 500)
     self.resizable(0,0)
     
-    logData = {"logFile": False, "data" : None, "anionCodesUnique" : [], "piAcidCodesUnique" : [], "cifDir" : None, "arrowExists" : False }
+    logData = {"logFile": False, "data" : None, "anionCodesUnique" : [], "piAcidCodesUnique" : [], 
+               "cifDir" : None, "arrowExists" : False, "displaying" : False, "displayingAround" : False }
+    
     checkboxVars = {}
     
     def getLogFile():
@@ -143,7 +145,8 @@ def fetchdialog(simulation = False):
     lab_use = Tkinter.Label(self, text = "Use filter")
     lab_use.grid(row = 0, column = 3)
     
-    numericalParameters = { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" }, "alpha" : { "header" : "Angle" }, "res" : { "header" : "Resolution" }  }
+    numericalParameters = { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
+                           "alpha" : { "header" : "Angle" }, "res" : { "header" : "Resolution" }  }
     
     actualRow = 1
     
@@ -163,6 +166,31 @@ def fetchdialog(simulation = False):
         numericalParameters[parameter]["checkbox"].grid(row=actualRow, column =  3)
         
         actualRow+=1
+        
+    def showAround():
+        if not logData["displaying"]:
+            return
+        
+        if chkvar_around.get() > 0 and not logData["displayingAround"]:
+            selectionAroundName = "suprAround"
+            cmd.select( selectionAroundName,  "byres ( suprSelection around 5 ) " )
+            cmd.show("lines", selectionAroundName)
+            logData["displayingAround"] = True
+        elif chkvar_around.get() == 0 and logData["displayingAround"]:
+            cmd.hide("lines" , "suprAround")
+            cmd.delete("suprAround")
+            logData["displayingAround"] = False
+            
+        cmd.deselect()
+        
+    
+    lab_around = Tkinter.Label(self, text = "Around")
+    lab_around.grid(row = actualRow, column = 0)
+    
+    chkvar_around = Tkinter.IntVar()
+    
+    chk_around = Tkinter.Checkbutton(self, variable = chkvar_around, command = showAround)
+    chk_around.grid(row = actualRow, column = 1)
 
     def listFilter(key):
         template = listParameters[key]["entry"].get()
@@ -183,10 +211,14 @@ def fetchdialog(simulation = False):
         
     def anionTypeFilter():
         listFilter("Groups")
+        
+    def metalFilter():
+        listFilter("Metals")
 
     listParameters = { "Pi acid" : { "header" : "Pi acid Code", "filterFunc" : piAcidFilter }, 
                       "Anions" : { "header" : "Anion code", "filterFunc" : anionFilter } , 
-                      "Groups" : { "header" : "Anion type", "filterFunc" : anionTypeFilter }  }
+                      "Groups" : { "header" : "Anion type", "filterFunc" : anionTypeFilter },
+                      "Metals" : { "header" : "Metal cations", "filterFunc" : metalFilter }} 
                 
     actualColumn = 4
     for parameter in sorted(listParameters.keys()):
@@ -260,7 +292,7 @@ def fetchdialog(simulation = False):
                     listIndex = listParameters[key]["listbox"].curselection()
                     if listIndex:
                         query = listParameters[key]["listbox"].get(listIndex)
-                        actualData = actualData[  actualData[ listParameters[key]["header"] ].str.match(query) ]
+                        actualData = actualData[  actualData[ listParameters[key]["header"] ] == query ]
 
                 elif key in numericalParameters:
                     minValue = numericalParameters[key]["entry_low"].get()
@@ -321,9 +353,9 @@ def fetchdialog(simulation = False):
                                                     row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
                                                     row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
                                                     str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                    str(row["h"])[:3], row["Resolution"]) )
+                                                    str(row["h"])[:3], row["Resolution"] , row["Metal cations"]  ) )
             rowId += 1
-            if rowId >= 500:
+            if rowId >= 1000:
                 break
             
             
@@ -339,9 +371,9 @@ def fetchdialog(simulation = False):
     lab_data = Tkinter.Label(self, width = 10, text = "Records found")
     lab_data.grid(row = 25, column = 0)
     
-    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res" ]
+    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Metal" ]
     
-    tree_data = ttk.Treeview(self, columns = headers, show = "headings" )
+    tree_data = ttk.Treeview(self, columns = headers, show = "headings", heigh = 20 )
     for header in headers:
         tree_data.heading(header, text = header)
         tree_data.column(header, width = 70)
@@ -389,10 +421,21 @@ def fetchdialog(simulation = False):
         res2Chain = data["Anion chain"].values[0]
         cmd.hide("everything")
         selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
-        cmd.show( "sticks" , selection  )
-        cmd.center(selection)
-        cmd.zoom(selection)
-        cmd.select(selection)
+        
+        selectionName = "suprSelection"
+        
+        cmd.select(selectionName, selection)
+        cmd.show( "sticks" , selectionName  )
+        cmd.center(selectionName)
+        cmd.zoom(selectionName)
+        
+        if chkvar_around.get() > 0:
+            selectionAroundName = "suprAround"
+            cmd.select( selectionAroundName,  "byres ( suprSelection around 5 ) " )
+            cmd.show("lines", selectionAroundName)
+            logData["displayingAround"] = True
+        else:
+            logData["displayingAround"] = False
         
         centroidCoords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
         anionAtomCoords = [ data["Anion x coord"].values[0] , data["Anion y coord"].values[0] , data["Anion z coord"].values[0] ]
@@ -402,7 +445,10 @@ def fetchdialog(simulation = False):
             
         cgo_arrow(anionAtomCoords, centroidCoords, 0.1, name = "Anion2Centroid")
         logData["arrowExists"] = True
+        logData["displaying"] = True
         currentMolecule["PdbCode"] = pdbCode
+        
+        cmd.deselect()
         
     
     but_showInteraction = Tkinter.Button(self, width = 10, command = showInteractions, text = "Show interact")
@@ -432,6 +478,12 @@ def fetchdialog(simulation = False):
     ent_cifDir = Tkinter.Entry(self, width =17)
     ent_cifDir.configure(state = "readonly")
     ent_cifDir.grid(row = 50, column = 3, columnspan = 3)
+    
+#    def printInfo():
+#        tkMessageBox.showinfo(title="Important", message = "Emilia Kuźniak jest najpiękniejszą kobietą na świecie co najmniej od czasów Kleopatry (nie zachowały się żadne podobizny Kleopatry pozwalają na porównanie)")
+#    
+#    but_info = Tkinter.Button(self, width = 10, command = printInfo , text = "Important")
+#    but_info.grid(row = 50, column = 6)
     
     if simulation:
         self.mainloop()
