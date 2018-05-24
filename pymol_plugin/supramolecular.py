@@ -191,6 +191,26 @@ def fetchdialog(simulation = False):
     
     chk_around = Tkinter.Checkbutton(self, variable = chkvar_around, command = showAround)
     chk_around.grid(row = actualRow, column = 1)
+    
+    actualRow += 1
+    
+    lab_noAAinPiAcids = Tkinter.Label(self, text = "No AA in Pi acids")
+    lab_noAAinPiAcids.grid(row = actualRow, column = 0)
+    
+    chkvar_noAAinPiAcids = Tkinter.IntVar()
+    
+    chk_noAAinPiAcids = Tkinter.Checkbutton(self, variable = chkvar_noAAinPiAcids)
+    chk_noAAinPiAcids.grid(row = actualRow, column = 1)
+    
+    actualRow += 1
+    
+    lab_noAAinAnions = Tkinter.Label(self, text = "No AA in anions")
+    lab_noAAinAnions.grid(row = actualRow, column = 0)
+    
+    chkvar_noAAinAnions = Tkinter.IntVar()
+    
+    chk_noAAinAnions = Tkinter.Checkbutton(self, variable = chkvar_noAAinAnions)
+    chk_noAAinAnions.grid(row = actualRow, column = 1)
 
     def listFilter(key):
         template = listParameters[key]["entry"].get()
@@ -313,6 +333,12 @@ def fetchdialog(simulation = False):
                 
 #        if not anythingSet:
 #            tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
+                        
+        if chkvar_noAAinAnions.get() > 0:
+            actualData = actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) ]
+        
+        if chkvar_noAAinPiAcids.get() > 0:
+            actualData = actualData[(actualData["Pi acid Code"] != "TYR") & (actualData[ "Pi acid Code" ] != "PHE" ) & ( actualData["Pi acid Code"] != "HIS" ) & ( actualData["Pi acid Code"] != "TRP" ) ]
 
         recordsFound = str(len(actualData))
         
