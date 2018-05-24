@@ -179,9 +179,11 @@ def molecule2graph( atoms, atom = None ):
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
     atomName = ""
+    parentId = "" 
     
     if atom != None: 
         atomName = atom.get_fullname()    
+        parentId = atom.get_parent().get_id()[1]
         
     thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
                   "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
@@ -198,7 +200,7 @@ def molecule2graph( atoms, atom = None ):
             threshold1 = thresholds[atom1.element]
         
         if atom != None:
-            if atom1.get_fullname() == atomName:
+            if atom1.get_fullname() == atomName and atom1.get_parent().get_id()[1] == parentId:
                 atoms_found.append(atom1Ind)
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
