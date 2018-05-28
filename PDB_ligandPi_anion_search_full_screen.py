@@ -29,7 +29,7 @@ dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
 
-numberOfProcesses = 6
+numberOfProcesses = 1
 pool = Pool(numberOfProcesses)
 
 def prepareArgumentsList(cifFiles):
@@ -52,7 +52,9 @@ cifNoFile = open("logs/cif2process.log", 'w')
 cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
-pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
+#pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
+for arg in argumentsList:
+    findSupramolecularAnionPiAllLigandsMultiProcess(arg)
 
 final_log = open("logs/MergeResultsFromLigprepOutput.log", "a+")
 log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")

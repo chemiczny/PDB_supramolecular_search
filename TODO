@@ -1,19 +1,10 @@
 -Uwzglednic oddzialywania anion (ligand) - Pi (bialko)
--Czy mostki disulfidowe sa ok?
--A co z fenolami?
--Kwestia grupy karbonylowej w estrach - zrobione, trzeba sprawdzic czy dziala, podobnie grupy nitrowe
 
 Do zrobienia mozliwie szybko:
 -jak dodac wodory do struktur?
 -obliczyc mapy esp
 
-Kolejne kroki:
--rozpoznawanie anionow
-
 Dowiedziec sie:
--co tak naprawde robi ligprep?
 -przykladowy output z esp
 -przykladowy skrypt z uruchomieniem esp
 
-Rozważyć:
-- utworzenie plugina do programu z wizualizacją (vmd, mercury itd.)

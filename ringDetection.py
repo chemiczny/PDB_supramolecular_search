@@ -196,6 +196,8 @@ def molecule2graph( atoms, atom = None ):
         if atom1.element == "H":
             continue
         
+        G.add_node(atom1Ind, element = atom1.element)
+        
         if atom1.element in thresholds.keys():
             threshold1 = thresholds[atom1.element]
         
@@ -217,8 +219,6 @@ def molecule2graph( atoms, atom = None ):
             threshold = max( threshold1, threshold2 )
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
-                G.node[atom1Ind]["element"] = atom1.element
-                G.node[atom2Ind]["element"] = atom2.element
                 
     if atom != None:
         if len(atoms_found) != 1 :

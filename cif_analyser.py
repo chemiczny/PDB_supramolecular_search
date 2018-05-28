@@ -53,46 +53,6 @@ def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData =
                 supramolecularFound = supramolecularFound or analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData)
             
     return supramolecularFound
-    
-def findSupramolecularAnionPiAllLigands( cifFile, PDBcode, ligprepData = None ):
-    """
-    Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
-    zwiazanych z konkretnym ligandem
-    
-    Wejscie:
-    ligandCode - kod liganda
-    cifFile    - plik cif pobrany z bazy PDB
-    
-    Wyjscie:
-    Hehehe, czas pokaze...
-    """
-    parser = FastMMCIFParser()
-    
-    try:
-        structure = parser.get_structure('temp', cifFile)
-    except:
-        print("Biopytong nie ogarnia!", cifFile)
-        #Zeby zobaczyc co sie dzieje
-        return True        
-        
-    supramolecularFound = False 
-    notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
-        "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
-        
-    resolution = readResolution(cifFile)
-#    print("jade z pliku: ", cifFile)
-    for modelIndex, model in enumerate(structure):
-        atoms = Selection.unfold_entities(model, 'A')  
-        ns = NeighborSearch(atoms)
-           
-        for residue in model.get_residues():
-            residueName = residue.get_resname().upper()
-            if not residueName in notPiacids  :
-#                print("Analizuje: ", residueName)
-                if analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData, resolution):
-                    supramolecularFound = True
-            
-    return supramolecularFound
 
 def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
     """
@@ -171,33 +131,6 @@ def readResolutionAndMethod( cifFile ):
         return res_list[0], method
     else:
         return -3, method
-        
-    
-def analysePiacid(ligand, PDBcode, modelIndex, ns, ligprepData, resolution):
-    centroids = getRingsCentroids( ligand )
-    ligandCode = ligand.get_resname()
-#    print("Znalazlem pierscienie w ilosci: ", len(centroids))
-    
-    ligandWithAnions = False
-    
-    for centroid in centroids:
-        distance = 4.5
-        neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-        extractedAtoms = extractNeighbours( neighbors, ligandCode, ns )
-            
-        if ligprepData:
-            extractedAtoms = anionScreening( extractedAtoms, ligprepData )
-            
-        cationNear = []
-        if len(extractedAtoms) > 0:
-            cationNear = searchForCation( centroid["coords"], ns )
-        
-        extractedAtoms =  writeSupramolecularSearchResults(ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear)
-        
-        if len(extractedAtoms) > 0:
-            ligandWithAnions = True
-        
-    return ligandWithAnions
 
 def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution, method):
     centroids = getRingsCentroids( ligand )
@@ -248,90 +181,7 @@ def getResiduesListFromAtomData( atomDataList ):
         atomsList.append(atomData["Atom"])
     return Selection.unfold_entities(atomsList, 'R')  
     
-def saveLigandWithAnion(ligand, ligandCode, PDBcode, modelIndex, centroid, extractedAtoms):        
-    anions = getResiduesListFromAtomData( extractedAtoms )
-    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
-    ligandId = str(ligand.get_id()[1])
-    chain = ligand.get_parent().get_id()
-    directory = "xyz/ligands_anions/"
-    
-    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
-        directory = "xyz/aminoacids_anions/"
-        
-    for anion in anions:     
-        atomsList = Selection.unfold_entities(anion, 'A') +  ligandAtoms
-        
-        anionName = anion.get_resname()
-        anionId = str(anion.get_id()[1])
-        anionChain = anion.get_parent().get_id()
-        xyzName = directory+anionName+"_ANION.xyz"
-
-        comment = "PDBCode: "+PDBcode+" Pi-acid-code: "+ligandCode+" Pi-acid-id: "+ligandId+" Pi-acid-chain: "+chain+" Anion-id: "+anionId+" Anion-chain: "+anionChain+"_ModelNo: "+str(modelIndex)
-        appendXYZ( xyzName, atomsList, comment, [ centroid ] )
             
-        
-
-def saveLigand(ligand, ligandCode, PDBcode, modelIndex):
-    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
-    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
-    ligandId = str(ligand.get_id()[1])
-    chain = ligand.get_parent().get_id()
-    
-    directory = "xyz/ligands/"
-    
-    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
-        directory = "xyz/aminoacids/"
-        
-    xyzName = directory+ligandCode+".xyz"
-    comment = "PDBCode: "+PDBcode+" Pi-acid-id: "+ligandId+" Pi-acid-chain: "+chain+"_ModelNo: "+str(modelIndex)
-    appendXYZ( xyzName, ligandAtoms, comment )
-
-def saveLigandEnv(ligand, ligandCode, PDBcode, modelIndex, centroids, anionsNames, ns):
-    ligandAtoms = Selection.unfold_entities(ligand, 'A')  
-    neighbors = []
-    distance = 4.5
-    ligandId = str(ligand.get_id()[1])
-    chain = ligand.get_parent().get_id()
-    
-    for atom in ligandAtoms:
-        neighbors += ns.search(np.array(atom.get_coord()), distance, 'A')
-        
-    neighbors = Selection.unfold_entities(neighbors, 'R')
-    atomsList = []
-    for neighbor in neighbors:
-        if not neighbor.get_resname() in [ "HOH", "DOD" ]:
-            atomsList += Selection.unfold_entities(neighbor, 'A') 
-         
-    directory = "xyz/ligands_ENV/"
-    if ligandCode.upper() in [ "HIS" , "PHE", "TYR", "TRP" ]:
-        directory = "xyz/aminoacids_ENV/"
-        
-    xyzName = directory+ligandCode+"_ENV.xyz"
-    comment = "PDBCode: "+PDBcode+" Pi-acid-id: "+ligandId+" Pi-acid-chain: "+chain+"_ModelNo: "+str(modelIndex)+"_Anions: "+",".join(anionsNames)
-    
-    appendXYZ( xyzName, atomsList, comment, centroids )
-    
-def appendXYZ( xyzName, atomsList, comment = "", centroids = [] ):
-    atomNo = len(atomsList)+len(centroids)*2
-    
-    xyz = open(xyzName, 'a+')
-    xyz.write( str(atomNo)+"\n" )
-    xyz.write(comment+"\n")
-    for atom in atomsList:
-        coord = atom.get_coord()
-        xyz.write(atom.element+" "+str(coord[0])+" "+str(coord[1])+" "+str(coord[2])+"\n")
-        
-    for centroid in centroids:
-        normVec = centroid["normVec"]
-        centroid = np.array(centroid["coords"])
-        
-        newGhost = centroid+normVec
-        
-        xyz.write("X "+str(centroid[0])+" "+str(centroid[1])+" "+str(centroid[2])+"\n")
-        xyz.write("X "+str(newGhost[0])+" "+str(newGhost[1])+" "+str(newGhost[2])+"\n")
-        
-    xyz.close()
-    
 def anionScreening( atoms, ligprepData ):
     selectedAtoms = []
     anionsNames = ligprepData["anionNames"]
