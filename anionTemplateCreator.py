@@ -103,7 +103,8 @@ def saveAnionJson( graph, fileName, charged):
             
         path2save = getUniquePath( dir_path , fileName)
         output = open(path2save, 'w')
-        json.dump(nx.node_link_data(graph), output )
+        
+        json.dump(nx.readwrite.json_graph.node_link_data(graph), output )
         output.close()
             
     graph.node[charged]["charged"] = False

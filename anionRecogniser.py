@@ -108,7 +108,7 @@ def searchInAnionTemplates( atom, ns ):
     
 def try2matchTemplate(moleculeGraph, atomId, anionTemplate, atoms):
     jsonF = open(anionTemplate)
-    graphTemplate = nx.node_link_graph(json.load(jsonF))
+    graphTemplate = nx.readwrite.json_graph.node_link_graph(json.load(jsonF))
     jsonF.close()
     
     moleculeGraph.node[atomId]["charged"] = True
