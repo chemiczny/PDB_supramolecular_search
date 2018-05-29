@@ -29,7 +29,7 @@ dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
 
-numberOfProcesses = 1
+numberOfProcesses = 6
 pool = Pool(numberOfProcesses)
 
 def prepareArgumentsList(cifFiles):
