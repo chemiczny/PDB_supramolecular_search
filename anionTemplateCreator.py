@@ -8,6 +8,7 @@ Created on Wed May 23 12:34:08 2018
 
 import networkx as nx
 from networkx.algorithms.isomorphism import GraphMatcher
+from networkx.readwrite.json_graph import node_link_data
 from os.path import isdir, join, isfile
 from os import mkdir
 import json
@@ -104,7 +105,7 @@ def saveAnionJson( graph, fileName, charged):
         path2save = getUniquePath( dir_path , fileName)
         output = open(path2save, 'w')
         
-        json.dump(nx.readwrite.json_graph.node_link_data(graph), output )
+        json.dump(node_link_data(graph), output )
         output.close()
             
     graph.node[charged]["charged"] = False
