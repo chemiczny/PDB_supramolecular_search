@@ -52,9 +52,9 @@ cifNoFile = open("logs/cif2process.log", 'w')
 cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
-#pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
-for arg in argumentsList:
-    findSupramolecularAnionPiAllLigandsMultiProcess(arg)
+pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
+#for arg in argumentsList:
+#    findSupramolecularAnionPiAllLigandsMultiProcess(arg)
 
 final_log = open("logs/MergeResultsFromLigprepOutput.log", "a+")
 log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")

@@ -1,8 +1,10 @@
--Uwzglednic oddzialywania anion (ligand) - Pi (bialko)
-
 Do zrobienia mozliwie szybko:
 -jak dodac wodory do struktur?
 -obliczyc mapy esp
+
+W koncu trzeba bd to zrobic:
+- TESTY
+- baza sqlowa zamiast pliku csv
 
 Dowiedziec sie:
 -przykladowy output z esp
