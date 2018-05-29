@@ -5,7 +5,7 @@ Created on Sat Apr 21 14:04:23 2018
 
 @author: michal
 """
-from ringDetection import molecule2graph, getSubstituents, isFlat
+from ringDetection import molecule2graph, getSubstituents, isFlat, isFlatPrimitive
 from anionTemplateCreator import anionMatcher
 import json
 from os.path import isdir, join
@@ -130,7 +130,7 @@ def try2matchTemplate(moleculeGraph, atomId, anionTemplate, atoms):
             return False, moleculeGraph.node[atomId]["element"]
     elif graphTemplate.graph["geometry"] == "planar":
 #        print("Sprawdzam płaskosc")
-        flatAnalysis = isFlat(atoms, list(matching.keys() ), [] )
+        flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ))
         if not flatAnalysis["isFlat"]:
             print("nie je plaski", graphTemplate.graph["name"])
             return False, moleculeGraph.node[atomId]["element"]

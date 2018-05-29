@@ -69,8 +69,6 @@ def isFlat(allAtomsList, atomsIndList, substituents):
     norm_vec = getNormVec( allAtomsList, atomsIndList)
     
     if len(atomsIndList) <= 3:
-#        print("LOL strasznie krotki pierscien")
-        #verdict['isFlat'] = True
         verdict['normVec'] = norm_vec
         return verdict    
     
@@ -96,6 +94,56 @@ def isFlat(allAtomsList, atomsIndList, substituents):
     verdict['coords'] = centroid
     return verdict
     
+def isFlatPrimitive(allAtomsList, atomsIndList):
+    """
+    Sprawdz czy wybrane atomy leza w jednej plaszczyznie.
+    Procedura: na podstawie polozen trzech pierwszych atomow wyznacza sie 
+    wektor normalnych do wyznaczonej przez nich plaszczyzny. Nastepnie 
+    sprawdzane jest czy kolejne wiazania tworza wektory prostopadle
+    do wektora normalnego. Dopuszczalne jest odchylenie 5 stopni.
+    
+    TODO: Nie lepiej byloby obliczyc tensor momentu bezwladnosci, 
+    zdiagonalizowac go i rozstrzygnac na podstawie jego wartosci wlasnych?
+    
+    Wejscie:
+    allAtomsList - lista obiektow Atom (cala czasteczka)
+    atomsIndList - lista indeksow atomow, ktore maja byc zweryfikowane
+                    pod wzgledem lezenia w jednej plaszczyznie
+                    
+    Wyjscie:
+    verdict - slownik, posiada klucze: isFlat (zmienna logiczna, True jesli
+                struktura jest plaska), normVec (3-elementowa lista float,
+                wspolrzedne wektora normalnego plaszczyzny, jesli struktura nie
+                jest plaska wszystkie jego wspolrzedne sa rowne 0)
+    """
+        
+    verdict = { 'isFlat' : False, 'normVec' : [ 0, 0, 0] }
+    
+    if len(atomsIndList) < 3:
+        print("Znaleziono 2-wu elementowy cykl!!!")
+        return verdict
+    
+    norm_vec = getNormVec( allAtomsList, atomsIndList)
+    
+    if len(atomsIndList) <= 3:
+        verdict['normVec'] = norm_vec
+        return verdict    
+    
+    firstAtomCoord = np.array(allAtomsList[ atomsIndList[0] ].get_coord() )
+    centroid = getAverageCoords(allAtomsList, atomsIndList) 
+    for i in range(1, len(atomsIndList)  ):
+        atomInd = atomsIndList[i]
+        D = np.array(allAtomsList[ atomInd ].get_coord() )
+        new_vec = normalize( firstAtomCoord - D )
+        
+        if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
+            return verdict
+            
+    verdict['isFlat'] = True
+    verdict['normVec'] = norm_vec
+    verdict['coords'] = centroid
+    return verdict
+
 def getNormVec( allAtomsList, atomsIndList ):
     norm_vec = np.array([0. , 0. , 0.])
     expanded_list = atomsIndList + atomsIndList[:2]
