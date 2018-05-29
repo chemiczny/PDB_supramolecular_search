@@ -10,7 +10,7 @@ from anionTemplateCreator import anionMatcher
 import json
 from os.path import isdir, join
 from glob import glob
-import networkx as nx
+from networkx.readwrite.json_graph import node_link_graph
 
 def extractNeighbours( atomList, ligandCode, ns ):
     """
@@ -108,7 +108,7 @@ def searchInAnionTemplates( atom, ns ):
     
 def try2matchTemplate(moleculeGraph, atomId, anionTemplate, atoms):
     jsonF = open(anionTemplate)
-    graphTemplate = nx.readwrite.json_graph.node_link_graph(json.load(jsonF))
+    graphTemplate = node_link_graph(json.load(jsonF))
     jsonF.close()
     
     moleculeGraph.node[atomId]["charged"] = True
