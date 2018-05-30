@@ -8,9 +8,10 @@ Created on Sat Apr 21 14:04:23 2018
 from ringDetection import molecule2graph, getSubstituents, isFlat, isFlatPrimitive
 from anionTemplateCreator import anionMatcher
 import json
-from os.path import isdir, join
+from os.path import join
 from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
+from copy import copy
 
 def extractNeighbours( atomList, ligandCode, ns ):
     """
@@ -69,6 +70,17 @@ def isItWorthAnalyzing(atom, ligandCode):
         
     return True
 
+def graph2Composition( graph ):
+    composition = {}
+    for node in list(graph):
+        element = graph.node[node]["element"]
+        if not element in composition:
+            composition[element] = 1
+        else:
+            composition[element] += 1
+            
+    return composition
+
 def searchInAnionTemplates( atom, ns):
     if not hasattr(searchInAnionTemplates, "templates"):
         searchInAnionTemplates.templates =  getAllTemplates()
@@ -82,7 +94,7 @@ def searchInAnionTemplates( atom, ns):
     aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
         "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
     
-    if atomParent.get_resname().upper() in aminoacids and element != "O":
+    if atomParent.get_resname().upper() in aminoacids and not element in [ "O", "S" ]:
         return False, element
     
     atoms = list(atomParent.get_atoms())
@@ -95,15 +107,44 @@ def searchInAnionTemplates( atom, ns):
             atoms.append(neighbor)
             
     graph, atomInd = molecule2graph( atoms, atom )
-    priority2template = searchInAnionTemplates.templates[element]
+    composition = graph2Composition(graph)
     
+    priority2template = searchInAnionTemplates.templates[element]
+
     for priority in sorted(priority2template.keys()):
         for guess in priority2template[priority]:
+            if not dummyCompare(copy(composition), guess):
+                 continue
             matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
             if matchResult:
                 return matchResult, anionGroup
             
     return False, element
+
+def dummyCompare(composition, template):
+    for node in list(template):
+        if not "aliases" in template.node[node]:
+            element = template.node[node]["element"]
+            if element == "X":
+                continue
+            
+            if not element in composition:
+                return False
+            else:
+                composition[element] -= 1
+                if composition[element] < 0:
+                    return False
+        elif not template.node[node]["aliases"]:
+            element = template.node[node]["element"]
+            if element == "X":
+                continue
+            if not element in composition:
+                return False
+            else:
+                composition[element] -= 1
+                if composition[element] < 0:
+                    return False
+    return True
 
 def getAllTemplates():
     templates = join("anion_templates", "*", "*.json")
@@ -127,8 +168,6 @@ def getAllTemplates():
             graphTemplates[element][priority].append(graphTemplate)
             
     return graphTemplates
-        
-
     
 def try2matchTemplate(moleculeGraph, atomId, graphTemplate, atoms):
     

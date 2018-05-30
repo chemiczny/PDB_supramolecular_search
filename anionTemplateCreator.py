@@ -141,9 +141,9 @@ if __name__ == "__main__":
     #OXYGEN
     
 #    #RCOOH
-    saveAnion( [ "X" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
+    saveAnion( [ "C" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RCOO", 0, terminating = [2, 3], 
-              notAliases = {0 : [ "O" ] }, geometry = "planar" )
+              geometry = "planar" )
     
     #ClO, BrO, IO, 
     saveAnion([ "CL",  "O" ], [(0, 1)], 
