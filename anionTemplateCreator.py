@@ -66,6 +66,7 @@ def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases
     graph.graph["fullIsomorphism"] = fullIsomorphism
     graph.graph["name"] = name
     graph.graph["nameMapping"] = nameMapping
+    graph.graph["priority"] = priority
         
     fileName = str(priority)+"_"+name
     
@@ -84,6 +85,8 @@ def saveAnionJson( graph, fileName, charged):
         graph.node[charged]["aliases"] = []
     
     graph.node[charged]["charged"] = True
+    graph.graph["charged"] = charged 
+    
     oldName = ""
     nameMapping = False
     if "X" in graph.graph["name"] and charged in graph.graph["nameMapping"]:
@@ -149,7 +152,7 @@ if __name__ == "__main__":
     
     #NO2, ClO2, BRO2, 
     saveAnion([ "N",  "O" , "O" ], [(0, 1), (0,2)], 
-              1, "XO2", 10, fullIsomorphism = True, nameMapping = { 0 : "X" })
+              1, "XO2", 10, fullIsomorphism = True, aliases = { 0 : ["CL", "BR"]}, nameMapping = { 0 : "X" })
     
     #NO3, CO3, PO3, SO3, AsO3, BO3, ClO3, BRO3
     saveAnion( ["N", "O", "O", "O"], [(0,1), (0,2), (0,3)],
@@ -207,7 +210,7 @@ if __name__ == "__main__":
     saveAnion([ "N",  "N" , "N" ], [(0, 1), (0,2)], 
               [0,1], "N3", 70, fullIsomorphism = True)
     
-    #SCN
+    #CN
     saveAnion([  "C" , "N" ], [(0, 1)], 
               [0,1], "CN", 75, fullIsomorphism = True)
 

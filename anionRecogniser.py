@@ -69,16 +69,24 @@ def isItWorthAnalyzing(atom, ligandCode):
         
     return True
 
-def searchInAnionTemplates( atom, ns ):
-    element = atom.element
+def searchInAnionTemplates( atom, ns):
+    if not hasattr(searchInAnionTemplates, "templates"):
+        searchInAnionTemplates.templates =  getAllTemplates()
+    element = atom.element.upper()
     
-    templates_dir = join("anion_templates", element.upper())
-    
-    if not isdir(templates_dir):
+    if not element in searchInAnionTemplates.templates:
         return False, element
     
     atomParent = atom.get_parent()
+    
+    aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
+        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+    
+    if atomParent.get_resname().upper() in aminoacids and element != "O":
+        return False, element
+    
     atoms = list(atomParent.get_atoms())
+    
     neighbors = ns.search( atom.get_coord(), 2.2 , 'A')
     anionId = atomParent.get_id()[1]
     
@@ -87,29 +95,42 @@ def searchInAnionTemplates( atom, ns ):
             atoms.append(neighbor)
             
     graph, atomInd = molecule2graph( atoms, atom )
+    priority2template = searchInAnionTemplates.templates[element]
     
-    anionsTemplates = glob(  join(templates_dir, "*.json"))
-    
-    priority2template = {}
-    for template in anionsTemplates:
-        priority = int( template.split("/")[-1].split("_")[0] )
-        if not priority in priority2template:
-            priority2template[priority] = [ template ]
-        else:
-            priority2template[priority].append(template)
-        
     for priority in sorted(priority2template.keys()):
         for guess in priority2template[priority]:
             matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
             if matchResult:
                 return matchResult, anionGroup
-        
+            
     return False, element
+
+def getAllTemplates():
+    templates = join("anion_templates", "*", "*.json")
+    anionsTemplates = glob(  templates )
     
-def try2matchTemplate(moleculeGraph, atomId, anionTemplate, atoms):
-    jsonF = open(anionTemplate)
-    graphTemplate = node_link_graph(json.load(jsonF))
-    jsonF.close()
+    graphTemplates = {}
+    
+    for template in anionsTemplates:
+        jsonF = open(template)
+        graphTemplate = node_link_graph(json.load(jsonF))
+        jsonF.close()
+        
+        priority = graphTemplate.graph["priority"]
+        element = graphTemplate.node[ graphTemplate.graph["charged"] ]["element"]
+        
+        if not element in graphTemplates:
+            graphTemplates[element] = { priority : [ graphTemplate ] }
+        elif not priority in graphTemplates[element]:
+            graphTemplates[element][priority] = [ graphTemplate ]
+        else:
+            graphTemplates[element][priority].append(graphTemplate)
+            
+    return graphTemplates
+        
+
+    
+def try2matchTemplate(moleculeGraph, atomId, graphTemplate, atoms):
     
     moleculeGraph.node[atomId]["charged"] = True
     anMatcher = anionMatcher(moleculeGraph, graphTemplate)
