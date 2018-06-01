@@ -148,7 +148,7 @@ if __name__ == "__main__":
     #ClO, BrO, IO, 
     saveAnion([ "CL",  "O" ], [(0, 1)], 
               1, "XO", 5, fullIsomorphism = True,
-              aliases = { 0 : [ "BR", "I" ] } )
+              aliases = { 0 : [ "BR", "I" ] }, nameMapping = { 0 : "X"} )
     
     #NO2, ClO2, BRO2, 
     saveAnion([ "N",  "O" , "O" ], [(0, 1), (0,2)], 

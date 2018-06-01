@@ -12,49 +12,14 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
-from Bio.PDB.MMCIF2Dict import MMCIF2Dict
-import time
+from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np
-from supramolecularLogging import writeSupramolecularSearchHeader, writeSupramolecularSearchResults, incrementPartialProgress
+from supramolecularLogging import writeSupramolecularSearchResults, incrementPartialProgress
 from ringDetection import getRingsCentroids
 from anionRecogniser import extractNeighbours
 from multiprocessing import current_process
-        
 
-def findSupramolecularAnionPiLigand( ligandCode, cifFile, PDBcode, ligprepData = None ):
-    """
-    Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
-    zwiazanych z konkretnym ligandem
-    
-    Wejscie:
-    ligandCode - kod liganda
-    cifFile    - plik cif pobrany z bazy PDB
-    
-    Wyjscie:
-    Hehehe, czas pokaze...
-    """
-    parser = FastMMCIFParser()
-    
-    try:
-        structure = parser.get_structure('temp', cifFile)
-    except:
-        print("Biopytong nie ogarnia!", cifFile)
-        #Zeby zobaczyc co sie dzieje
-        return True        
-        
-    supramolecularFound = False 
-    
-    for modelIndex, model in enumerate(structure):
-        atoms = Selection.unfold_entities(model, 'A')  
-        ns = NeighborSearch(atoms)
-           
-        for residue in model.get_residues():
-            if ligandCode == residue.get_resname():
-                supramolecularFound = supramolecularFound or analysePiacid(residue, PDBcode, modelIndex, ns, ligprepData)
-            
-    return supramolecularFound
-
-def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
+def findSupramolecularAnionPiAllLigands( cifData):
     """
     Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
     zwiazanych z konkretnym ligandem
@@ -93,7 +58,7 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
 #                print("Analizuje: ", residueName)
-                if analysePiacidMultiProcess(residue, PDBcode, modelIndex, ns, resolution, method):
+                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
                     supramolecularFound = True
             
     fileId = current_process()
@@ -102,7 +67,8 @@ def findSupramolecularAnionPiAllLigandsMultiProcess( cifData):
     
 def readResolutionAndMethod( cifFile ):
     try:
-        mmcif_dict = MMCIF2Dict(cifFile)
+        mmcif_dict_parser = primitiveCif2Dict(cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method"] )
+        mmcif_dict = mmcif_dict_parser.result
     except:
         return -666, -666
     
@@ -132,7 +98,7 @@ def readResolutionAndMethod( cifFile ):
     else:
         return -3, method
 
-def analysePiacidMultiProcess(ligand, PDBcode, modelIndex, ns, resolution, method):
+def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
     centroids = getRingsCentroids( ligand )
     ligandCode = ligand.get_resname()
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))

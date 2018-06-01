@@ -4,7 +4,8 @@ Created on Mon Jan  1 18:00:25 2018
 
 @author: michal
 """
-from cif_analyser import writeSupramolecularSearchHeader, findSupramolecularAnionPiAllLigandsMultiProcess
+from cif_analyser import findSupramolecularAnionPiAllLigands
+from supramolecularLogging import writeSupramolecularSearchHeader
 from os.path import isdir, basename
 from os import makedirs, remove
 import glob
@@ -52,7 +53,7 @@ cifNoFile = open("logs/cif2process.log", 'w')
 cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
-pool.map(findSupramolecularAnionPiAllLigandsMultiProcess, argumentsList)
+pool.map(findSupramolecularAnionPiAllLigands, argumentsList)
 #for arg in argumentsList:
 #    findSupramolecularAnionPiAllLigandsMultiProcess(arg)
 
