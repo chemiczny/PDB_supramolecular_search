@@ -9,11 +9,11 @@ import shlex
 
 class primitiveCif2Dict:
     def __init__(self, cif, interestingKeys):
-        cifFile = open(cif, 'r')
+        self.cifFile = open(cif, 'r')
         self.result = {}
         self.interestingKeys = interestingKeys
         
-        line = cifFile.readline()
+        line = self.cifFile.readline()
         self.loop = False
         self.loopKeysSize = 0
         self.interestingKeyIndex = {}
@@ -24,11 +24,21 @@ class primitiveCif2Dict:
             else:
                 self.outOfTheLoopCase(line)
             
-            line = cifFile.readline()
+            line = self.cifFile.readline()
         
-        cifFile.close()
+        self.cifFile.close()
         
     def loopCase(self, line):
+        if "loop_" in line.lower():
+            self.loop = True
+            self.loopKeysSize = 0
+            self.interestingKeyIndex = {}
+            return
+        
+        if line.startswith("#"):
+            self.loop = False
+            return 
+        
         lineSpl = line.split()
         if len(lineSpl) == 1 and lineSpl[0][0] == "_":
             self.loopKeysSize +=1
@@ -39,9 +49,20 @@ class primitiveCif2Dict:
             if self.interestingKeyIndex:
                 lineSpl = shlex.split(line)
                 if len(lineSpl) == self.loopKeysSize:
+
                     if self.interestingKeyIndex:
                         for key in self.interestingKeyIndex:
                             self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
+                elif len(lineSpl) > 15:
+                    nextLine = self.cifFile.readline()
+                    nextLineSpl =shlex.split(nextLine)
+                    newLineSpl = lineSpl+nextLineSpl
+                    if len(newLineSpl) == self.loopKeysSize:
+
+                        if self.interestingKeyIndex:
+                            for key in self.interestingKeyIndex:
+                                self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
+
             else:
                 self.loop = False
                 self.loopKeysSize = 0
@@ -50,6 +71,8 @@ class primitiveCif2Dict:
     def outOfTheLoopCase(self, line):
         if "loop_" in line.lower():
             self.loop = True
+            self.loopKeysSize = 0
+            self.interestingKeyIndex = {}
             return
         elif line.startswith(";"):
             return
@@ -87,7 +110,7 @@ class primitiveCif2Dict:
                     
 if __name__ == "__main__":
     
-    cif = "cif/1ldy.cif"
+    cif = "cif/4pdj.cif"
     print(cif)
     test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
     print(test.result)
