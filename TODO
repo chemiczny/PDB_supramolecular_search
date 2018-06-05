@@ -6,6 +6,7 @@ W koncu trzeba bd to zrobic:
 - TESTY
 - baza sqlowa zamiast pliku csv
 - ograniczyć liczbę porównywanych grafów (lepszy przesiew kandydatow)
+- dorzucac wiecej atomow do potencjalnego anionu
 
 Dowiedziec sie:
 -przykladowy output z esp

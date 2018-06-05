@@ -157,12 +157,12 @@ if __name__ == "__main__":
     #NO3, CO3, PO3, SO3, AsO3, BO3, ClO3, BRO3
     saveAnion( ["N", "O", "O", "O"], [(0,1), (0,2), (0,3)],
               1, "XO3", 15, fullIsomorphism = True, 
-              aliases = { 0 : [ "C", "P", "B", "S", "As", "CL", "BR" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "C", "P", "B", "S", "AS", "CL", "BR" ] }, nameMapping = { 0 : "X" } )
     
     #PO4, SO4, AsO4, ClO4, BRO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
               1, "XO4", 20, fullIsomorphism = True, 
-              aliases = { 0 : [ "S", "As", "CL", "BR" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "S", "AS", "CL", "BR" ] }, nameMapping = { 0 : "X" } )
     
 #   Ph-OH
     saveAnion( [ "C" , "C" , "C" , "C" , "C", "C" , "O" ], [(0,1),(1,2), (2,3), (3,4),( 4, 5), (5, 0), (5,6)],
@@ -179,32 +179,42 @@ if __name__ == "__main__":
     
     #R-PO4, R-SO4, R-AsO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
-              1, "XO4", 45, 
-              aliases = { 0 : [ "S", "As" ] }, nameMapping = { 0 : "X" } )
+              1, "R-XO4", 45, terminating = [ 1, 2, 3 ] ,
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
+    
+    #R2-PO4, R2-SO4, R2-AsO4
+    saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
+              1, "R2-XO4", 47, terminating = [ 1, 2 ] ,
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
+    
+    #R3-PO4, R3-SO4, R3-AsO4
+    saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
+              1, "R2-XO4", 48, terminating = [ 1 ] ,
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
     
     #RAsO3, RPO3, RSO3
     saveAnion( ["P", "O", "O", "O", "C"], [(0,1), (0,2), (0,3), (0, 4)],
-              1, "RXO3", 50, 
-              aliases = { 0 : [ "S", "As" ] }, nameMapping = { 0 : "X" } )
+              1, "RXO3", 50,  terminating = [1, 2, 3] , 
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
     
     #R2AsO2, R2PO2, RRSO2
     saveAnion( ["P", "O", "O", "C", "C"], [(0,1), (0,2), (0,3), (0, 4)],
-              1, "RXO3", 55, 
-              aliases = { 0 : [ "S", "As" ] }, nameMapping = { 0 : "X" } )
+              1, "R2XO2", 55, terminating = [1, 2],
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
     
     #F, CL, BR, I, S
     saveAnion( [ "F" ], [], 0, "X", 55, aliases = { 0 : [ "CL", "BR", "I", "S"] },
               fullIsomorphism = True, nameMapping = { 0 : "X"})
     
+    #SCN
+    saveAnion([ "S",  "C" , "N" ], [(0, 1), (0,2)], 
+              [0,1,2], "SCN", 62, fullIsomorphism = True)
     
 #    #RSH
     saveAnion( [ "X" , "S" ], [ (0,1)], 
               1, "RSH", 60, terminating = [1], 
               notAliases = {0 : [ "O" ] } )
     
-    #SCN
-    saveAnion([ "S",  "C" , "N" ], [(0, 1), (0,2)], 
-              [0,1,2], "SCN", 65, fullIsomorphism = True)
     
     #N3
     saveAnion([ "N",  "N" , "N" ], [(0, 1), (0,2)], 

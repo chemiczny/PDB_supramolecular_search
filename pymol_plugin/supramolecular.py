@@ -335,7 +335,7 @@ def fetchdialog(simulation = False):
 #            tkMessageBox.showwarning(title="Warning", message = "Please select any filter")
                         
         if chkvar_noAAinAnions.get() > 0:
-            actualData = actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) ]
+            actualData = actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) & ( actualData["Anion code"] != "CYS") ]
         
         if chkvar_noAAinPiAcids.get() > 0:
             actualData = actualData[(actualData["Pi acid Code"] != "TYR") & (actualData[ "Pi acid Code" ] != "PHE" ) & ( actualData["Pi acid Code"] != "HIS" ) & ( actualData["Pi acid Code"] != "TRP" ) ]
