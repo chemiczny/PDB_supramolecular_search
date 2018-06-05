@@ -51,7 +51,7 @@ class primitiveCif2Dict:
         if "loop_" in line.lower():
             self.loop = True
             return
-        elif ";" == line.strip()[0]:
+        elif line.startswith(";"):
             return
         else:
             if not self.fastInterestingKeyInLine(line):
@@ -85,26 +85,11 @@ class primitiveCif2Dict:
     
     
                     
-#if __name__ == "__main__":
-#    cifs = glob("cif/*cif")
-#    timeStart = time.time()
-#    
-#    for cif in cifs:
-#        print(cif)
-#        print(readResolutionAndMethod(cif))
-#        
-#    timeStop = time.time()
-#    
-#    print(timeStop-timeStart)
-#    
-#    timeStart = time.time()
-#    
-#    for cif in cifs:
-#        print(cif)
-#        test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
-#        print(test.result)
-#        
-#    timeStop = time.time()
-#    
-#    print(timeStop-timeStart)
+if __name__ == "__main__":
+    
+    cif = "cif/1ldy.cif"
+    print(cif)
+    test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
+    print(test.result)
+        
     
