@@ -55,7 +55,7 @@ cifNoFile.close()
 
 pool.map(findSupramolecularAnionPiAllLigands, argumentsList)
 #for arg in argumentsList:
-#    findSupramolecularAnionPiAllLigandsMultiProcess(arg)
+#    findSupramolecularAnionPiAllLigands(arg)
 
 final_log = open("logs/MergeResultsFromLigprepOutput.log", "a+")
 log_files = glob.glob("logs/MergeResultsFromLigprepOutput*.log")

@@ -100,7 +100,6 @@ def readResolutionAndMethod( cifFile ):
 
 def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
     centroids = getRingsCentroids( ligand )
-    ligandCode = ligand.get_resname()
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
@@ -108,7 +107,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
     for centroid in centroids:
         distance = 4.5
         neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-        extractedAtoms = extractNeighbours( neighbors, ligandCode, ns )
+        extractedAtoms = extractNeighbours( neighbors, ligand, ns )
             
         cationNear = []
         if len(extractedAtoms) > 0:

@@ -5,6 +5,7 @@ Created on Sat Apr 21 14:04:23 2018
 
 @author: michal
 """
+from Bio.PDB import Selection
 from ringDetection import molecule2graph, getSubstituents, isFlat, isFlatPrimitive
 from anionTemplateCreator import anionMatcher
 import json
@@ -13,7 +14,7 @@ from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
 
-def extractNeighbours( atomList, ligandCode, ns ):
+def extractNeighbours( atomList, ligand, ns ):
     """
     Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
     
@@ -27,48 +28,91 @@ def extractNeighbours( atomList, ligandCode, ns ):
     """
     extractedAtoms = []
     
-    for atom in atomList:
-        if not isItWorthAnalyzing(atom, ligandCode):
+    residuesNeighbor = Selection.unfold_entities(atomList, 'R')  
+    residuesNeighbor = set(residuesNeighbor)
+    
+    resId2atoms, resId2res = createResDicts(atomList, residuesNeighbor, ligand)
+    
+    aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
+        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+    
+    for resId in resId2atoms:
+        resAtoms = resId2atoms[resId]
+        elements = atomsList2ElementsList( resAtoms )
+        resName = resId2res[ resId ].get_resname()
+        
+        if resName.upper() in aminoacids and not ( "O" in elements or "S" in elements ):
             continue
         
-        potentiallySupramolecular = False
-        anionType = ""
-        
-        potentiallySupramolecular, anionType = searchInAnionTemplates(atom, ns)            
+        atoms = getResidueWithConnections( resAtoms, ns )
+        for atom in resAtoms:
+            potentiallySupramolecular = False
+            anionType = ""
             
-        if potentiallySupramolecular:
-#            print("cos watergo uwagi :D", atom.get_fullname())
-            extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
+            potentiallySupramolecular, anionType = searchInAnionTemplates(atom, atoms)            
+                
+            if potentiallySupramolecular:
+    #            print("cos watergo uwagi :D", atom.get_fullname())
+                extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
             
     return extractedAtoms
 
-def isItWorthAnalyzing(atom, ligandCode):
-    """
-    Szybka, wstepna weyfikacja atomu jako potencjalnego anionu
-    Odrzucane sa te atomy, ktore naleza do niekwasnych aminokwasow,
-    czasteczki wody oraz ligandu
+def getResidueWithConnections( atoms, ns ):
+    atomParent = atoms[0].get_parent()
     
-    Wejscie:
-    atom - obiekt Atom (Biopython)
-    ligandCode - kod liganda
+    atoms = list(atomParent.get_atoms())
+    neighbors = []
+    for atom in atoms:
+        neighbors += ns.search( atom.get_coord(), 2.2 , 'A')
+    neighbors = set(neighbors)
+    anionId = atomParent.get_id()[1]
     
-    Wyjscie:
-    True/False - czy atom moze byc potencjalnym anionem?
-    """
-    parent_name = atom.get_parent().get_resname()
+    for neighbor in neighbors:
+        if neighbor.get_parent().get_id()[1] != anionId:
+            atoms.append(neighbor)
     
-#    bad_parents = [ "HOH", "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS",
-#        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+    return atoms
+
+def createResId(residue):
+    idNo = residue.get_id()[1]
+    chain = residue.get_parent().get_id()
+    
+    return chain+str(idNo)
+
+def createResIdFromAtom(atom):
+    return createResId( atom.get_parent() )
+
+def atomsList2ElementsList( atomList ):
+    elements = set()
+    for a in atomList:
+        elements.add(a.element)
+        
+    return elements
+
+def createResDicts(atoms, residues, ligand):
+    ligandId = createResId(ligand)
+    resId2res = {}
+    for res in residues:
+        resId2res[ createResId(res) ] = res
         
     bad_parents = [ "HOH", "DOD", "OXY"]
-        
-    if parent_name == ligandCode:
-        return False
+    resId2atoms = {}
     
-    if parent_name in bad_parents:
-        return False
+    for a in atoms:
+        resId = createResIdFromAtom(a)
+        if resId == ligandId:
+            continue
+        resname = a.get_parent().get_resname()
         
-    return True
+        if resname in bad_parents:
+            continue
+        if not resId in resId2atoms:
+            resId2atoms[resId] = [a]
+        else:
+            resId2atoms[resId].append(a)
+            
+    return resId2atoms, resId2res
+            
 
 def graph2Composition( graph ):
     composition = {}
@@ -81,30 +125,13 @@ def graph2Composition( graph ):
             
     return composition
 
-def searchInAnionTemplates( atom, ns):
+def searchInAnionTemplates( atom, atoms ):
     if not hasattr(searchInAnionTemplates, "templates"):
         searchInAnionTemplates.templates =  getAllTemplates()
     element = atom.element.upper()
     
     if not element in searchInAnionTemplates.templates:
         return False, element
-    
-    atomParent = atom.get_parent()
-    
-    aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
-        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
-    
-    if atomParent.get_resname().upper() in aminoacids and not element in [ "O", "S" ]:
-        return False, element
-    
-    atoms = list(atomParent.get_atoms())
-    
-    neighbors = ns.search( atom.get_coord(), 2.2 , 'A')
-    anionId = atomParent.get_id()[1]
-    
-    for neighbor in neighbors:
-        if neighbor.get_parent().get_id()[1] != anionId:
-            atoms.append(neighbor)
             
     graph, atomInd = molecule2graph( atoms, atom )
     composition = graph2Composition(graph)
