@@ -129,14 +129,14 @@ def isFlatPrimitive(allAtomsList, atomsIndList):
         verdict['normVec'] = norm_vec
         return verdict    
     
-    firstAtomCoord = np.array(allAtomsList[ atomsIndList[0] ].get_coord() )
     centroid = getAverageCoords(allAtomsList, atomsIndList) 
-    for i in range(1, len(atomsIndList)  ):
-        atomInd = atomsIndList[i]
-        D = np.array(allAtomsList[ atomInd ].get_coord() )
-        new_vec = normalize( firstAtomCoord - D )
+    D = -np.inner(centroid, norm_vec)
+    
+    for atomInd in atomsIndList:
+        atomCoord = np.array(allAtomsList[ atomInd ].get_coord() )
+        atomDist = abs( np.inner(norm_vec, atomCoord) + D  )
         
-        if abs( np.inner( new_vec, norm_vec ) ) > 0.09:
+        if atomDist > 0.1:
             return verdict
             
     verdict['isFlat'] = True
