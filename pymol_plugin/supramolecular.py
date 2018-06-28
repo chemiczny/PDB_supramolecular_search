@@ -297,6 +297,50 @@ def fetchdialog(simulation = False):
             
         actualColumn += 2
         
+    def privShowRange(start, stop):
+        tree_data.delete(*tree_data.get_children())
+        
+        rowId = 0
+        actualData = logData["filtered"]
+        for index, row in actualData.iterrows():
+            if rowId >= start and rowId < stop:
+                tree_data.insert('', "end" , values =  ( rowId, row["PDB Code"] , row["Pi acid Code"], 
+                                                        row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
+                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
+                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
+                                                        str(row["h"])[:3], row["Resolution"] , row["Metal cations"]  ) )
+            rowId += 1
+            if rowId >= stop:
+                break
+            
+    def isStrInt( str2check):
+        try:
+            int(str2check)
+            return True
+        except:
+            return False
+            
+    def privGetRange():
+        if not "filtered" in logData:
+            return 0, 0
+        
+        start = ent_rangeStart.get()
+        stop = ent_rangeStop.get()
+        
+        if not isStrInt(start) or not isStrInt(stop):
+            return 0, 1000
+        
+        start = int(start)
+        stop = int(stop)
+        
+        if stop < start:
+            return 0, 1000
+        
+        if start < 0:
+            return 0, 1000
+        
+        return start, stop
+        
     
     def applyFilter ():
         if logData["logFile"] == False:
@@ -371,18 +415,8 @@ def fetchdialog(simulation = False):
         if anySort:
             actualData = actualData.sort_values(by = columns, ascending = ascending)
         logData["filtered"] = actualData
-        tree_data.delete(*tree_data.get_children())
-        
-        rowId = 0
-        for index, row in actualData.iterrows():
-            tree_data.insert('', "end" , values =  ( rowId, row["PDB Code"] , row["Pi acid Code"], 
-                                                    row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
-                                                    row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
-                                                    str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                    str(row["h"])[:3], row["Resolution"] , row["Metal cations"]  ) )
-            rowId += 1
-            if rowId >= 1000:
-                break
+
+        showRange()
             
             
             
@@ -393,9 +427,78 @@ def fetchdialog(simulation = False):
     ent_recordsFound.configure(state = "readonly")
     ent_recordsFound.grid(row = 25, column = 1, columnspan = 2)
     
+    lab_range = Tkinter.Label(self, width = 5, text = "Range")
+    lab_range.grid(row = 25, column = 3 )
+    
+    ent_rangeStart = Tkinter.Entry(self, width = 10)
+    ent_rangeStart.grid(row = 25, column = 4, columnspan = 2)
+    ent_rangeStart.insert("end", 0)
+    
+    ent_rangeStop = Tkinter.Entry(self, width = 10)
+    ent_rangeStop.grid(row = 25, column = 6, columnspan = 2)
+    ent_rangeStop.insert("end", 1000)
+    
+    def showRange():
+        start, stop = privGetRange()
+        if start == stop:
+            return
+        
+        privShowRange(start, stop)
+        
+    
+    def showNext():
+        start, stop = privGetRange()
+        if start == stop:
+            return
+        
+        diff = stop - start
+        newStart = stop
+        newStop = stop + diff
+        
+        dataLen = logData["filtered"].shape[0]
+        if newStop > dataLen:
+            newStop = dataLen
+            newStart = dataLen - diff
+            
+        ent_rangeStart.delete(0, "end")
+        ent_rangeStart.insert("end", str(newStart))
+        ent_rangeStop.delete(0, "end")
+        ent_rangeStop.insert("end", str(newStop))
+        
+        privShowRange(newStart, newStop)
+    
+    def showPrev():
+        start, stop = privGetRange()
+        if start == stop:
+            return
+        
+        diff = stop - start
+        newStart = start - diff
+        newStop = start
+        
+        if newStart < 0:
+            newStop = diff
+            newStart = 0
+            
+        ent_rangeStart.delete(0, "end")
+        ent_rangeStart.insert("end", str(newStart))
+        ent_rangeStop.delete(0, "end")
+        ent_rangeStop.insert("end", str(newStop))
+        privShowRange(newStart, newStop)
+    
+    but_rangeShow = Tkinter.Button(self, width = 6, text = "Show", command = showRange)
+    but_rangeShow.grid(row = 25, column = 8, columnspan = 2)
+    
+    but_rangeNext = Tkinter.Button(self, width = 6, text = "Next", command = showNext)
+    but_rangeNext.grid(row = 25, column = 10, columnspan = 2)
+    
+    but_rangePrev = Tkinter.Button(self, width = 6, text = "Prev", command = showPrev)
+    but_rangePrev.grid(row = 25, column = 12, columnspan = 2)
+    
 # Records list
     lab_data = Tkinter.Label(self, width = 10, text = "Records found")
     lab_data.grid(row = 25, column = 0)
+    
     
     headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Metal" ]
     
