@@ -14,7 +14,7 @@ from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
 
-def extractNeighbours( atomList, ligand, ns ):
+def extractAnionAtoms( atomList, ligand, ns ):
     """
     Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
     

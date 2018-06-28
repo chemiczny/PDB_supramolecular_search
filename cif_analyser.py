@@ -13,13 +13,14 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from primitiveCif2Dict import primitiveCif2Dict
-import numpy as np
-from supramolecularLogging import writeSupramolecularSearchResults, incrementPartialProgress
+import numpy as np                
+from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
+from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults
 from ringDetection import getRingsCentroids
-from anionRecogniser import extractNeighbours
+from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 
-def findSupramolecularAnionPiAllLigands( cifData):
+def findSupramolecular( cifData):
     """
     Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
     zwiazanych z konkretnym ligandem
@@ -38,9 +39,10 @@ def findSupramolecularAnionPiAllLigands( cifData):
     try:
         structure = parser.get_structure('temp', cifFile)
     except:
-        print("Biopytong nie ogarnia!", cifFile)
+        errorMessage = "FastMMCIFParser cannot handle with: " + cifFile
         fileId = current_process()
         incrementPartialProgress(fileId)
+        writeAdditionalInfo(errorMessage, fileId)
         #Zeby zobaczyc co sie dzieje
         return True        
         
@@ -70,6 +72,9 @@ def readResolutionAndMethod( cifFile ):
         mmcif_dict_parser = primitiveCif2Dict(cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method"] )
         mmcif_dict = mmcif_dict_parser.result
     except:
+        fileId = current_process()
+        errorMessage = "primitiveCif2Dict cannot handle with: "+cifFile
+        writeAdditionalInfo(errorMessage, fileId)
         return -666, -666
     
     method = "Unknown"
@@ -103,17 +108,25 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
-    
+    fileId = current_process()
     for centroid in centroids:
         distance = 4.5
         neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-        extractedAtoms = extractNeighbours( neighbors, ligand, ns )
+        extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, ns )
             
-        cationNear = []
-        if len(extractedAtoms) > 0:
-            cationNear = searchForCation( centroid["coords"], ns )
-        fileId = current_process()
-        extractedAtoms =  writeSupramolecularSearchResults(ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, method, fileId)
+        if len(extractedAnionAtoms) > 0:
+            extractedCationAtoms = extractCationAtoms( centroid["coords"], ns, 10 )
+            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, modelIndex, fileId )
+            
+            extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, ns)
+            writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
+            
+            for atom in extractedAnionAtoms:
+                cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), ns, 4.5  )
+                writeAnionCationResults(atom["Atom"], PDBcode, cationNearAnion, modelIndex, fileId)
+            
+        
+        extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, [], method, fileId)
 
         
         if len(extractedAtoms) > 0:
@@ -121,8 +134,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
         
     return ligandWithAnions
 
-def searchForCation ( point, ns  ):
-    distance = 10
+def extractCationAtoms ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')
     
     metalCationsFound = []
@@ -136,9 +148,40 @@ def searchForCation ( point, ns  ):
     
     for atom in neighbors:
         if atom.element.upper() in [ element.upper() for element in metalCations ]:
-            metalCationsFound.append( atom.element.upper() )
+            metalCationsFound.append( atom )
     
     return metalCationsFound
+
+def extractRingCentroids(point, residue, ns):
+    distAtom = 4.7
+    distCent = 4.5
+    neighbors = ns.search(np.array(point), distAtom, 'A')
+    residues = Selection.unfold_entities(neighbors, 'R') 
+    point = np.array(point)
+    
+    notAromatic = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
+        "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
+    
+    res1id = createResId(residue)
+    centroidsFound = []
+    ringMolecules = []
+    
+    for res in residues:
+        if res.get_resname() in notAromatic:
+            continue
+        
+        if createResId(res) == res1id:
+            continue
+        
+        centroids = getRingsCentroids(res)
+        for centroid in centroids:
+            dist = np.linalg.norm( point - np.array(centroid["coords"]) )
+            if dist < distCent:
+                centroid["distance"] = dist
+                centroidsFound.append(centroid)
+                ringMolecules.append(res)
+                
+    return centroidsFound, ringMolecules
     
 def getResiduesListFromAtomData( atomDataList ):
     atomsList = []

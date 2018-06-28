@@ -35,7 +35,6 @@ timeActual = time.time()
 
 progress = float(cifProcessed)/cifNo * 100
 if abs(progress-100) < 0.00001 and timeStop > timeStart:
-    print("lol")
     timeActual = timeStop
     
 timeTaken = timeActual - timeStart

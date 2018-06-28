@@ -123,7 +123,7 @@ def fetchdialog(simulation = False):
             logData["data"] = pd.read_csv(logData["logFile"], sep = "\t")
             updateMenu()
         except:
-            tkMessageBox("Pandas cannot parse this file")
+            tkMessageBox.showwarning(title = "Error!", message = "Pandas cannot parse this file")
             
     def updateMenu():
         for parameter in listParameters:
@@ -345,6 +345,7 @@ def fetchdialog(simulation = False):
     def applyFilter ():
         if logData["logFile"] == False:
             tkMessageBox.showwarning(title="Warning", message = "Log file not selected")
+            return
             
 #        anythingSet = False
         actualData = logData["data"]
@@ -502,7 +503,7 @@ def fetchdialog(simulation = False):
     
     headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Metal" ]
     
-    tree_data = ttk.Treeview(self, columns = headers, show = "headings", heigh = 20 )
+    tree_data = ttk.Treeview(self, columns = headers, show = "headings", heigh = 15 )
     for header in headers:
         tree_data.heading(header, text = header)
         tree_data.column(header, width = 70)
