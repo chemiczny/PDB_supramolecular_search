@@ -171,9 +171,15 @@ def fetchdialog(simulation = False):
         if not logData["displaying"]:
             return
         
+        radius = ent_around.get()
+        try:
+            radius = float(radius)
+        except:
+            return
+        
         if chkvar_around.get() > 0 and not logData["displayingAround"]:
             selectionAroundName = "suprAround"
-            cmd.select( selectionAroundName,  "byres ( suprSelection around 5 ) " )
+            cmd.select( selectionAroundName,  "byres ( suprSelection around "+str(radius)+" ) " )
             cmd.show("lines", selectionAroundName)
             logData["displayingAround"] = True
         elif chkvar_around.get() == 0 and logData["displayingAround"]:
@@ -191,6 +197,10 @@ def fetchdialog(simulation = False):
     
     chk_around = Tkinter.Checkbutton(self, variable = chkvar_around, command = showAround)
     chk_around.grid(row = actualRow, column = 1)
+    
+    ent_around = Tkinter.Entry(self, width = 10)
+    ent_around.grid(row = actualRow, column = 2)
+    ent_around.insert("end", "5.0")
     
     actualRow += 1
     

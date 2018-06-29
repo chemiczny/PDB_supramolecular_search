@@ -110,19 +110,23 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
     ligandWithAnions = False
     fileId = current_process()
     for centroid in centroids:
+        bigDistance =12
         distance = 4.5
-        neighbors = ns.search(np.array(centroid["coords"]), distance, 'A')
-        extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, ns )
+        atoms = ns.search(np.array(centroid["coords"]), bigDistance, 'A')
+        nsSmall = NeighborSearch(atoms)
+        neighbors = nsSmall.search(np.array(centroid["coords"]), distance, 'A')
+        
+        extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
             
         if len(extractedAnionAtoms) > 0:
-            extractedCationAtoms = extractCationAtoms( centroid["coords"], ns, 10 )
+            extractedCationAtoms = extractCationAtoms( centroid["coords"], nsSmall, 10 )
             writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, modelIndex, fileId )
             
-            extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, ns)
+            extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
-                cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), ns, 4.5  )
+                cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
                 writeAnionCationResults(atom["Atom"], PDBcode, cationNearAnion, modelIndex, fileId)
             
         

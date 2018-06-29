@@ -142,7 +142,7 @@ if __name__ == "__main__":
     
 #    #RCOOH
     saveAnion( [ "C" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
-              2, "RCOO", 0, terminating = [2, 3], 
+              2, "RCOO", 0, terminating = [1, 2, 3], 
               geometry = "planar" )
     
     #ClO, BrO, IO, 

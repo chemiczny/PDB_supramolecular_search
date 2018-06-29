@@ -189,6 +189,9 @@ def getRingsCentroids( molecule ):
 #    print("Znalazlem cykli: ", len(cycles))
     centroids = []
     for cycle in cycles:
+        if not onlyLighAtomsInCycle(cycle, atoms):
+            continue
+        
         if len(cycle) > 6:
             continue
         
@@ -203,6 +206,12 @@ def getRingsCentroids( molecule ):
         centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) })
         
     return centroids
+
+def onlyLighAtomsInCycle( cycle, atoms ):
+    for atomInd in cycle:
+        if not atoms[atomInd].element in [ "C", "O", "N", "S" ]:
+            return False
+    return True
     
 def getSubstituents( graphMolecule, cycle ):
     substituents = {}
@@ -215,6 +224,11 @@ def getSubstituents( graphMolecule, cycle ):
                 
     return substituents
 
+def createAtomId(atom):
+    atomCoords = atom.get_coord()
+    
+    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
+
 def molecule2graph( atoms, atom = None ):
     """
     Konwersja czasteczki na graf (networkx)
@@ -226,12 +240,11 @@ def molecule2graph( atoms, atom = None ):
     Wyjscie:
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
-    atomName = ""
-    parentId = "" 
+    atomId = ""
     
     if atom != None: 
-        atomName = atom.get_fullname()    
-        parentId = atom.get_parent().get_id()[1]
+        atomId = createAtomId(atom)
+#        print("szukam ", atomName, parentId, atom.get_parent().get_resname())
         
     thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
                   "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
@@ -250,7 +263,7 @@ def molecule2graph( atoms, atom = None ):
             threshold1 = thresholds[atom1.element]
         
         if atom != None:
-            if atom1.get_fullname() == atomName and atom1.get_parent().get_id()[1] == parentId:
+            if atomId == createAtomId(atom1):
                 atoms_found.append(atom1Ind)
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
@@ -276,6 +289,32 @@ def molecule2graph( atoms, atom = None ):
             print("Nie znalazlem "+ atom.element+" w grafie!")
             G.add_node( atoms_found[0] )
             
-        return G, atoms_found[0]
+        nodes2stay = [ ]
+        for node in G.nodes:
+            if nx.has_path(G, node, atoms_found[0]):
+                nodes2stay.append(node)
+            
+        return G.subgraph(nodes2stay), atoms_found[0]
+#        return G, atoms_found[0]
         
     return G
+
+def findInGraph( G, atom, atomList ):
+    nodes2stay = [ ]
+    atomId = createAtomId(atom)
+    atoms_found = []
+
+    for node in G.nodes:
+        if createAtomId( atomList[node] ) == atomId:
+            atoms_found.append(node)
+            
+    if len(atoms_found) != 1 :
+        print("WTF!? ", atoms_found)
+        
+    for node in G.nodes:
+        
+        if nx.has_path(G, node, atoms_found[0]):
+            nodes2stay.append(node)
+        
+    return G.subgraph(nodes2stay), atoms_found[0]
+    

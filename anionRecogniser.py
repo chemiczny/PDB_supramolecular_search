@@ -6,13 +6,14 @@ Created on Sat Apr 21 14:04:23 2018
 @author: michal
 """
 from Bio.PDB import Selection
-from ringDetection import molecule2graph, getSubstituents, isFlat, isFlatPrimitive
+from ringDetection import molecule2graph, getSubstituents, isFlat, isFlatPrimitive, findInGraph
 from anionTemplateCreator import anionMatcher
 import json
 from os.path import join
 from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
+from biopythonUtilities import createResId, createResIdFromAtom
 
 def extractAnionAtoms( atomList, ligand, ns ):
     """
@@ -27,9 +28,7 @@ def extractAnionAtoms( atomList, ligand, ns ):
         klucze: Atom - atom, AnionType - rodzaj anionu
     """
     extractedAtoms = []
-    
     residuesNeighbor = Selection.unfold_entities(atomList, 'R')  
-    residuesNeighbor = set(residuesNeighbor)
     
     resId2atoms, resId2res = createResDicts(atomList, residuesNeighbor, ligand)
     
@@ -45,6 +44,7 @@ def extractAnionAtoms( atomList, ligand, ns ):
             continue
         
         atoms = getResidueWithConnections( resAtoms, ns )
+#        initGraph = molecule2graph(atoms)
         for atom in resAtoms:
             potentiallySupramolecular = False
             anionType = ""
@@ -60,27 +60,31 @@ def extractAnionAtoms( atomList, ligand, ns ):
 def getResidueWithConnections( atoms, ns ):
     atomParent = atoms[0].get_parent()
     
-    atoms = list(atomParent.get_atoms())
+    parentAtoms = list(atomParent.get_atoms())
     neighbors = []
     for atom in atoms:
-        neighbors += ns.search( atom.get_coord(), 2.2 , 'A')
-    neighbors = set(neighbors)
-    anionId = atomParent.get_id()[1]
+        neighbors += ns.search( atom.get_coord(), 2 , 'A')
+#    neighbors = set(neighbors)
+    neighbors = Selection.unfold_entities(neighbors, "A")
+    newNeighbors = []
+    for atom in neighbors:
+        if atom.element != "C":
+            newNeighbors += ns.search( atom.get_coord(), 2 , 'A')
+        
+    neighbors = Selection.unfold_entities(newNeighbors, "A")
     
+    newNeighbors = []
+    for atom in neighbors:
+        if atom.element != "C":
+            newNeighbors += ns.search( atom.get_coord(), 2 , 'A')
+        
+    neighbors = Selection.unfold_entities(newNeighbors, "A")
+    parentId = createResId(atomParent)
     for neighbor in neighbors:
-        if neighbor.get_parent().get_id()[1] != anionId:
-            atoms.append(neighbor)
+        if parentId != createResIdFromAtom(neighbor):
+            parentAtoms.append(neighbor)
     
-    return atoms
-
-def createResId(residue):
-    idNo = residue.get_id()[1]
-    chain = residue.get_parent().get_id()
-    
-    return chain+str(idNo)
-
-def createResIdFromAtom(atom):
-    return createResId( atom.get_parent() )
+    return parentAtoms
 
 def atomsList2ElementsList( atomList ):
     elements = set()
@@ -147,6 +151,30 @@ def searchInAnionTemplates( atom, atoms ):
                 return matchResult, anionGroup
             
     return False, element
+
+def searchInAnionTemplatesBis( atom, atoms, initGraph ):
+    if not hasattr(searchInAnionTemplates, "templates"):
+        searchInAnionTemplates.templates =  getAllTemplates()
+    element = atom.element.upper()
+    
+    if not element in searchInAnionTemplates.templates:
+        return False, element
+            
+    graph, atomInd = findInGraph( initGraph, atom, atoms )
+    composition = graph2Composition(graph)
+    
+    priority2template = searchInAnionTemplates.templates[element]
+
+    for priority in sorted(priority2template.keys()):
+        for guess in priority2template[priority]:
+            if not dummyCompare(copy(composition), guess):
+                 continue
+            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
+            if matchResult:
+                return matchResult, anionGroup
+            
+    return False, element
+
 
 def dummyCompare(composition, template):
     for node in list(template):
