@@ -290,7 +290,7 @@ def molecule2graph( atoms, atom = None ):
             G.add_node( atoms_found[0] )
             
         nodes2stay = [ ]
-        for node in G.nodes:
+        for node in G.nodes():
             if nx.has_path(G, node, atoms_found[0]):
                 nodes2stay.append(node)
             
@@ -311,7 +311,7 @@ def findInGraph( G, atom, atomList ):
     if len(atoms_found) != 1 :
         print("WTF!? ", atoms_found)
         
-    for node in G.nodes:
+    for node in G.nodes():
         
         if nx.has_path(G, node, atoms_found[0]):
             nodes2stay.append(node)
