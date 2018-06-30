@@ -68,7 +68,7 @@ def getResidueWithConnections( atoms, ns ):
     neighbors = Selection.unfold_entities(neighbors, "A")
     newNeighbors = []
     for atom in neighbors:
-        if atom.element != "C":
+        if atom.element != "C" :
             newNeighbors += ns.search( atom.get_coord(), 2 , 'A')
         
     neighbors = Selection.unfold_entities(newNeighbors, "A")

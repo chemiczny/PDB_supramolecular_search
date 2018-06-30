@@ -366,6 +366,11 @@ def angleBetweenNormVec( centroid1, centroid2):
     normVec2 = centroid2["normVec"]
     
     inner_prod = np.inner( normVec1, normVec2 )
+    if abs(inner_prod) > 1.0:
+        if abs(inner_prod) < 1.1:
+            return 0.0
+        else:
+            return 666.0
     
     return degrees( acos(inner_prod) )
 
