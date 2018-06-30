@@ -52,19 +52,23 @@ def findSupramolecular( cifData):
         
     resolution, method = readResolutionAndMethod(cifFile)
 #    print("jade z pliku: ", cifFile)
-    for modelIndex, model in enumerate(structure):
-        atoms = Selection.unfold_entities(model, 'A')  
-        ns = NeighborSearch(atoms)
-           
-        for residue in model.get_residues():
-            residueName = residue.get_resname().upper()
-            if not residueName in notPiacids  :
-#                print("Analizuje: ", residueName)
-                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
-                    supramolecularFound = True
-            
-    fileId = current_process()
-    incrementPartialProgress(fileId)
+    try:
+        for modelIndex, model in enumerate(structure):
+            atoms = Selection.unfold_entities(model, 'A')  
+            ns = NeighborSearch(atoms)
+               
+            for residue in model.get_residues():
+                residueName = residue.get_resname().upper()
+                if not residueName in notPiacids  :
+    #                print("Analizuje: ", residueName)
+                    if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
+                        supramolecularFound = True
+                
+        fileId = current_process()
+        incrementPartialProgress(fileId)
+    except:
+        fileId = current_process()
+        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     return supramolecularFound
     
 def readResolutionAndMethod( cifFile ):
