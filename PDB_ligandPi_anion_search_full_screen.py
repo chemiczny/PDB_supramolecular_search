@@ -5,7 +5,7 @@ Created on Mon Jan  1 18:00:25 2018
 @author: michal
 """
 from cif_analyser import findSupramolecular
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeAdditionalInfo
 from os.path import isdir, basename
 from os import makedirs, remove
 import glob
@@ -13,7 +13,9 @@ import time
 from multiprocessing import Pool
 
 #write header
-            
+#restart = False
+
+#if not restart:
 if not isdir("logs"):
         makedirs("logs")
         
@@ -33,7 +35,21 @@ writeCationPiHeader()
 
 
 cif_files = glob.glob( "cif/*.cif" )
-    
+
+#if restart:
+#    log_files = glob.glob("logs/anionPi*.log")
+#    print(log_files)
+#    PDBprocessed = set()
+#    for log in log_files:
+#        if log != "logs/piPi.log":
+#            continue
+#        
+#        logDataFrame = pd.read_csv(log, sep="\t")
+#        newPDB = logDataFrame[0].unique()
+#        print(newPDB)
+#        
+#
+#    
 dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
@@ -41,16 +57,19 @@ dataLen = len(cif_files)
 numberOfProcesses = 6
 pool = Pool(numberOfProcesses)
 
-def prepareArgumentsList(cifFiles):
+
+processedPDB = []
+
+def prepareArgumentsList(cifFiles, PDB2doNotProcess ):
     arguments = []
     
     for cif in cifFiles:
         PDBcode = basename(cif).split(".")[0].upper()
-        arguments.append( ( cif, PDBcode ) )
+        if not PDBcode in PDB2doNotProcess:
+            arguments.append( ( cif, PDBcode ) )
+            PDB2doNotProcess.append(PDBcode)
         
-    return arguments
-
-argumentsList = prepareArgumentsList( cif_files)
+    return arguments, PDB2doNotProcess
 
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
@@ -58,10 +77,24 @@ timeFile.write(str(timeStart))
 timeFile.close()
 
 cifNoFile = open("logs/cif2process.log", 'w')
-cifNoFile.write(str(len(cif_files)))
+#cifNoFile.write(str(len(cif_files)))
+cifNoFile.write("137000")
 cifNoFile.close()
 
-pool.map(findSupramolecular, argumentsList)
+while True:
+    writeAdditionalInfo("Obieg pętli start")
+    argumentsList, processedPDB = prepareArgumentsList( cif_files, processedPDB)
+    writeAdditionalInfo("Znalazlem "+str(len(argumentsList)) + " nowych plikow cif")
+    
+    if len(argumentsList) < 5:
+        writeAdditionalInfo("Koniec imprezy")
+        break
+    
+    pool.map(findSupramolecular, argumentsList)
+    
+    cif_files = glob.glob( "cif/*.cif" )
+    writeAdditionalInfo("Obieg pętli stop")
+    
 #for arg in argumentsList:
 #    findSupramolecular(arg)
 
