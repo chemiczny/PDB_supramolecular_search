@@ -242,13 +242,13 @@ def fetchdialog(simulation = False):
     def anionTypeFilter():
         listFilter("Groups")
         
-    def metalFilter():
-        listFilter("Metals")
+    def methodFilter():
+        listFilter("Methods")
 
     listParameters = { "Pi acid" : { "header" : "Pi acid Code", "filterFunc" : piAcidFilter }, 
                       "Anions" : { "header" : "Anion code", "filterFunc" : anionFilter } , 
                       "Groups" : { "header" : "Anion type", "filterFunc" : anionTypeFilter },
-                      "Metals" : { "header" : "Metal cations", "filterFunc" : metalFilter }} 
+                      "Methods" : { "header" : "Method", "filterFunc" : methodFilter }} 
                 
     actualColumn = 4
     for parameter in sorted(listParameters.keys()):
@@ -318,7 +318,7 @@ def fetchdialog(simulation = False):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
                                                         row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["Resolution"] , row["Metal cations"]  ) )
+                                                        str(row["h"])[:3], row["Resolution"] , row["Method"]  ) )
             rowId += 1
             if rowId >= stop:
                 break
@@ -511,7 +511,7 @@ def fetchdialog(simulation = False):
     lab_data.grid(row = 25, column = 0)
     
     
-    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Metal" ]
+    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Method" ]
     
     tree_data = ttk.Treeview(self, columns = headers, show = "headings", heigh = 15 )
     for header in headers:
