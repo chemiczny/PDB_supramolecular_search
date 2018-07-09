@@ -608,7 +608,7 @@ def fetchdialog(simulation = False):
         app = plugins.get_pmgapp()
         root = plugins.get_tk_root()
         
-    appData = { "general" : {} , "anionPi" : {} , "piPi" : {}, "cationPi" : {} }
+    appData = { "cifDir" : False }
     
     self = Tkinter.Toplevel(root)
     self.title('Supramolecular analyser')
@@ -616,74 +616,72 @@ def fetchdialog(simulation = False):
     self.resizable(0,0)
     
     nb = ttk.Notebook(self, height = 700, width = 1100)
-    
-    pageGeneral = ttk.Frame(nb)
+
     pageAnionPi = ttk.Frame(nb)
     pagePiPi = ttk.Frame(nb)
     pageCationPi = ttk.Frame(nb)
     pageAnionCation  = ttk.Frame(nb)
     
-    nb.add(pageGeneral, text = "General")
     nb.add(pageAnionPi, text = "AnionPi")
     nb.add(pagePiPi, text = "PiPi")
     nb.add(pageCationPi, text = "CationPi")
     nb.add(pageAnionCation, text = "AnionCation")
     
-    nb.grid(column = 0)
+    nb.grid(column = 0, row = 0, columnspan = 20)
     
     guiAnionPi = SupramolecularGUI(pageAnionPi)
     guiPiPi = SupramolecularGUI(pagePiPi)
     guiCationPi = SupramolecularGUI( pageCationPi)
     guiAnionCation = SupramolecularGUI( pageAnionCation)
     
+    guis = [ guiAnionPi, guiPiPi, guiCationPi, guiAnionCation]
+    
     ######################
     # GENERAL
     ######################
     
     def selectCif():
-        appData["general"]["cifDir"] = tkFileDialog.askdirectory()
+        appData["cifDir"] = tkFileDialog.askdirectory()
+        if not appData["cifDir"]:
+            print("nihuhu")
+            return
+        
         ent_cifDir.configure(state = "normal")
         ent_cifDir.delete(0,"end")
-        ent_cifDir.insert(0, appData["general"]["cifDir"])
+        ent_cifDir.insert(0, appData["cifDir"])
         ent_cifDir.configure(state = "readonly")
+        
+        for gui in guis:
+            gui.logData["cifDir"] = appData["cifDir"]
+        
+        
     
-    but_cifDir = Tkinter.Button(pageGeneral, width = 10, command = selectCif, text = "Cif dir")
-    but_cifDir.grid(row = 0, column = 1)
+    but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
+    but_cifDir.grid(row = 2, column = 1)
     
-    ent_cifDir = Tkinter.Entry(pageGeneral, width =45)
+    ent_cifDir = Tkinter.Entry(self, width =45)
     ent_cifDir.configure(state = "readonly")
-    ent_cifDir.grid(row = 0, column = 2, columnspan = 3)
+    ent_cifDir.grid(row = 2, column = 2, columnspan = 3)
     
-    actions = [ "AND", "AND NOT" ]
     actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation" ]
     actionLabels2Objects = { "AnionPi" : guiAnionPi, "PiPi" : guiPiPi, "CationPi" : guiCationPi, "AnionCation" : guiAnionCation }
     actionMenu = {}
     
     column = 1
     
-    lab_usePage = Tkinter.Label(pageGeneral, width = 10, text = "Use:")
-    lab_usePage.grid(row = 2, column = 0)
+    lab_usePage = Tkinter.Label(self, width = 10, text = "Use:")
+    lab_usePage.grid(row = 4, column = 0)
     for label in actionLabels:
         actionMenu[label] = {}
         
-        actionMenu[label]["label"] = Tkinter.Label(pageGeneral, text = label)
-        actionMenu[label]["label"].grid(row = 1, column = column )
+        actionMenu[label]["label"] = Tkinter.Label(self, text = label)
+        actionMenu[label]["label"].grid(row = 3, column = column )
         
-        actual_row = 2
+        actual_row = 4
         
         actionMenu[label]["checkValue"] = Tkinter.IntVar()
-        actionMenu[label]["checkbox"] = Tkinter.Checkbutton(pageGeneral, variable = actionMenu[label]["checkValue"])
+        actionMenu[label]["checkbox"] = Tkinter.Checkbutton(self, variable = actionMenu[label]["checkValue"])
         actionMenu[label]["checkbox"].grid(row = actual_row, column = column)
-        
-        actual_row += 1
-        
-        actionMenu[label]["radioButton"] = {}
-        actionMenu[label]["actionKey"] = Tkinter.IntVar()
-        
-        for value, key in enumerate(actions):
-            actionMenu[label]["radioButton"][key]= Tkinter.Radiobutton(pageGeneral, text = key, value = value, variable = actionMenu[label]["actionKey"], indicatoron=0, width = 8 )
-            actionMenu[label]["radioButton"][key].grid(row = actual_row, column = column)
-            actual_row += 1
             
         column += 1
     
@@ -699,16 +697,15 @@ def fetchdialog(simulation = False):
                 else:
                     pass
     
-    but_merge = Tkinter.Button(pageGeneral, width = 20, text = "Merge!", command = mergeResults)
-    but_merge.grid(row = 10, column = 0, columnspan = 2)
+    but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
+    but_merge.grid(row = 4, column = 6, columnspan = 2)
     
-    headers = [ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Method" ]
+    def showAllInteractions():
+        pass
     
-    tree_data = ttk.Treeview(pageGeneral, columns = headers, show = "headings", heigh = 15 )
-    for header in headers:
-        tree_data.heading(header, text = header)
-        tree_data.column(header, width = 70)
-    tree_data.grid(row = 30, column = 0, columnspan = 40)
+    but_showAll = Tkinter.Button(self, width = 20, text = "All inter.", command = showAllInteractions)
+    but_showAll.grid(row = 4, column = 8, columnspan = 2)
+
     ######################
     # HELPERS
     ######################
@@ -920,7 +917,6 @@ def fetchdialog(simulation = False):
     ######################
     # ALL
     ######################
-    guis = [ guiAnionPi, guiPiPi, guiCationPi, guiAnionCation]
     
     for gui in guis:
         gui.grid()
