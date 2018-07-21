@@ -34,7 +34,8 @@ writePiPiHeader()
 writeCationPiHeader()
 
 
-cif_files = glob.glob( "cif/*.cif" )
+cif_files = glob.glob( "cif/*.cif" )                                                                                                                         
+#cif_files = glob.glob( "/net/scratch/people/plgglanow/slurm_jobdir/cif/*.cif" )
 
 #if restart:
 #    log_files = glob.glob("logs/anionPi*.log")
@@ -63,9 +64,9 @@ def prepareArgumentsList(cifFiles, PDB2doNotProcess ):
     
     for cif in cifFiles:
         PDBcode = basename(cif).split(".")[0].upper()
-        if not PDBcode in PDB2doNotProcess:
-            arguments.append( ( cif, PDBcode ) )
-            PDB2doNotProcess.append(PDBcode)
+#        if not PDBcode in PDB2doNotProcess:
+        arguments.append( ( cif, PDBcode ) )
+#            PDB2doNotProcess.append(PDBcode)
         
     return arguments, PDB2doNotProcess
 
