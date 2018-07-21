@@ -20,9 +20,10 @@ from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
 from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults
-from ringDetection import getRingsCentroids
+from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
+import networkx as nx
 
 def findSupramolecular( cifData):
     """
@@ -112,7 +113,7 @@ def readResolutionAndMethod( cifFile ):
         return -3, method
 
 def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
-    centroids = getRingsCentroids( ligand )
+    centroids, ligandGraph = getRingsCentroids( ligand, True )
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
@@ -128,7 +129,12 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
             
         if len(extractedAnionAtoms) > 0:
             extractedCationAtoms = extractCationAtoms( centroid["coords"], nsSmall, 10 )
-            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, modelIndex, fileId )
+            cationRingLenChains = []
+            for cat in extractedCationAtoms:
+                cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph) )
+                    
+            
+            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, modelIndex, fileId )
             
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
@@ -138,7 +144,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
                 writeAnionCationResults(atom["Atom"], PDBcode, cationNearAnion, modelIndex, fileId)
             
         
-        extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, [], method, fileId)
+        extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, method, fileId)
 
         
         if len(extractedAtoms) > 0:
@@ -163,6 +169,36 @@ def extractCationAtoms ( point,  ns, distance  ):
             metalCationsFound.append( atom )
     
     return metalCationsFound
+
+def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
+    piAcidAtoms = list(piAcid.get_atoms())
+    
+    cationNeighbours = ns.search( cation.get_coord(), 2.4, 'A' )
+    firstAtomInRing = centroidData["cycleAtoms"][0]
+    shortestPath = []
+    for catN in cationNeighbours:
+        if catN.get_parent() == piAcid:
+            tempG, catNIndex = findInGraph( ligandGraph, catN, piAcidAtoms )
+            newPath = nx.shortest_path(ligandGraph, firstAtomInRing, catNIndex)
+            newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
+            
+            if len(newPath) < len(shortestPath) or not shortestPath:
+                shortestPath = newPath
+                
+    if not shortestPath:
+        return 0
+    
+    for node in shortestPath:
+        neighbors = list(nx.neighbors(ligandGraph, node))
+        if len( neighbors ) > 2:
+            verdict = isFlatPrimitive(piAcidAtoms, neighbors + [ node ], 0.25)
+            if not verdict["isFlat"]:
+                fileId = current_process()
+                writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
+                return 0
+            
+    return len(shortestPath)
+        
 
 def extractRingCentroids(point, residue, ns):
     distAtom = 4.7

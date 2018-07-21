@@ -35,8 +35,7 @@ def writeAnionPiHeader( ):
     resultsFile.write("Model No\tDisordered\t")
     resultsFile.write("Ring size\t")
     resultsFile.write("Resolution\t")
-    resultsFile.write("Method\t")
-    resultsFile.write("Metal cations\n")
+    resultsFile.write("Method\n")
     resultsFile.close()
     
 def writeCationPiHeader( ):
@@ -49,6 +48,7 @@ def writeCationPiHeader( ):
     resultsFile.write("Cation code\tCation chain\tCation id\t")
     resultsFile.write("Atom symbol\tDistance\tAngle\t")
     resultsFile.write("x\th\t")
+    resultsFile.write("RingChain\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
     resultsFile.write("Model No\n")
@@ -85,7 +85,7 @@ def writeAnionCationHeader( ):
     resultsFile.write("Model No\n")
     resultsFile.close()
     
-def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, cationNear, method, fileId = None ):
+def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -146,20 +146,19 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
         resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
         resultsFile.write(str(centroid["ringSize"])+"\t")
         resultsFile.write(str(resolution)+"\t")
-        resultsFile.write(str(method)+"\t")
-        if cationNear:
-            resultsFile.write(str(cationNear)+"\n")
-        else:
-            resultsFile.write("None\n")
+        resultsFile.write(str(method)+"\n")
     
     resultsFile.close()
     
     return newAtoms
             
-def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, fileId = None ):
+def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , modelIndex, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
+    if not extractedAtoms:
+        return
+    
     resultsFileName = "logs/cationPi.log"
     if fileId != None:
         resultsFileName = "logs/cationPi"+str(fileId)+".log"
@@ -168,7 +167,7 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex,
     ligandChain = ligand.get_parent().get_id()
     resultsFile = open(resultsFileName, "a+")
     
-    for atom in extractedAtoms:
+    for atom, chainLen in zip(extractedAtoms , cationRingChainLens):
         distance = atomDistanceFromCentroid( atom, centroid )
         angle = atomAngleNomVecCentroid( atom, centroid )
         
@@ -198,6 +197,8 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex,
         
         resultsFile.write(str(x)+"\t")
         resultsFile.write(str(h)+"\t")
+        
+        resultsFile.write(str(chainLen)+"\t")
         
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")

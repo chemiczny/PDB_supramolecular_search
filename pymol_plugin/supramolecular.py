@@ -339,8 +339,8 @@ class SupramolecularGUI:
                 if key in self.listParameters:
                     listIndex = self.listParameters[key]["listbox"].curselection()
                     if listIndex:
-                        query = self.listParameters[key]["listbox"].get(listIndex)
-                        actualData = actualData[  actualData[ self.listParameters[key]["header"] ] == query ]
+                        query = str(self.listParameters[key]["listbox"].get(listIndex))
+                        actualData = actualData[  actualData[ self.listParameters[key]["header"] ].astype(str) == query ]
 
                 elif key in self.numericalParameters:
                     minValue = self.numericalParameters[key]["entry_low"].get()
@@ -687,15 +687,17 @@ def fetchdialog(simulation = False):
     
     
     def mergeResults():
-        dataMerged = False
+        uniqueId = False
         for label in actionLabels:
             if actionMenu[label]["checkValue"].get() > 0:
                 if not "filtered" in  actionLabels2Objects[label].logData:
                     continue
-                elif not dataMerged:
-                    dataMerged = actionLabels2Objects[label].logData
+                elif not uniqueId:
+                    uniqueId = actionLabels2Objects[label].logData["filtered"]["PDB Code"] +  actionLabels2Objects[label].logData["filtered"]["Pi acid Code"]
                 else:
                     pass
+                
+        print(uniqueId)
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
     but_merge.grid(row = 4, column = 6, columnspan = 2)
@@ -826,7 +828,8 @@ def fetchdialog(simulation = False):
     
     guiCationPi.setListParameters({ "Pi acid" : { "header" : "Pi acid Code" }, 
                       "Cation" : { "header" : "Cation code" },
-                      "Element" : { "header" : "Atom symbol" }
+                      "Element" : { "header" : "Atom symbol" },
+                      "Chain" : {"header" : "RingChain" }
                       })
     
     

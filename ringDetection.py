@@ -96,7 +96,7 @@ def isFlat(allAtomsList, atomsIndList, substituents):
     verdict['coords'] = centroid
     return verdict
     
-def isFlatPrimitive(allAtomsList, atomsIndList):
+def isFlatPrimitive(allAtomsList, atomsIndList, maxDist = 0.15):
     """
     Sprawdz czy wybrane atomy leza w jednej plaszczyznie.
     Procedura: na podstawie polozen trzech pierwszych atomow wyznacza sie 
@@ -138,7 +138,7 @@ def isFlatPrimitive(allAtomsList, atomsIndList):
         atomCoord = np.array(allAtomsList[ atomInd ].get_coord() )
         atomDist = abs( np.inner(norm_vec, atomCoord) + D  )
         
-        if atomDist > 0.1:
+        if atomDist > maxDist:
             return verdict
             
     verdict['isFlat'] = True
@@ -161,7 +161,7 @@ def getNormVec( allAtomsList, atomsIndList ):
         
     return normalize(norm_vec)
 
-def getRingsCentroids( molecule ):
+def getRingsCentroids( molecule, returnGraph = False ):
     """
     Znajdz pierscienie w czasteczce i wyznacz wspolrzedne ich srodkow jesli
     sa one aromatyczne.
@@ -205,9 +205,12 @@ def getRingsCentroids( molecule ):
 #        else:
 #            print("cykl jest plaski")
         
-        centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) })
+        centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) , "cycleAtoms" : cycle })
         
-    return centroids
+    if returnGraph:
+        return centroids, G
+    else:
+        return centroids
 
 def onlyLighAtomsInCycle( cycle, atoms ):
     for atomInd in cycle:
