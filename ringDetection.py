@@ -242,10 +242,6 @@ def molecule2graph( atoms, atom = None ):
     Wyjscie:
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """
-    atomId = ""
-    
-    if atom != None: 
-        atomId = createAtomId(atom)
 #        print("szukam ", atomName, parentId, atom.get_parent().get_resname())
         
     thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
@@ -265,7 +261,7 @@ def molecule2graph( atoms, atom = None ):
             threshold1 = thresholds[atom1.element]
         
         if atom != None:
-            if atomId == createAtomId(atom1):
+            if atom == atom1:
                 atoms_found.append(atom1Ind)
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
@@ -303,13 +299,84 @@ def molecule2graph( atoms, atom = None ):
         
     return G
 
+def moleculeFragment2graph( atoms, atom , maxDist ):
+    """
+    Konwersja czasteczki na graf (networkx)
+    
+    Wejscie:
+    atom - obiekt Atom (Biopython), ktorego polozenie w grafie jest istotne
+    atoms - lista wszystkich atomow
+    
+    Wyjscie:
+    G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
+    """        
+    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
+                  "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
+    
+    G = nx.Graph()
+    atoms_found = []
+    for atom1Ind, atom1 in enumerate(atoms):
+        threshold1 = 2.2
+
+        if atom1.element == "H":
+            continue
+        
+        if atom1 - atom > maxDist:
+            continue
+        
+        G.add_node(atom1Ind, element = atom1.element)
+        
+        if atom1.element in thresholds.keys():
+            threshold1 = thresholds[atom1.element]
+        
+        if atom != None:
+            if atom == atom1:
+                atoms_found.append(atom1Ind)
+        
+        for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
+            threshold2 = 2.2
+          
+            if atom2.element == "H":
+                continue
+            
+            if atom2 - atom > maxDist:
+                continue
+            
+            if atom2.element in thresholds.keys():
+                threshold2 = thresholds[atom2.element]
+            
+            distance = atom1 - atom2
+            
+            threshold = max( threshold1, threshold2 )
+            if distance < threshold :
+                G.add_edge(atom1Ind, atom2Ind)
+                
+    if atom != None:
+        if len(atoms_found) != 1 :
+            fileId = current_process()
+            writeAdditionalInfo( "Many atoms in graph found!!!! "+str(atoms_found)  , fileId)
+            print("WTF!? ", atoms_found)
+            
+        if not atoms_found[0] in G.nodes():
+            print("Nie znalazlem "+ atom.element+" w grafie!")
+            G.add_node( atoms_found[0] )
+            
+        nodes2stay = [ ]
+        for node in G.nodes():
+            if nx.has_path(G, node, atoms_found[0]):
+                nodes2stay.append(node)
+            
+        return G.subgraph(nodes2stay), atoms_found[0]
+#        return G, atoms_found[0]
+        
+    return G
+
 def findInGraph( G, atom, atomList ):
     nodes2stay = [ ]
-    atomId = createAtomId(atom)
     atoms_found = []
 
     for node in G.nodes:
-        if createAtomId( atomList[node] ) == atomId:
+        if  atomList[node]  == atom:
             atoms_found.append(node)
             
     if len(atoms_found) != 1 :

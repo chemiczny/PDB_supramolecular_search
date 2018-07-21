@@ -4,6 +4,8 @@
 Created on Fri Jun 29 12:53:24 2018
 
 @author: michal
+
+In older versions of Biopython method get_fullid() returns empty tuple
 """
 
 def createResId(residue):

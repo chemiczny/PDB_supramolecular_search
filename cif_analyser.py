@@ -9,7 +9,11 @@ Sluzy do analizy pojedynczego pliku cif celem znalezienia potencjalnych struktur
 zawierajacych oddzialywania supramolekularne anion-pi oraz obliczenie
 wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 """
-
+#fast ang ugly code especially for prometheus
+import sys
+from os.path import isdir
+if isdir("/net/people/plgglanow/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
+    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from primitiveCif2Dict import primitiveCif2Dict

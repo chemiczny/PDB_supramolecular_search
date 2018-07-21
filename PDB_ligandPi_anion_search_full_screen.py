@@ -47,9 +47,7 @@ cif_files = glob.glob( "cif/*.cif" )
 #        logDataFrame = pd.read_csv(log, sep="\t")
 #        newPDB = logDataFrame[0].unique()
 #        print(newPDB)
-#        
-#
-#    
+
 dataProcessed = 0
 structure_saved = 0
 dataLen = len(cif_files)
@@ -77,24 +75,13 @@ timeFile.write(str(timeStart))
 timeFile.close()
 
 cifNoFile = open("logs/cif2process.log", 'w')
-#cifNoFile.write(str(len(cif_files)))
-cifNoFile.write("137000")
+cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
-while True:
-    writeAdditionalInfo("Obieg pętli start")
-    argumentsList, processedPDB = prepareArgumentsList( cif_files, processedPDB)
-    writeAdditionalInfo("Znalazlem "+str(len(argumentsList)) + " nowych plikow cif")
-    
-    if len(argumentsList) < 5:
-        writeAdditionalInfo("Koniec imprezy")
-        break
-    
-    pool.map(findSupramolecular, argumentsList)
-    
-    cif_files = glob.glob( "cif/*.cif" )
-    writeAdditionalInfo("Obieg pętli stop")
-    
+
+argumentsList, processedPDB = prepareArgumentsList( cif_files, processedPDB)
+pool.map(findSupramolecular, argumentsList)
+
 #for arg in argumentsList:
 #    findSupramolecular(arg)
 
