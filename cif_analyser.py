@@ -207,7 +207,7 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
                 writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
                 return 0
             
-    return len(shortestPath)
+    return len(shortestPath)+1
         
 
 def extractRingCentroids(point, residue, ns):

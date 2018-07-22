@@ -7,6 +7,7 @@ Created on Sun Jul 22 19:40:59 2018
 """
 import pandas as pd
 import sys
+from os import path
 
 if sys.version_info[0] < 3:
     import Tkinter
@@ -62,6 +63,31 @@ def fetchdialog(simulation = False):
     # GENERAL
     ######################
     
+    def readLogDir():
+        appData["logDir"] = tkFileDialog.askdirectory()
+        if not appData["logDir"]:
+            print("nihuhu")
+            return
+        
+        ent_logDir.configure(state = "normal")
+        ent_logDir.delete(0,"end")
+        ent_logDir.insert(0, appData["logDir"])
+        ent_logDir.configure(state = "readonly")
+        
+        for guiKey in actionLabels2Objects:
+            basename = guiKey[0].lower()+guiKey[1:]+".log"
+            logFileName = path.join( appData["logDir"], basename )
+            if path.isfile(logFileName):
+                actionLabels2Objects[guiKey].logData["logFile"] = logFileName
+                actionLabels2Objects[guiKey].openLogFile()
+    
+    but_readLogDir = Tkinter.Button(self, width = 20, text = "Read log Dir", command = readLogDir)
+    but_readLogDir.grid(row = 2, column = 1, columnspan = 1)
+    
+    ent_logDir = Tkinter.Entry(self, width =45)
+    ent_logDir.configure(state = "readonly")
+    ent_logDir.grid(row = 2, column = 2, columnspan = 2)
+    
     def selectCif():
         appData["cifDir"] = tkFileDialog.askdirectory()
         if not appData["cifDir"]:
@@ -79,20 +105,20 @@ def fetchdialog(simulation = False):
         
     
     but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
-    but_cifDir.grid(row = 2, column = 1)
+    but_cifDir.grid(row = 2, column = 4)
     
     ent_cifDir = Tkinter.Entry(self, width =45)
     ent_cifDir.configure(state = "readonly")
-    ent_cifDir.grid(row = 2, column = 2, columnspan = 3)
+    ent_cifDir.grid(row = 2, column = 5, columnspan = 3)
     
     actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation" ]
     actionLabels2Objects = { "AnionPi" : guiAnionPi, "PiPi" : guiPiPi, "CationPi" : guiCationPi, "AnionCation" : guiAnionCation }
     actionMenu = {}
     
-    column = 1
+    column = 2
     
     lab_usePage = Tkinter.Label(self, width = 10, text = "Use:")
-    lab_usePage.grid(row = 4, column = 0)
+    lab_usePage.grid(row = 4, column = 1)
     for label in actionLabels:
         actionMenu[label] = {}
         
@@ -171,11 +197,6 @@ def fetchdialog(simulation = False):
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
     but_merge.grid(row = 4, column = 6, columnspan = 2)
     
-    def showAllInteractions():
-        pass
-    
-    but_showAll = Tkinter.Button(self, width = 20, text = "All inter.", command = showAllInteractions)
-    but_showAll.grid(row = 4, column = 8, columnspan = 2)
 
     ######################
     # HELPERS

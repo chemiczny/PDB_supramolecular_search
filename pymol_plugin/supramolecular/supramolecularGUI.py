@@ -69,6 +69,12 @@ class SupramolecularGUI:
         
     def getLogFile(self):
         self.logData["logFile"] = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Log files","*.log"), ("Txt files", "*.txt") ,("CSV files","*.csv"), ("Dat files", "*.dat"), ("all files","*.*")) )
+        self.openLogFile()
+    
+    def openLogFile(self):
+        if not self.logData["logFile"]:
+            return
+        
         self.ent_log.configure(state = "normal")
         self.ent_log.delete(0,"end")
         self.ent_log.insert(0, self.logData["logFile"])
@@ -79,7 +85,7 @@ class SupramolecularGUI:
             self.updateMenu()
         except:
             tkMessageBox.showwarning(title = "Error!", message = "Pandas cannot parse this file")
-            
+    
     def updateMenu(self):
         for parameter in self.listParameters:
             parametersData = self.logData["data"][ self.listParameters[parameter]["header"]  ].unique()
