@@ -77,7 +77,7 @@ def writeAnionCationHeader( ):
     """
     resultsFileName = "logs/anionCation.log"
     resultsFile = open(resultsFileName, "w")
-    resultsFile.write("PDB Code\tCation Code\tCation chain\tCation id\t")
+    resultsFile.write("PDB Code\tCation code\tCation chain\tCation id\t")
     resultsFile.write("Anion code\tAnion chain\tAnion id\t")
     resultsFile.write("Anion symbol\tCation symbol\tDistance\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
