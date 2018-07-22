@@ -60,9 +60,15 @@ def findSupramolecular( cifData):
     try:
         for modelIndex, model in enumerate(structure):
             atoms = Selection.unfold_entities(model, 'A')  
-            ns = NeighborSearch(atoms)
+            not_disordered_atoms = []
+            for atom in atoms:
+                if not atom.is_disordered() or atom.get_altloc() == 'A':
+                    not_disordered_atoms.append(atom)
+                
+            ns = NeighborSearch(not_disordered_atoms)
                
             for residue in model.get_residues():
+                
                 residueName = residue.get_resname().upper()
                 if not residueName in notPiacids  :
     #                print("Analizuje: ", residueName)
@@ -113,6 +119,10 @@ def readResolutionAndMethod( cifFile ):
         return -3, method
 
 def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
+    firstAtom = list(ligand.get_atoms())[0]
+    if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
+        return False
+        
     centroids, ligandGraph = getRingsCentroids( ligand, True )
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     

@@ -150,14 +150,6 @@ def searchInAnionTemplates( atom, atoms ):
 #    print("transformuje na graf")
     graph, atomInd = moleculeFragment2graph( atoms, atom, 5.0 )
 #    print("rozmiar grafu: ", len(graph.nodes()))
-    if len(graph.nodes()) > 30:
-        dupa = open("dupa.xyz", "a+")
-        dupa.write(str(len(atoms))+"\n\n")
-        for a in atoms:
-            c = a.get_coord()
-            dupa.write(a.element+ " "+ str(c[0])+" "+str(c[1])+" "+str(c[2])+"\n")
-        
-        dupa.close()
 #    print("Przetransformowalem")
     composition = graph2Composition(graph)
 #    print("Kompozycja zrobiena")
