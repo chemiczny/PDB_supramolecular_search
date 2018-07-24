@@ -211,6 +211,14 @@ def fetchdialog(simulation = False):
     def noAAinAnions(actualData):
         return actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) & ( actualData["Anion code"] != "CYS") ]
    
+    def noNUinAnions(actualData):
+        return actualData[(actualData["Anion code"] != "G") & (actualData[ "Anion code" ] != "A" ) & ( actualData["Anion code"] != "C" ) & ( actualData["Anion code"] != "T") & ( actualData["Anion code"] != "U") ]
+   
+    def noNUinPiAcids(actualData):
+        return actualData[(actualData["Pi acid Code"] != "G") & (actualData[ "Pi acid Code" ] != "A" ) & ( actualData["Pi acid Code"] != "C" ) & ( actualData["Pi acid Code"] != "T" ) & ( actualData["Pi acid Code"] != "U" )  ]
+    
+    def noNUinPiRes(actualData):
+        return actualData[(actualData["Pi res code"] != "G") & (actualData[ "Pi res code" ] != "A" ) & ( actualData["Pi res code"] != "C" ) & ( actualData["Pi res code"] != "T" ) & ( actualData["Pi res code"] != "T" ) ]
     
     ######################
     # ANION PI
@@ -231,7 +239,9 @@ def fetchdialog(simulation = False):
     guiAnionPi.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Method" ])
      
     guiAnionPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
-                                         { "label" : "No AA in anions" ,  "func" : noAAinAnions }  ]  )
+                                         { "label" : "No AA in anions" ,  "func" : noAAinAnions } ,
+                                         { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ,
+                                         { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
     
     def row2ValuesAnionPi(rowId, row):
         return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
@@ -279,7 +289,9 @@ def fetchdialog(simulation = False):
     guiPiPi.setTreeData([ "ID" , "PDB" , "Pi 1", "Pi 1 id", "Pi 2", "Pi 2 id" , "R", "alpha", "x", "h", "theta" ])
     
     guiPiPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi 1", "func" : noAAinPiAcids } ,
-                                         { "label" : "No AA in Pi 2" ,  "func" : noAAinPiRes }  ]  )
+                                         { "label" : "No AA in Pi 2" ,  "func" : noAAinPiRes },
+                                         { "label" : "No NU in Pi 1", "func" : noNUinPiAcids },
+                                         { "label" : "No NU in Pi 2", "func" : noNUinPiRes } ]  )
     
     def row2ValuesPiPi(rowId, row):
         return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
@@ -314,7 +326,7 @@ def fetchdialog(simulation = False):
     ######################
     
     guiCationPi.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
-                           "alpha" : { "header" : "Angle" } } )
+                           "alpha" : { "header" : "Angle" } , "Chain size" : {"header" : "RingChain" } } )
     
     guiCationPi.setListParameters({ "Pi acid" : { "header" : "Pi acid Code" }, 
                       "Cation" : { "header" : "Cation code" },
@@ -327,9 +339,10 @@ def fetchdialog(simulation = False):
                           "Pi acid" : "Pi acid Code" ,"Cation" : "Cation code", "Cat. el." : "Atom symbol" }, [  "R" , "Angle" , "x" , "h" ,
                           "Pi acid" ,"Cation" , "Cat. el." ] )
     
-    guiCationPi.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h" ])
+    guiCationPi.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h", "chain" ])
     
-    guiCationPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids }   ]  )
+    guiCationPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
+                                           { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ]  )
     
     def getSelectionCationPi( data):
         res1Id = data["Piacid id"].values[0]
@@ -356,7 +369,7 @@ def fetchdialog(simulation = False):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Cation code"], 
                                                         row["Cation chain"] + str(row["Cation id"]), row["Atom symbol"], 
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3]  )
+                                                        str(row["h"])[:3] , str(row["RingChain"] ) )
         
     guiCationPi.setRow2Values(row2ValuesCationPi)
     
@@ -377,7 +390,8 @@ def fetchdialog(simulation = False):
     
     guiAnionCation.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Anion", "Anion id", "Anion el.", "Cat. el." , "R"])
     
-    guiAnionCation.setAdditionalCheckboxes( [ { "label" : "No AA in Pi anions", "func" : noAAinAnions }   ]  )
+    guiAnionCation.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
+                                              { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
     
     def row2ValuesAnionCation(rowId, row):
         return ( rowId, row["PDB Code"] , row["Cation code"], 
