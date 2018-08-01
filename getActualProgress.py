@@ -34,7 +34,7 @@ if isfile("logs/timeStop.log"):
 timeActual = time.time()
 
 progress = float(cifProcessed)/cifNo * 100
-if abs(progress-100) < 0.00001 and timeStop > timeStart:
+if abs(progress-100) < 0.00001 or timeStop > timeStart:
     timeActual = timeStop
     
 timeTaken = timeActual - timeStart

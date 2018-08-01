@@ -189,6 +189,10 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
     for catN in cationNeighbours:
         if catN.get_parent() == piAcid:
             tempG, catNIndex = findInGraph( ligandGraph, catN, piAcidAtoms )
+            if catNIndex == None:
+                print(piAcid.get_resname(), piAcid.get_id(), piAcid.get_parent().get_id())
+                continue
+            
             newPath = nx.shortest_path(ligandGraph, firstAtomInRing, catNIndex)
             newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
             

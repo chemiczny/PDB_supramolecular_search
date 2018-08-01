@@ -120,6 +120,9 @@ class SupramolecularGUI:
             self.actualRow+=1
             
     def listFilter(self, key):
+        if not self.logData["logFile"]:
+            return
+        
         template = self.listParameters[key]["entry"].get()
         template = template.upper()
         

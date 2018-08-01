@@ -136,7 +136,7 @@ def fetchdialog(simulation = False):
     
     def mergeResults():
         headersId ={ 
-                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id"] , 
+                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
                     "Cation" : ["Cation code", "Cation chain", "Cation id"]  }
         
@@ -298,7 +298,7 @@ def fetchdialog(simulation = False):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Pi res code"], 
                                                         row["Pi res chain"] + str(row["Pi res id"]), 
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["theta"]  )
+                                                        str(row["h"])[:3], row["theta"][:4]  )
     guiPiPi.setRow2Values( row2ValuesPiPi )
     
     def getSelectionPiPi( data):

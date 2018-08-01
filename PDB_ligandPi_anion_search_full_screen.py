@@ -35,19 +35,6 @@ writeCationPiHeader()
 
 
 cif_files = glob.glob( "cif/*.cif" )                                                                                                                         
-#cif_files = glob.glob( "/net/scratch/people/plgglanow/slurm_jobdir/cif/*.cif" )
-
-#if restart:
-#    log_files = glob.glob("logs/anionPi*.log")
-#    print(log_files)
-#    PDBprocessed = set()
-#    for log in log_files:
-#        if log != "logs/piPi.log":
-#            continue
-#        
-#        logDataFrame = pd.read_csv(log, sep="\t")
-#        newPDB = logDataFrame[0].unique()
-#        print(newPDB)
 
 dataProcessed = 0
 structure_saved = 0
@@ -56,19 +43,14 @@ dataLen = len(cif_files)
 numberOfProcesses = 6
 pool = Pool(numberOfProcesses)
 
-
-processedPDB = []
-
-def prepareArgumentsList(cifFiles, PDB2doNotProcess ):
+def prepareArgumentsList(cifFiles ):
     arguments = []
     
     for cif in cifFiles:
         PDBcode = basename(cif).split(".")[0].upper()
-#        if not PDBcode in PDB2doNotProcess:
         arguments.append( ( cif, PDBcode ) )
-#            PDB2doNotProcess.append(PDBcode)
         
-    return arguments, PDB2doNotProcess
+    return arguments
 
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
@@ -80,7 +62,7 @@ cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
 
-argumentsList, processedPDB = prepareArgumentsList( cif_files, processedPDB)
+argumentsList = prepareArgumentsList( cif_files)
 pool.map(findSupramolecular, argumentsList)
 ##
 #for arg in argumentsList:
@@ -101,6 +83,7 @@ def mergeLogs( logFinal, logs  ):
             line = new_log.readline()
         
         new_log.close()
+        remove(log_file)
     
     final_log.close()
 

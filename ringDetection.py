@@ -190,7 +190,8 @@ def getRingsCentroids( molecule, returnGraph = False ):
     cycles = list(nx.cycle_basis(G))
 #    print("Znalazlem cykli: ", len(cycles))
     centroids = []
-    for cycle in cycles:
+    
+    for cycleId, cycle in enumerate(cycles):
         if not onlyLighAtomsInCycle(cycle, atoms):
             continue
         
@@ -205,7 +206,8 @@ def getRingsCentroids( molecule, returnGraph = False ):
 #        else:
 #            print("cykl jest plaski")
         
-        centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) , "cycleAtoms" : cycle })
+        centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) ,
+                          "cycleAtoms" : cycle, "cycleId" : cycleId })
         
     if returnGraph:
         return centroids, G
@@ -297,7 +299,10 @@ def molecule2graph( atoms, atom = None ):
             if nx.has_path(G, node, atoms_found[0]):
                 nodes2stay.append(node)
             
+#        if atoms_found:
         return G.subgraph(nodes2stay), atoms_found[0]
+#        else:
+#            return G.subgraph(nodes2stay), None
 #        return G, atoms_found[0]
         
     return G
@@ -385,10 +390,12 @@ def findInGraph( G, atom, atomList ):
     if len(atoms_found) != 1 :
         print("WTF!? ", atoms_found)
         
-    for node in G.nodes():
+    if atoms_found:
+        for node in G.nodes():
+            
+            if nx.has_path(G, node, atoms_found[0]):
+                nodes2stay.append(node)
         
-        if nx.has_path(G, node, atoms_found[0]):
-            nodes2stay.append(node)
-        
-    return G.subgraph(nodes2stay), atoms_found[0]
-    
+        return G.subgraph(nodes2stay), atoms_found[0]
+    else:
+        return G.subgraph(nodes2stay), None

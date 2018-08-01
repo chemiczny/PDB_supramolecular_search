@@ -30,6 +30,7 @@ def writeAnionPiHeader( ):
     resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion type\t")
     resultsFile.write("Atom symbol\tDistance\tAngle\t")
     resultsFile.write("x\th\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Model No\tDisordered\t")
@@ -49,6 +50,7 @@ def writeCationPiHeader( ):
     resultsFile.write("Atom symbol\tDistance\tAngle\t")
     resultsFile.write("x\th\t")
     resultsFile.write("RingChain\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
     resultsFile.write("Model No\n")
@@ -65,6 +67,7 @@ def writePiPiHeader( ):
     resultsFile.write("Distance\tAngle\t")
     resultsFile.write("x\th\t")
     resultsFile.write("theta\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Centroid 2 x coord\tCentroid 2 y coord\tCentroid 2 z coord\t")
     resultsFile.write("Model No\t")
@@ -134,6 +137,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
         resultsFile.write(str(x)+"\t")
         resultsFile.write(str(h)+"\t")
         
+        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")
         resultsFile.write(str(centroidCoords[2])+"\t")
@@ -200,6 +204,7 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
         
         resultsFile.write(str(chainLen)+"\t")
         
+        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")
         resultsFile.write(str(centroidCoords[2])+"\t")
@@ -256,6 +261,7 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
         
         resultsFile.write(str(theta)+"\t")
         
+        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")
         resultsFile.write(str(centroidCoords[2])+"\t")
