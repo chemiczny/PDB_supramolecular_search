@@ -49,4 +49,5 @@ print("##########################################")
 print("Przetworzono: ", cifProcessed, "/", cifNo)
 print(progress, "%")
 print("W czasie: ", prettyTimeTaken)
-print("Szacowany pozostały czas: ", prettyTimeEstimated)
+if  timeStop < timeStart:
+    print("Szacowany pozostały czas: ", prettyTimeEstimated)

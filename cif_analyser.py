@@ -56,22 +56,24 @@ def findSupramolecular( cifData):
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
     resolution, method = readResolutionAndMethod(cifFile)
-#    print("jade z pliku: ", cifFile)
+
     try:
         for modelIndex, model in enumerate(structure):
             atoms = Selection.unfold_entities(model, 'A')  
             not_disordered_atoms = []
             for atom in atoms:
                 if not atom.is_disordered() or atom.get_altloc() == 'A':
+    
                     not_disordered_atoms.append(atom)
                 
+            if len(not_disordered_atoms) == 0:
+                continue
+            
             ns = NeighborSearch(not_disordered_atoms)
                
             for residue in model.get_residues():
-                
                 residueName = residue.get_resname().upper()
                 if not residueName in notPiacids  :
-    #                print("Analizuje: ", residueName)
                     if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
                         supramolecularFound = True
                 
@@ -192,6 +194,9 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
             if catNIndex == None:
                 print(piAcid.get_resname(), piAcid.get_id(), piAcid.get_parent().get_id())
                 continue
+            
+            if not  nx.has_path(ligandGraph, firstAtomInRing, catNIndex):
+                continue 
             
             newPath = nx.shortest_path(ligandGraph, firstAtomInRing, catNIndex)
             newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
