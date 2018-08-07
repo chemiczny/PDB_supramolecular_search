@@ -9,6 +9,7 @@ Created on Sun Jul 22 19:39:10 2018
 import pandas as pd
 import sys
 from os import path
+from time import time
 
 if sys.version_info[0] < 3:
     import Tkinter
@@ -36,7 +37,7 @@ class SupramolecularGUI:
     def __init__(self, page):
         self.page = page
         self.logData= {"logFile": False, "data" : None, 
-               "cifDir" : None, "arrowExists" : False, "displaying" : False, "displayingAround" : False}
+               "cifDir" : None, "displaying" : False, "displayingAround" : False}
         self.numericalParameters = {}
         self.checkboxVars = {}
         self.listParameters = {}
@@ -44,6 +45,11 @@ class SupramolecularGUI:
         self.headers = []
         self.currentMolecule = { "PdbCode" : None  }
         self.additionalCheckboxes = []
+        self.dataIsMerged = False
+        self.arrowName = "DefaultArrow"
+        self.arrowColor = "blue red"
+        
+        self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
         
     def grid(self):
         self.gridLogFilePart()
@@ -300,8 +306,9 @@ class SupramolecularGUI:
             if adChk["chkVar"].get() > 0:
                 actualData = adChk["func"](actualData)
                                       
+        self.dataIsMerged = False
         self.printFilterResults(actualData)
-            
+                    
     def printFilterResults(self, actualData ):
         recordsFound = str(len(actualData))
         
@@ -336,6 +343,7 @@ class SupramolecularGUI:
         self.logData["filtered"] = actualData
 
         self.showRange()
+        self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
     
     def showInteractions(self):
         if not "filtered" in self.logData:
@@ -387,17 +395,23 @@ class SupramolecularGUI:
         else:
             self.logData["displayingAround"] = False
         
-        if self.logData["arrowExists"]:
-            cmd.delete("Anion2Centroid")
+        self.deleteArrows()
             
         arrowBegin, arrowEnd = self.getArrow(data)
-        cgo_arrow(arrowBegin, arrowEnd, 0.1, name = "Anion2Centroid")
-        
-        self.logData["arrowExists"] = True
+        cgo_arrow(arrowBegin, arrowEnd, 0.1, name = self.arrowName, color = self.arrowColor)
+    
         self.logData["displaying"] = True
         self.currentMolecule["PdbCode"] = pdbCode
         
         cmd.deselect()
+        
+        self.actualDisplaying["rowData"] = data
+        self.actualDisplaying["selectionTime"] = time()
+        
+    def deleteArrows(self):
+        for arrow in cmd.get_names_of_type("object:cgo"):
+            if "rrow" in arrow:
+                cmd.delete(arrow)
         
     def setSelectionFunc(self, selectionFunc):
         self.getSelection = selectionFunc

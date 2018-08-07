@@ -22,7 +22,7 @@ else:
     from tkinter import messagebox as tkMessageBox
     import tkinter.ttk as ttk
 
-from supramolecularGUI import SupramolecularGUI
+from supramolecularComposition import SupramolecularComposition
 
 def fetchdialog(simulation = False):
     if simulation:
@@ -35,7 +35,7 @@ def fetchdialog(simulation = False):
     
     self = Tkinter.Toplevel(root)
     self.title('Supramolecular analyser')
-    self.minsize(1100, 700)
+    self.minsize(1100, 800)
     self.resizable(0,0)
     
     nb = ttk.Notebook(self, height = 700, width = 1100)
@@ -52,12 +52,9 @@ def fetchdialog(simulation = False):
     
     nb.grid(column = 0, row = 0, columnspan = 20)
     
-    guiAnionPi = SupramolecularGUI(pageAnionPi)
-    guiPiPi = SupramolecularGUI(pagePiPi)
-    guiCationPi = SupramolecularGUI( pageCationPi)
-    guiAnionCation = SupramolecularGUI( pageAnionCation)
+    supramolecularComposition = SupramolecularComposition(pageAnionPi, pagePiPi,
+                                                          pageCationPi, pageAnionCation)
     
-    guis = [ guiAnionPi, guiPiPi, guiCationPi, guiAnionCation]
     
     ######################
     # GENERAL
@@ -74,12 +71,8 @@ def fetchdialog(simulation = False):
         ent_logDir.insert(0, appData["logDir"])
         ent_logDir.configure(state = "readonly")
         
-        for guiKey in actionLabels2Objects:
-            basename = guiKey[0].lower()+guiKey[1:]+".log"
-            logFileName = path.join( appData["logDir"], basename )
-            if path.isfile(logFileName):
-                actionLabels2Objects[guiKey].logData["logFile"] = logFileName
-                actionLabels2Objects[guiKey].openLogFile()
+        supramolecularComposition.readAllLogsFromDir(appData["logDir"])
+        
     
     but_readLogDir = Tkinter.Button(self, width = 20, text = "Read log Dir", command = readLogDir)
     but_readLogDir.grid(row = 2, column = 1, columnspan = 1)
@@ -99,8 +92,7 @@ def fetchdialog(simulation = False):
         ent_cifDir.insert(0, appData["cifDir"])
         ent_cifDir.configure(state = "readonly")
         
-        for gui in guis:
-            gui.logData["cifDir"] = appData["cifDir"]
+        supramolecularComposition.selectCifDir(appData["cifDir"])
         
         
     
@@ -111,15 +103,13 @@ def fetchdialog(simulation = False):
     ent_cifDir.configure(state = "readonly")
     ent_cifDir.grid(row = 2, column = 5, columnspan = 3)
     
-    actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation" ]
-    actionLabels2Objects = { "AnionPi" : guiAnionPi, "PiPi" : guiPiPi, "CationPi" : guiCationPi, "AnionCation" : guiAnionCation }
     actionMenu = {}
     
     column = 2
     
     lab_usePage = Tkinter.Label(self, width = 10, text = "Use:")
     lab_usePage.grid(row = 4, column = 1)
-    for label in actionLabels:
+    for label in supramolecularComposition.actionLabels:
         actionMenu[label] = {}
         
         actionMenu[label]["label"] = Tkinter.Label(self, text = label)
@@ -133,300 +123,49 @@ def fetchdialog(simulation = False):
             
         column += 1
     
+    lab_showInt = Tkinter.Label(self, width = 10, text = "Show:" )
+    lab_showInt.grid(row = 5, column = 1)
+    
+    showMenu = {}
+    column = 2
+    
+    for label in supramolecularComposition.actionLabels:
+        showMenu[label] = {}
+        
+        showMenu[label]["checkValue"] = Tkinter.IntVar()
+        showMenu[label]["checkbox"] = Tkinter.Checkbutton(self, variable = showMenu[label]["checkValue"])
+        showMenu[label]["checkbox"].grid(row = 5, column = column)
+            
+        column += 1
+    
     
     def mergeResults():
-        headersId ={ 
-                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
-                    "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"]  }
-        
-        selectedData = []
-        
-        
-        for label in actionLabels:
-            if actionMenu[label]["checkValue"].get() > 0:
-                if not "filtered" in  actionLabels2Objects[label].logData:
-                    continue
-                else:
-                    selectedData.append(label)
-                    
-        if len(selectedData) < 2:
-            return
-        
-        uniqueData = []
-        actualKeys = []
-        for key in selectedData:
-            headers = [ "PDB Code", "Model No" ] 
-            
-            for headerKey in headersId:
-                if headerKey in key:
-                    headers += headersId[headerKey]
-                    
-            if len(uniqueData) == 0:
-                uniqueData = actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
-            else:
-                uniqueData = pd.merge( uniqueData,  actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(actualKeys) & set(headers) ))
-                uniqueData = uniqueData.drop_duplicates()
-                
-            actualKeys = list(set( actualKeys + headers ))
-            
-            
-        for key in selectedData:
-            headers = [ "PDB Code", "Model No" ] 
-            
-            for headerKey in headersId:
-                if headerKey in key:
-                    headers += headersId[headerKey]
-                    
-            mergingKeys = list(set(actualKeys) & set(headers) )
-            tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
-            mergedData = pd.merge( actionLabels2Objects[ key ].logData["filtered"], tempDataFrame, on = mergingKeys )
-            actionLabels2Objects[ key ].printFilterResults( mergedData )
-            
+        supramolecularComposition.merge(actionMenu)
             
         
-    def countSubstringInList( list2check, substring ):
-        found = 0
-        
-        for el in list2check:
-            if substring in list2check:
-                found +=1
-                
-        return found
+#    def countSubstringInList( list2check, substring ):
+#        found = 0
+#        
+#        for el in list2check:
+#            if substring in list2check:
+#                found +=1
+#                
+#        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
     but_merge.grid(row = 4, column = 6, columnspan = 2)
     
-
-    ######################
-    # HELPERS
-    ######################
+    def showAllInteractions():
+        supramolecularComposition.showAll(showMenu)
     
-    def noAAinPiAcids(actualData):
-        return actualData[(actualData["Pi acid Code"] != "TYR") & (actualData[ "Pi acid Code" ] != "PHE" ) & ( actualData["Pi acid Code"] != "HIS" ) & ( actualData["Pi acid Code"] != "TRP" ) ]
-    
-    def noAAinPiRes(actualData):
-        return actualData[(actualData["Pi res code"] != "TYR") & (actualData[ "Pi res code" ] != "PHE" ) & ( actualData["Pi res code"] != "HIS" ) & ( actualData["Pi res code"] != "TRP" ) ]
-    
-    def noAAinAnions(actualData):
-        return actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) & ( actualData["Anion code"] != "CYS") ]
-   
-    def noNUinAnions(actualData):
-        return actualData[(actualData["Anion code"] != "G") & (actualData[ "Anion code" ] != "A" ) & ( actualData["Anion code"] != "C" ) & ( actualData["Anion code"] != "T") & ( actualData["Anion code"] != "U") ]
-   
-    def noNUinPiAcids(actualData):
-        return actualData[(actualData["Pi acid Code"] != "G") & (actualData[ "Pi acid Code" ] != "A" ) & ( actualData["Pi acid Code"] != "C" ) & ( actualData["Pi acid Code"] != "T" ) & ( actualData["Pi acid Code"] != "U" )  ]
-    
-    def noNUinPiRes(actualData):
-        return actualData[(actualData["Pi res code"] != "G") & (actualData[ "Pi res code" ] != "A" ) & ( actualData["Pi res code"] != "C" ) & ( actualData["Pi res code"] != "T" ) & ( actualData["Pi res code"] != "T" ) ]
-    
-    ######################
-    # ANION PI
-    ######################
-    
-    guiAnionPi.setNumericalParameters({ "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
-                           "alpha" : { "header" : "Angle" }, "res" : { "header" : "Resolution" }  }  )
-    
-    guiAnionPi.setListParameters( { "Pi acid" : { "header" : "Pi acid Code" }, 
-                      "Anions" : { "header" : "Anion code" } , 
-                      "Groups" : { "header" : "Anion type" },
-                      "Methods" : { "header" : "Method" }} )
-    
-    guiAnionPi.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
-                         "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [  "R" , "Angle" , "x" , "h" ,
-                         "res" , "Pi acid" ,"Anion" ] )
-    
-    guiAnionPi.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Method" ])
-     
-    guiAnionPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
-                                         { "label" : "No AA in anions" ,  "func" : noAAinAnions } ,
-                                         { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ,
-                                         { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
-    
-    def row2ValuesAnionPi(rowId, row):
-        return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
-                                                        row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
-                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
-                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["Resolution"] , row["Method"]  )
-        
-    guiAnionPi.setRow2Values( row2ValuesAnionPi )
-    
-    def getSelectionAnionPi( data):
-        res1Id = data["Piacid id"].values[0]
-        res1Chain = data["Pi acid chain"].values[0]
-        
-        res2Id = data["Anion id"].values[0]
-        res2Chain = data["Anion chain"].values[0]
-        cmd.hide("everything")
-        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
-        return selection
-    
-    guiAnionPi.setSelectionFunc( getSelectionAnionPi )
-    
-    def getArrowAnionPi( data ):
-        centroidCoords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
-        anionAtomCoords = [ data["Anion x coord"].values[0] , data["Anion y coord"].values[0] , data["Anion z coord"].values[0] ]
-        
-        return centroidCoords, anionAtomCoords
-    
-    guiAnionPi.setArrowFunc( getArrowAnionPi )
-    
-    ######################
-    # PI PI
-    ######################
-    
-    guiPiPi.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
-                           "alpha" : { "header" : "Angle" }, "theta" : { "header" : "theta" }  }  )
-    
-    guiPiPi.setListParameters( { "Pi 1" : { "header" : "Pi acid Code" }, 
-                      "Pi 2" : { "header" : "Pi res code" } } )
-    
-    guiPiPi.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
-                         "theta" : "theta", "Pi 1" : "Pi acid Code" ,"Pi 2" : "Pi res code" }, [  "R" , "Angle" , "x" , "h" ,
-                         "theta" , "Pi 1" ,"Pi 2" ] )
-    
-    guiPiPi.setTreeData([ "ID" , "PDB" , "Pi 1", "Pi 1 id", "Pi 2", "Pi 2 id" , "R", "alpha", "x", "h", "theta" ])
-    
-    guiPiPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi 1", "func" : noAAinPiAcids } ,
-                                         { "label" : "No AA in Pi 2" ,  "func" : noAAinPiRes },
-                                         { "label" : "No NU in Pi 1", "func" : noNUinPiAcids },
-                                         { "label" : "No NU in Pi 2", "func" : noNUinPiRes } ]  )
-    
-    def row2ValuesPiPi(rowId, row):
-        return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
-                                                        row["Pi acid chain"]+str(row["Piacid id"]) , row["Pi res code"], 
-                                                        row["Pi res chain"] + str(row["Pi res id"]), 
-                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["theta"][:4]  )
-    guiPiPi.setRow2Values( row2ValuesPiPi )
-    
-    def getSelectionPiPi( data):
-        res1Id = data["Piacid id"].values[0]
-        res1Chain = data["Pi acid chain"].values[0]
-        
-        res2Id = data["Pi res id"].values[0]
-        res2Chain = data["Pi res chain"].values[0]
-        cmd.hide("everything")
-        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
-        return selection
-    
-    guiPiPi.setSelectionFunc( getSelectionPiPi )
-    
-    def getArrowPiPi( data ):
-        point1Coords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
-        point2Coords = [ data["Centroid 2 x coord"].values[0] , data["Centroid 2 y coord"].values[0] , data["Centroid 2 z coord"].values[0] ]
-        
-        return point1Coords, point2Coords
-    
-    guiPiPi.setArrowFunc( getArrowPiPi )
-    
-    ######################
-    # CATION PI
-    ######################
-    
-    guiCationPi.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
-                           "alpha" : { "header" : "Angle" } , "Chain size" : {"header" : "RingChain" } } )
-    
-    guiCationPi.setListParameters({ "Pi acid" : { "header" : "Pi acid Code" }, 
-                      "Cation" : { "header" : "Cation code" },
-                      "Element" : { "header" : "Atom symbol" },
-                      "Chain" : {"header" : "RingChain" }
-                      })
-    
-    
-    guiCationPi.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
-                          "Pi acid" : "Pi acid Code" ,"Cation" : "Cation code", "Cat. el." : "Atom symbol" }, [  "R" , "Angle" , "x" , "h" ,
-                          "Pi acid" ,"Cation" , "Cat. el." ] )
-    
-    guiCationPi.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h", "chain" ])
-    
-    guiCationPi.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
-                                           { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ]  )
-    
-    def getSelectionCationPi( data):
-        res1Id = data["Piacid id"].values[0]
-        res1Chain = data["Pi acid chain"].values[0]
-        
-        res2Id = data["Cation id"].values[0]
-        res2Chain = data["Cation chain"].values[0]
-        cmd.hide("everything")
-        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
-        return selection
-    
-    guiCationPi.setSelectionFunc( getSelectionCationPi )
-    
-    def getArrowCationPi( data ):
-        point1Coords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
-        point2Coords = [ data["Cation x coord"].values[0] , data["Cation y coord"].values[0] , data["Cation z coord"].values[0] ]
-        
-        return point1Coords, point2Coords
-    
-    guiCationPi.setArrowFunc( getArrowCationPi )
-    
-    def row2ValuesCationPi(rowId, row):
-        return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
-                                                        row["Pi acid chain"]+str(row["Piacid id"]) , row["Cation code"], 
-                                                        row["Cation chain"] + str(row["Cation id"]), row["Atom symbol"], 
-                                                        str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3] , str(row["RingChain"] ) )
-        
-    guiCationPi.setRow2Values(row2ValuesCationPi)
-    
-    ######################
-    # CATION ANION
-    ######################
-    
-    guiAnionCation.setNumericalParameters({ "R" : {"header" : "Distance"} })
-    
-    guiAnionCation.setListParameters({ "Cation" : { "header" : "Cation code" }, 
-                      "Cat. el." : { "header" : "Cation symbol" } , 
-                      "Anion" : { "header" : "Anion code" },
-                      "An. at." : { "header" : "Anion symbol"}})
-    
-    guiAnionCation.setSortingParameters({  "R" : "Distance", "Cation" : "Cation code", "Cat. el." : "Cation symbol" , "Anion" : "Anion code",
-                         "An. el." : "Anion symbol" }, [  "R" , "Cation" , "Cat. el." , "Anion" ,
-                         "An. el."  ])
-    
-    guiAnionCation.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Anion", "Anion id", "Anion el.", "Cat. el." , "R"])
-    
-    guiAnionCation.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
-                                              { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
-    
-    def row2ValuesAnionCation(rowId, row):
-        return ( rowId, row["PDB Code"] , row["Cation code"], 
-                                                        row["Cation chain"]+str(row["Cation id"]) , row["Anion code"], 
-                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion symbol"], 
-                                                        row["Cation symbol"], str(row["Distance"])[:3] )
-        
-    guiAnionCation.setRow2Values(row2ValuesAnionCation)
-    
-    def getSelectionAnionCation( data):
-        res1Id = data["Anion id"].values[0]
-        res1Chain = data["Anion chain"].values[0]
-        
-        res2Id = data["Cation id"].values[0]
-        res2Chain = data["Cation chain"].values[0]
-        cmd.hide("everything")
-        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
-        return selection
-    
-    guiAnionCation.setSelectionFunc( getSelectionAnionCation )
-    
-    def getArrowAnionCation( data ):
-        point1Coords = [ data["Anion x coord"].values[0] , data["Anion y coord"].values[0] , data["Anion z coord"].values[0] ]
-        point2Coords = [ data["Cation x coord"].values[0] , data["Cation y coord"].values[0] , data["Cation z coord"].values[0] ]
-        
-        return point1Coords, point2Coords
-    
-    guiAnionCation.setArrowFunc(getArrowAnionCation)
+    but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
+    but_showMany.grid(row = 5, column = 6, columnspan = 2)
     
     ######################
     # ALL
     ######################
     
-    for gui in guis:
-        gui.grid()
+    supramolecularComposition.grid()
     
     if simulation:
         self.mainloop()
