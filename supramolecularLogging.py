@@ -50,9 +50,11 @@ def writeCationPiHeader( ):
     resultsFile.write("Atom symbol\tDistance\tAngle\t")
     resultsFile.write("x\th\t")
     resultsFile.write("RingChain\t")
+    resultsFile.write("ChainFlat\t")
     resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
+    resultsFile.write("Complex\tCoordNo\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
     
@@ -156,7 +158,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
     
     return newAtoms
             
-def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , modelIndex, fileId = None ):
+def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , cationComplexData, modelIndex, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -171,7 +173,7 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
     ligandChain = ligand.get_parent().get_id()
     resultsFile = open(resultsFileName, "a+")
     
-    for atom, chainLen in zip(extractedAtoms , cationRingChainLens):
+    for atom, chainLen, complexData in zip(extractedAtoms , cationRingChainLens, cationComplexData):
         distance = atomDistanceFromCentroid( atom, centroid )
         angle = atomAngleNomVecCentroid( atom, centroid )
         
@@ -202,7 +204,8 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
         resultsFile.write(str(x)+"\t")
         resultsFile.write(str(h)+"\t")
         
-        resultsFile.write(str(chainLen)+"\t")
+        resultsFile.write(str(chainLen[0])+"\t")
+        resultsFile.write(str(chainLen[1])+"\t")
         
         resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
@@ -212,6 +215,9 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
         resultsFile.write(str(atomCoords[0])+"\t")
         resultsFile.write(str(atomCoords[1])+"\t")
         resultsFile.write(str(atomCoords[2])+"\t")
+        
+        resultsFile.write(str(complexData["complex"])+"\t")
+        resultsFile.write(str(complexData["coordNo"])+"\t")
         
         resultsFile.write(str(modelIndex)+"\n")
     

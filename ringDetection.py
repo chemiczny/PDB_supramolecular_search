@@ -216,7 +216,7 @@ def getRingsCentroids( molecule, returnGraph = False ):
 
 def onlyLighAtomsInCycle( cycle, atoms ):
     for atomInd in cycle:
-        if not atoms[atomInd].element in [ "C", "O", "N", "S" ]:
+        if not atoms[atomInd].element in [ "C", "O", "N" ]:
             return False
     return True
     
@@ -249,38 +249,56 @@ def molecule2graph( atoms, atom = None ):
     """
 #        print("szukam ", atomName, parentId, atom.get_parent().get_resname())
         
-    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
-                  "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
+    radius = { "H" : 0.32, "D" : 0.32, "HE" : 0.46,
+              "LI" : 1.33, "BE" : 1.02, "B" : 0.85, "C" : 0.75, "N" : 0.71,
+              "O" : 0.63, "F" : 0.64, "NE" : 0.67,
+              "NA" : 1.55, "MG" : 1.39, "AL": 1.26, "SI" : 1.16, "P" : 1.11,
+              "S" : 1.03, "CL" : 0.99, "AR" : 0.96,
+              "K" : 1.96, "CA" : 1.71, "SC" : 1.48 , "TI" : 1.36, "V" : 1.34,
+              "CR" : 1.22, "MN" : 1.19, "FE" : 1.16, "CO" : 1.11,
+              "NI" : 1.10, "CU" : 1.12, "ZN" : 1.18, "GA" : 1.24, "GE" : 1.21,
+              "AS" : 1.21, "SE" : 1.16, "BR" : 1.14, "KR" : 1.17, "RB": 2.10, 
+              "SR" : 1.85, "Y" : 1.63, "ZR" : 1.54, "NB" : 1.47, "MO" : 1.38,
+              "TC" : 1.28, "RU" : 1.25, "RH" : 1.25, "PD" : 1.20, "AG" : 1.28,
+              "CD" : 1.36, "IN" : 1.42, "SN" : 1.40, "SB" : 1.40, "TE" : 1.36,
+              "I" : 1.33, "XE" : 1.31, "CS" : 2.32, "BA" : 1.96, "HF" : 1.52,
+              "TA" : 1.46, "W" : 1.37, "RE" : 1.31, "OS" : 1.29, "IR" : 1.22, 
+              "PT" : 1.23, "AU" : 1.24, "HG" : 1.33, "TL" : 1.44, "PB" : 1.44,
+              "BI" : 1.51, "PO" : 1.45, "AT" : 1.47, "RN" : 1.42, "FR" : 2.23, 
+              "RA" : 2.01, "RF" : 1.57, "DB" : 1.49, "SG" : 1.43, "BH" : 1.41,
+              "HS" : 1.34, "MT" : 1.29, "DS" : 1.28, "RG" : 1.21, "LA" : 1.80,
+              "CE" : 1.63, "PR" : 1.76, "ND" : 1.74, "PM" : 1.73, "SM" : 1.72,
+              "EU" : 1.68, "GD" : 1.69, "TB" : 1.68, "DY" : 1.67, "HO" : 1.66,
+              "ER" : 1.65, "TM" : 1.64, "YB" : 1.70, "LU" : 1.62, "AC" : 1.86,
+              "TH" : 1.75, "PA" : 1.69, "U" : 1.70, "NP" : 1.71, "PU" : 1.72, 
+              "AM" : 1.66, "CM" : 1.66, "BK" : 1.68, "CF" : 1.68, "ES" : 1.65, 
+              "FM" : 1.67, "MD" : 1.73, "NO" : 1.76, "LR" : 1.61}
     
     G = nx.Graph()
     atoms_found = []
     for atom1Ind, atom1 in enumerate(atoms):
-        threshold1 = 2.2
 
         if atom1.element == "H":
             continue
         
         G.add_node(atom1Ind, element = atom1.element)
         
-        if atom1.element in thresholds.keys():
-            threshold1 = thresholds[atom1.element]
+        radius1 = radius[atom1.element]
         
         if atom != None:
             if atom == atom1:
                 atoms_found.append(atom1Ind)
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
-            threshold2 = 2.2
           
             if atom2.element == "H":
                 continue
             
-            if atom2.element in thresholds.keys():
-                threshold2 = thresholds[atom2.element]
+            radius2 = radius[atom2.element]
             
             distance = atom1 - atom2
             
-            threshold = max( threshold1, threshold2 )
+            threshold = 1.1*(radius1+radius2)
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
@@ -318,13 +336,34 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
     Wyjscie:
     G, atomInd - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
     """        
-    thresholds = { "C" : 1.8, "O" : 1.8, "N" : 1.8, "S" : 2.2,
-                  "F" : 1.6, "CL" : 2.0, "BR" : 2.1, "I" : 2.2 }
+    radius = { "H" : 0.32, "D" : 0.32, "HE" : 0.46,
+              "LI" : 1.33, "BE" : 1.02, "B" : 0.85, "C" : 0.75, "N" : 0.71,
+              "O" : 0.63, "F" : 0.64, "NE" : 0.67,
+              "NA" : 1.55, "MG" : 1.39, "AL": 1.26, "SI" : 1.16, "P" : 1.11,
+              "S" : 1.03, "CL" : 0.99, "AR" : 0.96,
+              "K" : 1.96, "CA" : 1.71, "SC" : 1.48 , "TI" : 1.36, "V" : 1.34,
+              "CR" : 1.22, "MN" : 1.19, "FE" : 1.16, "CO" : 1.11,
+              "NI" : 1.10, "CU" : 1.12, "ZN" : 1.18, "GA" : 1.24, "GE" : 1.21,
+              "AS" : 1.21, "SE" : 1.16, "BR" : 1.14, "KR" : 1.17, "RB": 2.10, 
+              "SR" : 1.85, "Y" : 1.63, "ZR" : 1.54, "NB" : 1.47, "MO" : 1.38,
+              "TC" : 1.28, "RU" : 1.25, "RH" : 1.25, "PD" : 1.20, "AG" : 1.28,
+              "CD" : 1.36, "IN" : 1.42, "SN" : 1.40, "SB" : 1.40, "TE" : 1.36,
+              "I" : 1.33, "XE" : 1.31, "CS" : 2.32, "BA" : 1.96, "HF" : 1.52,
+              "TA" : 1.46, "W" : 1.37, "RE" : 1.31, "OS" : 1.29, "IR" : 1.22, 
+              "PT" : 1.23, "AU" : 1.24, "HG" : 1.33, "TL" : 1.44, "PB" : 1.44,
+              "BI" : 1.51, "PO" : 1.45, "AT" : 1.47, "RN" : 1.42, "FR" : 2.23, 
+              "RA" : 2.01, "RF" : 1.57, "DB" : 1.49, "SG" : 1.43, "BH" : 1.41,
+              "HS" : 1.34, "MT" : 1.29, "DS" : 1.28, "RG" : 1.21, "LA" : 1.80,
+              "CE" : 1.63, "PR" : 1.76, "ND" : 1.74, "PM" : 1.73, "SM" : 1.72,
+              "EU" : 1.68, "GD" : 1.69, "TB" : 1.68, "DY" : 1.67, "HO" : 1.66,
+              "ER" : 1.65, "TM" : 1.64, "YB" : 1.70, "LU" : 1.62, "AC" : 1.86,
+              "TH" : 1.75, "PA" : 1.69, "U" : 1.70, "NP" : 1.71, "PU" : 1.72, 
+              "AM" : 1.66, "CM" : 1.66, "BK" : 1.68, "CF" : 1.68, "ES" : 1.65, 
+              "FM" : 1.67, "MD" : 1.73, "NO" : 1.76, "LR" : 1.61}
     
     G = nx.Graph()
     atoms_found = []
     for atom1Ind, atom1 in enumerate(atoms):
-        threshold1 = 2.2
 
         if atom1.element == "H":
             continue
@@ -334,15 +373,13 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
         
         G.add_node(atom1Ind, element = atom1.element)
         
-        if atom1.element in thresholds.keys():
-            threshold1 = thresholds[atom1.element]
+        radius1 = radius[atom1.element]
         
         if atom != None:
             if atom == atom1:
                 atoms_found.append(atom1Ind)
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
-            threshold2 = 2.2
           
             if atom2.element == "H":
                 continue
@@ -350,12 +387,11 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
             if atom2 - atom > maxDist:
                 continue
             
-            if atom2.element in thresholds.keys():
-                threshold2 = thresholds[atom2.element]
+            radius2 = radius[atom2.element]
             
             distance = atom1 - atom2
             
-            threshold = max( threshold1, threshold2 )
+            threshold = 1.1*(radius1+radius2)
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 

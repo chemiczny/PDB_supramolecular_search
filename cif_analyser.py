@@ -20,7 +20,7 @@ from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
 from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults
-from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive
+from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
@@ -57,31 +57,31 @@ def findSupramolecular( cifData):
         
     resolution, method = readResolutionAndMethod(cifFile)
 
-    try:
-        for modelIndex, model in enumerate(structure):
-            atoms = Selection.unfold_entities(model, 'A')  
-            not_disordered_atoms = []
-            for atom in atoms:
-                if not atom.is_disordered() or atom.get_altloc() == 'A':
-    
-                    not_disordered_atoms.append(atom)
-                
-            if len(not_disordered_atoms) == 0:
-                continue
+#    try:
+    for modelIndex, model in enumerate(structure):
+        atoms = Selection.unfold_entities(model, 'A')  
+        not_disordered_atoms = []
+        for atom in atoms:
+            if not atom.is_disordered() or atom.get_altloc() == 'A':
+
+                not_disordered_atoms.append(atom)
             
-            ns = NeighborSearch(not_disordered_atoms)
-               
-            for residue in model.get_residues():
-                residueName = residue.get_resname().upper()
-                if not residueName in notPiacids  :
-                    if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
-                        supramolecularFound = True
-                
-        fileId = current_process()
-        incrementPartialProgress(fileId)
-    except:
-        fileId = current_process()
-        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
+        if len(not_disordered_atoms) == 0:
+            continue
+        
+        ns = NeighborSearch(not_disordered_atoms)
+           
+        for residue in model.get_residues():
+            residueName = residue.get_resname().upper()
+            if not residueName in notPiacids  :
+                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
+                    supramolecularFound = True
+            
+    fileId = current_process()
+    incrementPartialProgress(fileId)
+#    except:
+#        fileId = current_process()
+#        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     return supramolecularFound
     
 def readResolutionAndMethod( cifFile ):
@@ -138,15 +138,16 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
         neighbors = nsSmall.search(np.array(centroid["coords"]), distance, 'A')
         
         extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
-            
+
         if len(extractedAnionAtoms) > 0:
             extractedCationAtoms = extractCationAtoms( centroid["coords"], nsSmall, 10 )
             cationRingLenChains = []
+            cationComplexData = []
             for cat in extractedCationAtoms:
                 cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph) )
+                cationComplexData.append( findCationComplex( cat, ns ) )
                     
-            
-            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, modelIndex, fileId )
+            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, cationComplexData, modelIndex, fileId )
             
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
@@ -163,6 +164,26 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
             ligandWithAnions = True
         
     return ligandWithAnions
+
+def findCationComplex(cation, ns):
+    potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
+    
+    resultantVector = np.array([0.0 , 0.0, 0.0])
+    coordNo = 0
+    for atom in potentialLigands:
+        if atom.element == "H":
+            continue
+        if atom != cation:
+            newVector = normalize( atom.get_coord() - cation.get_coord() )
+            resultantVector += newVector
+            coordNo += 1
+            
+    vectorLen = np.linalg.norm(resultantVector)
+     
+    if vectorLen < 0.2:
+         return { "complex" : True, "coordNo" : coordNo }
+    else:
+         return  { "complex" : False, "coordNo" : coordNo }
 
 def extractCationAtoms ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')
@@ -185,10 +206,13 @@ def extractCationAtoms ( point,  ns, distance  ):
 def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
     piAcidAtoms = list(piAcid.get_atoms())
     
-    cationNeighbours = ns.search( cation.get_coord(), 2.4, 'A' )
+    cationNeighbours = ns.search( cation.get_coord(), 2.6, 'A' )
     firstAtomInRing = centroidData["cycleAtoms"][0]
     shortestPath = []
+    somethingFound = False
     for catN in cationNeighbours:
+        if catN.element == "H":
+            continue
         if catN.get_parent() == piAcid:
             tempG, catNIndex = findInGraph( ligandGraph, catN, piAcidAtoms )
             if catNIndex == None:
@@ -198,15 +222,21 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
             if not  nx.has_path(ligandGraph, firstAtomInRing, catNIndex):
                 continue 
             
+            somethingFound = True
             newPath = nx.shortest_path(ligandGraph, firstAtomInRing, catNIndex)
             newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
             
             if len(newPath) < len(shortestPath) or not shortestPath:
+#                print(len(newPath))
+#                print(catN.element)
+#                print(piAcid.get_resname(), piAcid.get_id(), piAcid.get_parent().get_id())
+#                print( cation.element )
                 shortestPath = newPath
                 
-    if not shortestPath:
-        return 0
+    if not somethingFound:
+        return 0, False
     
+    flat = True
     for node in shortestPath:
         neighbors = list(nx.neighbors(ligandGraph, node))
         if len( neighbors ) > 2:
@@ -214,9 +244,9 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
             if not verdict["isFlat"]:
                 fileId = current_process()
                 writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
-                return 0
+                flat = False
             
-    return len(shortestPath)+1
+    return len(shortestPath)+1, flat
         
 
 def extractRingCentroids(point, residue, ns):

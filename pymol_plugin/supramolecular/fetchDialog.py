@@ -35,10 +35,10 @@ def fetchdialog(simulation = False):
     
     self = Tkinter.Toplevel(root)
     self.title('Supramolecular analyser')
-    self.minsize(1100, 800)
+    self.minsize(1500, 800)
     self.resizable(0,0)
     
-    nb = ttk.Notebook(self, height = 700, width = 1100)
+    nb = ttk.Notebook(self, height = 700, width = 1400)
 
     pageAnionPi = ttk.Frame(nb)
     pagePiPi = ttk.Frame(nb)

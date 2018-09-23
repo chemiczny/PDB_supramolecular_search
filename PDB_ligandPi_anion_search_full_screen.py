@@ -5,7 +5,7 @@ Created on Mon Jan  1 18:00:25 2018
 @author: michal
 """
 from cif_analyser import findSupramolecular
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeAdditionalInfo
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader
 from os.path import isdir, basename
 from os import makedirs, remove
 import glob
@@ -25,6 +25,8 @@ log_files += glob.glob("logs/cationPi*.log")
 log_files += glob.glob("logs/anionCation*.log")
 log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
+log_files += glob.glob("logs/piPiPi.log")
+
 for log_file in log_files:
     remove(log_file)
     

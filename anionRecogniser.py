@@ -78,8 +78,8 @@ def getResidueWithConnections( atoms, ns ):
     neighbors = list(set(neighbors))
     newNeighbors = []
     for atom in neighbors:
-        if atom.element != "C" :
-            newNeighbors += ns.search( atom.get_coord(), 2 , 'A')
+#        if atom.element != "C" :
+        newNeighbors += ns.search( atom.get_coord(), 2 , 'A')
         
     neighbors = list(set(newNeighbors))
     
