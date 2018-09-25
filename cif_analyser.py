@@ -154,12 +154,10 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
             
             for atom in extractedAnionAtoms:
                 cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
-                writeAnionCationResults(atom["Atom"], PDBcode, cationNearAnion, modelIndex, fileId)
-            
-        
+                writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
+
         extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, method, fileId)
 
-        
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
         
@@ -167,6 +165,9 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
 
 def findCationComplex(cation, ns):
     potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
+    
+    if not potentialLigands:
+        return  { "complex" : False, "coordNo" : 0 }
     
     resultantVector = np.array([0.0 , 0.0, 0.0])
     coordNo = 0

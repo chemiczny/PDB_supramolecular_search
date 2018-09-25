@@ -83,10 +83,13 @@ def writeAnionCationHeader( ):
     resultsFileName = "logs/anionCation.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tCation code\tCation chain\tCation id\t")
+    resultsFile.write("Pi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Anion code\tAnion chain\tAnion id\t")
     resultsFile.write("Anion symbol\tCation symbol\tDistance\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
+    resultsFile.write("Same semisphere\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
     
@@ -283,7 +286,7 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
     
     return newAtoms
 
-def writeAnionCationResults( anionAtom, PDBcode, extractedCations, modelIndex, fileId = None ):
+def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCations, modelIndex, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -295,13 +298,27 @@ def writeAnionCationResults( anionAtom, PDBcode, extractedCations, modelIndex, f
     anionId = str(anion.get_id()[1])
     anionChain = anion.get_parent().get_id()
     anionCoord = anionAtom.get_coord()
+    
+    ligandCode = ligand.get_resname()
+    ligandId = str(ligand.get_id()[1])
+    ligandChain = ligand.get_parent().get_id()
+    
     resultsFile = open(resultsFileName, "a+")
     newAtoms = []
+    
+    anionAngle = atomAngleNomVecCentroid( anionAtom, centroid )
+    firstSemisphereAnion = anionAngle < 180
+
     for cat in extractedCations:
         distance = anionAtom - cat
         
+        cationAngle = atomAngleNomVecCentroid(cat, centroid)
+        firstSemisphereCation = cationAngle < 180
+        sameSemisphere = firstSemisphereAnion == firstSemisphereCation
+        
         catCoord = cat.get_coord()
         catRes = cat.get_parent()
+        
         residueName = catRes.get_resname()
         resChain = catRes.get_parent().get_id()
         resId = str(catRes.get_id()[1])
@@ -309,6 +326,12 @@ def writeAnionCationResults( anionAtom, PDBcode, extractedCations, modelIndex, f
         resultsFile.write(residueName+"\t")
         resultsFile.write(resChain+"\t")
         resultsFile.write(resId+"\t")
+        
+        resultsFile.write(ligandCode+"\t")
+        resultsFile.write(ligandChain+"\t")
+        resultsFile.write(ligandId+"\t")
+        resultsFile.write(str(centroid["cycleId"])+"\t")
+        
         resultsFile.write(anionCode+"\t")
         resultsFile.write(anionChain+"\t")
         resultsFile.write(anionId+"\t")
@@ -326,6 +349,7 @@ def writeAnionCationResults( anionAtom, PDBcode, extractedCations, modelIndex, f
         resultsFile.write(str(catCoord[1])+"\t")
         resultsFile.write(str(catCoord[2])+"\t")
         
+        resultsFile.write(str(sameSemisphere)+"\t")
         resultsFile.write(str(modelIndex)+"\n")
     
     resultsFile.close()

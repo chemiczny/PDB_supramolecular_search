@@ -231,10 +231,10 @@ def getSubstituents( graphMolecule, cycle ):
                 
     return substituents
 
-def createAtomId(atom):
-    atomCoords = atom.get_coord()
-    
-    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
+#def createAtomId(atom):
+#    atomCoords = atom.get_coord()
+#    
+#    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
 
 def molecule2graph( atoms, atom = None ):
     """
@@ -281,6 +281,9 @@ def molecule2graph( atoms, atom = None ):
         if atom1.element == "H":
             continue
         
+        if not atom1.element in radius:
+            continue
+        
         G.add_node(atom1Ind, element = atom1.element)
         
         radius1 = radius[atom1.element]
@@ -292,6 +295,9 @@ def molecule2graph( atoms, atom = None ):
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
           
             if atom2.element == "H":
+                continue
+            
+            if not atom2.element in radius:
                 continue
             
             radius2 = radius[atom2.element]
@@ -368,6 +374,9 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
         if atom1.element == "H":
             continue
         
+        if not atom1.element in radius:
+            continue
+        
         if atom1 - atom > maxDist:
             continue
         
@@ -382,6 +391,9 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
           
             if atom2.element == "H":
+                continue
+            
+            if not atom2.element in radius:
                 continue
             
             if atom2 - atom > maxDist:

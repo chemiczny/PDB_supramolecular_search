@@ -63,6 +63,9 @@ class SupramolecularComposition:
                 if headerKey in key:
                     headers += headersId[headerKey]
                     
+            if "Anion" in key and "Cation" in key:
+                headers += headersId["Pi"]
+                    
             if len(uniqueData) == 0:
                 uniqueData = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
             else:
@@ -78,6 +81,9 @@ class SupramolecularComposition:
             for headerKey in headersId:
                 if headerKey in key:
                     headers += headersId[headerKey]
+                    
+            if "Anion" in key and "Cation" in key:
+                headers += headersId["Pi"]
                     
             mergingKeys = list(set(self.actualKeys) & set(headers) )
             tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
@@ -140,6 +146,9 @@ class SupramolecularComposition:
             for headerKey in headersId:
                 if headerKey in key:
                     headers += headersId[headerKey]
+                    
+            if "Anion" in key and "Cation" in key:
+                headers += headersId["Pi"]
                     
             mergingKeys = list(set(lastDataHeaders) & set(headers) )
             tempDataFrame = lastData[ mergingKeys   ]

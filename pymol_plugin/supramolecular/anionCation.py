@@ -19,13 +19,15 @@ class AnionCationGUI(SupramolecularGUI):
         self.setListParameters({ "Cation" : { "header" : "Cation code" }, 
                   "Cat. el." : { "header" : "Cation symbol" } , 
                   "Anion" : { "header" : "Anion code" },
-                  "An. at." : { "header" : "Anion symbol"}})
+                  "An. at." : { "header" : "Anion symbol"},
+                  "Pi acid" : { "header" : "Pi acid Code" },
+                  "Same semisphere" : { "header" : "Same semisphere"} })
 
         self.setSortingParameters({  "R" : "Distance", "Cation" : "Cation code", "Cat. el." : "Cation symbol" , "Anion" : "Anion code",
                      "An. el." : "Anion symbol" }, [  "R" , "Cation" , "Cat. el." , "Anion" ,
                      "An. el."  ])
 
-        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Anion", "Anion id", "Anion el.", "Cat. el." , "R"])
+        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Anion", "Anion id", "Anion el.", "Pi acid", "Pi acid id"  , "R", "Same semisphere" ])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
                                           { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
@@ -35,9 +37,12 @@ class AnionCationGUI(SupramolecularGUI):
         
     def getValues(self, rowId, row):
         return ( rowId, row["PDB Code"] , row["Cation code"], 
-                                                    row["Cation chain"]+str(row["Cation id"]) , row["Anion code"], 
+                                                    row["Cation chain"]+str(row["Cation id"]) ,row["Cation symbol"], 
+                                                    row["Anion code"], 
                                                     row["Anion chain"] + str(row["Anion id"]), row["Anion symbol"], 
-                                                    row["Cation symbol"], str(row["Distance"])[:3] )
+                                                    row["Pi acid Code"], 
+                                                    row["Pi acid chain"]+str(row["Piacid id"]) ,
+                                                    str(row["Distance"])[:3] , str(row["Same semisphere"]) )
         
     def getSelection(self,  data):
         res1Id = data["Anion id"].values[0]
