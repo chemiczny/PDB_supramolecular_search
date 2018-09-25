@@ -90,6 +90,7 @@ def writeAnionCationHeader( ):
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
     resultsFile.write("Same semisphere\t")
+    resultsFile.write("Latitude diff\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
     
@@ -307,13 +308,13 @@ def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCati
     newAtoms = []
     
     anionAngle = atomAngleNomVecCentroid( anionAtom, centroid )
-    firstSemisphereAnion = anionAngle < 180
+    firstSemisphereAnion = anionAngle < 90
 
     for cat in extractedCations:
         distance = anionAtom - cat
         
         cationAngle = atomAngleNomVecCentroid(cat, centroid)
-        firstSemisphereCation = cationAngle < 180
+        firstSemisphereCation = cationAngle < 90
         sameSemisphere = firstSemisphereAnion == firstSemisphereCation
         
         catCoord = cat.get_coord()
@@ -350,6 +351,7 @@ def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCati
         resultsFile.write(str(catCoord[2])+"\t")
         
         resultsFile.write(str(sameSemisphere)+"\t")
+        resultsFile.write(str(abs(anionAngle - cationAngle))+"\t")
         resultsFile.write(str(modelIndex)+"\n")
     
     resultsFile.close()

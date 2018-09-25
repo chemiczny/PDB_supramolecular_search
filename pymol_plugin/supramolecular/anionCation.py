@@ -14,7 +14,8 @@ from simpleFilters import noAAinAnions, noNUinAnions
 class AnionCationGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
-        self.setNumericalParameters({ "R" : {"header" : "Distance"} })
+        self.setNumericalParameters({ "R" : {"header" : "Distance"} ,
+                                     "Lat dif" : { "header" : "Latitude diff" } })
 
         self.setListParameters({ "Cation" : { "header" : "Cation code" }, 
                   "Cat. el." : { "header" : "Cation symbol" } , 
@@ -24,10 +25,11 @@ class AnionCationGUI(SupramolecularGUI):
                   "Same semisphere" : { "header" : "Same semisphere"} })
 
         self.setSortingParameters({  "R" : "Distance", "Cation" : "Cation code", "Cat. el." : "Cation symbol" , "Anion" : "Anion code",
-                     "An. el." : "Anion symbol" }, [  "R" , "Cation" , "Cat. el." , "Anion" ,
-                     "An. el."  ])
+                     "An. el." : "Anion symbol", "Lat dif" : "Latitude diff" }, [  "R" , "Cation" , "Cat. el." , "Anion" ,
+                     "An. el." , "Lat dif"  ])
 
-        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Anion", "Anion id", "Anion el.", "Pi acid", "Pi acid id"  , "R", "Same semisphere" ])
+        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Anion", "Anion id", "Anion el.", "Pi acid", "Pi acid id"  , 
+                          "R", "Same semisphere", "Lat dif" ])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
                                           { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
@@ -42,7 +44,7 @@ class AnionCationGUI(SupramolecularGUI):
                                                     row["Anion chain"] + str(row["Anion id"]), row["Anion symbol"], 
                                                     row["Pi acid Code"], 
                                                     row["Pi acid chain"]+str(row["Piacid id"]) ,
-                                                    str(row["Distance"])[:3] , str(row["Same semisphere"]) )
+                                                    str(row["Distance"])[:3] , str(row["Same semisphere"]) , str(row["Latitude diff"])) 
         
     def getSelection(self,  data):
         res1Id = data["Anion id"].values[0]
