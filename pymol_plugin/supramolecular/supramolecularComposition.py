@@ -136,6 +136,7 @@ class SupramolecularComposition:
             if headerKey in lastSelectionMenu:
                 lastDataHeaders += headersId[headerKey]
         
+        selection = ""
         for key in selectedData:
             if key == lastSelectionMenu:
                 continue
@@ -154,10 +155,23 @@ class SupramolecularComposition:
             tempDataFrame = lastData[ mergingKeys   ]
             mergedData = pd.merge( self.actionLabels2Objects[ key ].logData["filtered"], tempDataFrame, on = mergingKeys )
             
+            
             for index, row in mergedData.iterrows():
                 arrowBegin, arrowEnd = self.actionLabels2Objects[ key ].getArrowFromRow(row)
                 uniqueArrowName = self.actionLabels2Objects[ key ].arrowName+"A"+str(index)
                 cgo_arrow(arrowBegin, arrowEnd, 0.1, name = uniqueArrowName, color = self.actionLabels2Objects[ key ].arrowColor )
+                
+                if selection == "":
+                    selection = "(" + self.actionLabels2Objects[key].getSelectionFromRow(row) + " ) "
+                else:
+                    selection += "or (" + self.actionLabels2Objects[key].getSelectionFromRow(row) + " ) "
+                    
+        selectionName = "suprSelectionFull"
+        print(selection)
+        cmd.select(selectionName, selection)
+        cmd.show( "sticks" , selectionName  )
+        cmd.center(selectionName)
+        cmd.zoom(selectionName)
                 
     def deleteMergedArrows(self):
         for arrow in cmd.get_names_of_type("object:cgo"):

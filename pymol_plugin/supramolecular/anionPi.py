@@ -53,6 +53,16 @@ class AnionPiGUI(SupramolecularGUI):
         selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
         return selection
     
+    def getSelectionFromRow(self,  data):
+        res1Id = data["Piacid id"]
+        res1Chain = data["Pi acid chain"]
+        
+        res2Id = data["Anion id"]
+        res2Chain = data["Anion chain"]
+#        cmd.hide("everything")
+        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
+        return selection
+    
     def getArrow(self, data ):
         centroidCoords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
         anionAtomCoords = [ data["Anion x coord"].values[0] , data["Anion y coord"].values[0] , data["Anion z coord"].values[0] ]

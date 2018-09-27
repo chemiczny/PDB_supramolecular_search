@@ -56,6 +56,16 @@ class CationPiGUI(SupramolecularGUI):
         selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
         return selection
     
+    def getSelectionFromRow(self,  data):
+        res1Id = data["Piacid id"]
+        res1Chain = data["Pi acid chain"]
+        
+        res2Id = data["Cation id"]
+        res2Chain = data["Cation chain"]
+#        cmd.hide("everything")
+        selection =  "( " + "chain "+res1Chain +" and resi "+ str(res1Id) +" ) or ( " +" chain " + res2Chain + " and resi "+str(res2Id)+")"
+        return selection
+    
     def getArrow(self, data ):
         point1Coords = [ data["Centroid x coord"].values[0] , data["Centroid y coord"].values[0] , data["Centroid z coord"].values[0] ]
         point2Coords = [ data["Cation x coord"].values[0] , data["Cation y coord"].values[0] , data["Cation z coord"].values[0] ]

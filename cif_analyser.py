@@ -166,8 +166,8 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
 def findCationComplex(cation, ns):
     potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
     
-    if not potentialLigands:
-        return  { "complex" : False, "coordNo" : 0 }
+#    if not potentialLigands:
+#        return  { "complex" : False, "coordNo" : 0 }
     
     resultantVector = np.array([0.0 , 0.0, 0.0])
     coordNo = 0
@@ -178,6 +178,9 @@ def findCationComplex(cation, ns):
             newVector = normalize( atom.get_coord() - cation.get_coord() )
             resultantVector += newVector
             coordNo += 1
+            
+    if coordNo == 0 :
+        return  { "complex" : False, "coordNo" : 0 }
             
     vectorLen = np.linalg.norm(resultantVector)
      

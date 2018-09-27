@@ -304,7 +304,7 @@ def molecule2graph( atoms, atom = None ):
             
             distance = atom1 - atom2
             
-            threshold = 1.1*(radius1+radius2)
+            threshold = 1.2*(radius1+radius2)
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
@@ -403,7 +403,7 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
             
             distance = atom1 - atom2
             
-            threshold = 1.1*(radius1+radius2)
+            threshold = 1.2*(radius1+radius2)
             if distance < threshold :
                 G.add_edge(atom1Ind, atom2Ind)
                 
