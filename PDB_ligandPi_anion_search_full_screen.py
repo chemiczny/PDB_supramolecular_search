@@ -62,7 +62,7 @@ def prepareArgumentsList(cifFiles ):
     
     for cif in cifFiles:
         PDBcode = basename(cif).split(".")[0].upper()
-        arguments.append( ( cif, PDBcode ) )
+        arguments.append( ( cif, PDBcode, True ) )
         
     return arguments
 

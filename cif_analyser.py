@@ -39,13 +39,19 @@ def findSupramolecular( cifData):
     """
     cifFile = cifData[0]
     PDBcode = cifData[1]
+    brutalLogging = cifData[2]
     parser = FastMMCIFParser()
+    
+    if brutalLogging:
+        fileId = PDBcode
+    else:
+        fileId = current_process()
     
     try:
         structure = parser.get_structure('temp', cifFile)
     except:
         errorMessage = "FastMMCIFParser cannot handle with: " + cifFile
-        fileId = current_process()
+#        fileId = current_process()
         incrementPartialProgress(fileId)
         writeAdditionalInfo(errorMessage, fileId)
         #Zeby zobaczyc co sie dzieje
@@ -55,7 +61,7 @@ def findSupramolecular( cifData):
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
-    resolution, method = readResolutionAndMethod(cifFile)
+    resolution, method = readResolutionAndMethod(cifFile, fileId)
 
 #    try:
     for modelIndex, model in enumerate(structure):
@@ -74,22 +80,21 @@ def findSupramolecular( cifData):
         for residue in model.get_residues():
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
-                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method):
+                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId):
                     supramolecularFound = True
             
-    fileId = current_process()
+#    fileId = current_process()
     incrementPartialProgress(fileId)
 #    except:
 #        fileId = current_process()
 #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     return supramolecularFound
     
-def readResolutionAndMethod( cifFile ):
+def readResolutionAndMethod( cifFile, fileId ):
     try:
         mmcif_dict_parser = primitiveCif2Dict(cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method"] )
         mmcif_dict = mmcif_dict_parser.result
     except:
-        fileId = current_process()
         errorMessage = "primitiveCif2Dict cannot handle with: "+cifFile
         writeAdditionalInfo(errorMessage, fileId)
         return -666, -666
@@ -120,7 +125,7 @@ def readResolutionAndMethod( cifFile ):
     else:
         return -3, method
 
-def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
+def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
     firstAtom = list(ligand.get_atoms())[0]
     if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
         return False
@@ -129,7 +134,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
 #    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
-    fileId = current_process()
+    
     for centroid in centroids:
         bigDistance =12
         distance = 4.5
@@ -144,7 +149,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method):
             cationRingLenChains = []
             cationComplexData = []
             for cat in extractedCationAtoms:
-                cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph) )
+                cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph, fileId) )
                 cationComplexData.append( findCationComplex( cat, ns ) )
                     
             writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, cationComplexData, modelIndex, fileId )
@@ -207,7 +212,7 @@ def extractCationAtoms ( point,  ns, distance  ):
     
     return metalCationsFound
 
-def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
+def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileId ):
     piAcidAtoms = list(piAcid.get_atoms())
     
     cationNeighbours = ns.search( cation.get_coord(), 2.6, 'A' )
@@ -246,7 +251,6 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph ):
         if len( neighbors ) > 2:
             verdict = isFlatPrimitive(piAcidAtoms, neighbors + [ node ], 0.25)
             if not verdict["isFlat"]:
-                fileId = current_process()
                 writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
                 flat = False
             

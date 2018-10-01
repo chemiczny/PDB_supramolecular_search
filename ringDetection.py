@@ -8,8 +8,8 @@ Created on Sat Apr 21 13:58:24 2018
 import numpy as np
 from numpy_utilities import normalize
 import networkx as nx
-from supramolecularLogging import writeAdditionalInfo
-from multiprocessing import current_process
+#from supramolecularLogging import writeAdditionalInfo
+#from multiprocessing import current_process
 
 def getAverageCoords ( allAtomsList, atomsIndList ):
     """
@@ -310,8 +310,8 @@ def molecule2graph( atoms, atom = None ):
                 
     if atom != None:
         if len(atoms_found) != 1 :
-            fileId = current_process()
-            writeAdditionalInfo( "Many atoms in graph found!!!! "+str(atoms_found)  , fileId)
+#            fileId = current_process()
+#            writeAdditionalInfo( "Many atoms in graph found!!!! "+str(atoms_found)  , fileId)
             print("WTF!? ", atoms_found)
             
         if not atoms_found[0] in G.nodes():
@@ -409,8 +409,8 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
                 
     if atom != None:
         if len(atoms_found) != 1 :
-            fileId = current_process()
-            writeAdditionalInfo( "Many atoms in graph found!!!! "+str(atoms_found)  , fileId)
+#            fileId = current_process()
+#            writeAdditionalInfo( "Many atoms in graph found!!!! "+str(atoms_found)  , fileId)
             print("WTF!? ", atoms_found)
             
         if not atoms_found[0] in G.nodes():
