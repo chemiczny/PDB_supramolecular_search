@@ -55,3 +55,8 @@ cif_files = glob.glob(cifFiles)
 cifNoFile = open("logs/cif2process.log", 'w')
 cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
+
+cif2process = open("cif2process.dat", 'w')
+for cif in cif_files:
+    cif2process.write(cif+"\n")
+cif2process.close()
