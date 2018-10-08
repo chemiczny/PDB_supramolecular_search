@@ -39,13 +39,13 @@ def findSupramolecular( cifData):
     """
     cifFile = cifData[0]
     PDBcode = cifData[1]
-    brutalLogging = cifData[2]
+    logId = cifData[2]
     parser = FastMMCIFParser()
     
-    if brutalLogging:
-        fileId = PDBcode
-    else:
+    if logId == "default":
         fileId = current_process()
+    else:
+        fileId = logId
     
     try:
         structure = parser.get_structure('temp', cifFile)

@@ -6,7 +6,7 @@ Created on Mon Oct  1 14:26:23 2018
 @author: michal
 """
 from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader
-from os.path import isdir, isfile
+from os.path import isdir, isfile, join
 from os import makedirs, remove
 import glob, json
 import time
@@ -56,7 +56,52 @@ cifNoFile = open("logs/cif2process.log", 'w')
 cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
-cif2process = open("cif2process.dat", 'w')
+if not isdir("scr"):
+    makedirs("scr")
+
+filesForStep = 5
+actualId = 0
+filesForCurrentStep = 0
+
+inputFile = open("cif2process.dat", 'w')
+
+actualFile = open(join("scr", str(actualId)+".dat"), 'w')
+inputFile.write(join("scr", str(actualId)+".dat")+"\n")
 for cif in cif_files:
-    cif2process.write(cif+"\n")
-cif2process.close()
+    if filesForCurrentStep > filesForStep:
+        actualId += 1
+        actualFile.close()
+        actualFile = open(join("scr", str(actualId)+".dat"), 'w')
+        inputFile.write(join("scr", str(actualId)+".dat")+"\n")
+        filesForCurrentStep = 0
+        
+    actualFile.write( cif + "\n" )
+    filesForCurrentStep+=1
+    
+actualFile.close()
+inputFile.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
