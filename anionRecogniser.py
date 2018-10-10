@@ -11,8 +11,8 @@ from os.path import isdir
 if isdir("/net/people/plgglanow/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
     sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
     
-from Bio.PDB import Selection
-from ringDetection import getSubstituents, isFlat, isFlatPrimitive, findInGraph, moleculeFragment2graph
+from Bio.PDB import Selection, NeighborSearch
+from ringDetection import getSubstituents, isFlat, isFlatPrimitive, findInGraph, moleculeFragment2graph, molecule2graph
 from anionTemplateCreator import anionMatcher
 import json
 from os.path import join
@@ -21,6 +21,7 @@ from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
 from biopythonUtilities import createResId, createResIdFromAtom
 
+#from time import time
 def extractAnionAtoms( atomList, ligand, ns ):
     """
     Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
@@ -33,16 +34,22 @@ def extractAnionAtoms( atomList, ligand, ns ):
     extractedAtoms - lista slownikow z informacjami o potencjalnym anionie,
         klucze: Atom - atom, AnionType - rodzaj anionu
     """
+#    print("ekstrackja start")
 #    print("wyszukiwanie anionow start ", ligand.get_resname(), ligand.get_id())
     extractedAtoms = []
 #    print("wyciagam somsiasow")
     residuesNeighbor = Selection.unfold_entities(atomList, 'R')  
 #    print("wyciagnente")
+#    dictStart = time()
     resId2atoms, resId2res = createResDicts(atomList, residuesNeighbor, ligand)
+#    dictTime = time() - dictStart
 #    print("atomy przetransformowane")
     aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
         "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
     
+#    findConnectionsTime = 0
+#    graphSearch = 0
+#    loopStart = time()
     for resId in resId2atoms:
         resAtoms = resId2atoms[resId]
         elements = atomsList2ElementsList( resAtoms )
@@ -51,20 +58,30 @@ def extractAnionAtoms( atomList, ligand, ns ):
         if resName.upper() in aminoacids and not ( "O" in elements or "S" in elements ):
             continue
 #        print("Wyciagam polaczenia")
+#        getResStart = time()
         atoms = getResidueWithConnections( resAtoms, ns )
+        nsRes = NeighborSearch(atoms)
+#        findConnectionsTime += time() - getResStart
 #        initGraph = molecule2graph(atoms)
 #        print("Polaczenia wyciagniete")
         for atom in resAtoms:
             potentiallySupramolecular = False
             anionType = ""
-            
-            potentiallySupramolecular, anionType = searchInAnionTemplates(atom, atoms)            
+#            startSearch = time()
+            potentiallySupramolecular, anionType = searchInAnionTemplates(atom, atoms, nsRes)            
+#            graphSearch += time() - startSearch
                 
             if potentiallySupramolecular:
     #            print("cos watergo uwagi :D", atom.get_fullname())
                 extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
             
 #    print("Wyszukiwanie anionow stop")
+#    loopTime = time() - loopStart
+#    print("preparacja :", dictTime)
+#    print("petelka: ", loopTime)
+#    
+#    print("wycinanie reziduum ", findConnectionsTime)
+#    print("przeszukiwanie grafu", graphSearch)
     return extractedAtoms
 
 def getResidueWithConnections( atoms, ns ):
@@ -139,16 +156,25 @@ def graph2Composition( graph ):
             
     return composition
 
-def searchInAnionTemplates( atom, atoms ):
+def searchInAnionTemplates( atom, atoms, ns ):
+#    fullTime = 0
+#    graphConversion = 0
+#    matchingTemplate = 0
+#    
+#    start = time()
     if not hasattr(searchInAnionTemplates, "templates"):
         searchInAnionTemplates.templates =  getAllTemplates()
     element = atom.element.upper()
+    
     
     if not element in searchInAnionTemplates.templates:
         return False, element
             
 #    print("transformuje na graf")
-    graph, atomInd = moleculeFragment2graph( atoms, atom, 5.0 )
+#    graphStart = time()
+    atoms5 = ns.search(atom.get_coord(), 5.0, 'A')
+    graph, atomInd = molecule2graph( atoms5, atom )
+#    graphConversion += time() - graphStart
 #    print("rozmiar grafu: ", len(graph.nodes()))
 #    print("Przetransformowalem")
     composition = graph2Composition(graph)
@@ -161,11 +187,17 @@ def searchInAnionTemplates( atom, atoms ):
             if not dummyCompare(copy(composition), guess):
                  continue
 #            print("maczuje")
+#            matchstart = time()
             matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
+#            matchingTemplate += time() - matchstart
 #            print("pomaczowane")
             if matchResult:
                 return matchResult, anionGroup
-            
+#            
+#    fullTime = time() - start
+#    print("wszystko", fullTime)
+#    print("Konwersja na graf", graphConversion)
+#    print("maczowanie", matchingTemplate)
     return False, element
 
 def searchInAnionTemplatesBis( atom, atoms, initGraph ):

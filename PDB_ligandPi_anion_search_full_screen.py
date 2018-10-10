@@ -78,7 +78,7 @@ cifNoFile.close()
 
 argumentsList = prepareArgumentsList( cif_files)
 pool.map(findSupramolecular, argumentsList)
-##
+###
 #for arg in argumentsList:
 #    findSupramolecular(arg)
 
