@@ -59,7 +59,7 @@ cifNoFile.close()
 if not isdir("scr"):
     makedirs("scr")
 
-filesForStep = 5
+filesForStep = 50
 actualId = 0
 filesForCurrentStep = 0
 
