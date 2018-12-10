@@ -21,8 +21,8 @@ from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
-from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults
-from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize
+from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults
+from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
@@ -138,22 +138,9 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
     firstAtom = list(ligand.get_atoms())[0]
     if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
         return False
-        
-#    timeFindCentroids = 0
-#    timeExtractAnions = 0
-#    timeExtractCations = 0
-#    timeExtractCationsSmall = 0
-#    timeFindChains = 0
-#    timeFindPiPi = 0
-#    timeFindComplex = 0
-#    
-#    nsSearchBigTime = 0
-#    nsSearchSmallTime = 0
     
-#    timeFindCentroidsStart = time()
+    
     centroids, ligandGraph = getRingsCentroids( ligand, True )
-#    timeFindCentroids = time() - timeFindCentroidsStart
-#    print("Znalazlem pierscienie w ilosci: ", len(centroids))
     
     ligandWithAnions = False
     
@@ -161,68 +148,41 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
         bigDistance =12
         distance = 4.5
         
-#        timeNsSearchBigStart = time()
         atoms = ns.search(np.array(centroid["coords"]), bigDistance, 'A')
-#        timeNsSearchBigStop = time()
         
         nsSmall = NeighborSearch(atoms)
         neighbors = nsSmall.search(np.array(centroid["coords"]), distance, 'A')
-#        timeNsSearchSmallStop = time()
         
-#        nsSearchBigTime += timeNsSearchBigStop - timeNsSearchBigStart
-#        nsSearchSmallTime += timeNsSearchSmallStop - timeNsSearchBigStop
-        
-#        extractAnionsStart = time()
         extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
-#        timeExtractAnions += time() - extractAnionsStart
 
         if len(extractedAnionAtoms) > 0:
-#            extractCationStart = time()
             extractedCationAtoms = extractCationAtoms( centroid["coords"], nsSmall, 10 )
-#            timeExtractCations += time() - extractCationStart
             
             cationRingLenChains = []
             cationComplexData = []
             for cat in extractedCationAtoms:
-#                catSearchStart = time()
                 cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph, fileId) )
-#                findChainStop = time()
                 cationComplexData.append( findCationComplex( cat, ns ) )
-#                findComplexStop = time()
-                
-#                timeFindChains+= findChainStop - catSearchStart
-#                timeFindComplex += findComplexStop - findChainStop
                     
             writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, cationComplexData, modelIndex, fileId )
             
-#            pipiStart = time()
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
-#            timeFindPiPi += time() - pipiStart
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
-#                smallCationStart = time()
                 cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
-#                timeExtractCationsSmall += time() - smallCationStart
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
+                
+                hDonors = extractHbonds( atom , nsSmall, 3.5)
+                writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
+                
+            
 
         extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, method, fileId)
 
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
         
-#    print("analysePiAcid - koniec")
-    
-#    print("znalezienie centroidow ",timeFindCentroids )
-#    print("ekstrackja anionow",timeExtractAnions )
-#    print("ekstrackja kationow", timeExtractCations )
-#    print("szukanie lancuchow",timeFindChains )
-#    print("szukanie pipi",timeFindPiPi )
-#    print("szukanie kompleksu",timeFindComplex )
-#    print("kationy koło anionow", timeExtractCationsSmall)
-#    
-#    print("ns big search" , nsSearchBigTime )
-#    print("ns small search", nsSearchSmallTime )
     return ligandWithAnions
 
 def findCationComplex(cation, ns):
@@ -269,6 +229,56 @@ def extractCationAtoms ( point,  ns, distance  ):
     
     return metalCationsFound
 
+def extractHbonds( atom , nsSmall, distance):
+    neighbors = list(nsSmall.search( np.array(atom["Atom"].get_coord()) , distance, 'A' ))
+    
+    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"] )
+    
+    donors = []
+    
+    for potentialDonorInd in graph.nodes():
+        element = neighbors[potentialDonorInd].element
+        
+        if element == "N" :
+            pass
+        elif element == "O" :
+            connected = list(graph.neighbors(potentialDonorInd))
+            if len(connected) > 1 :
+                continue
+            
+            connectedElement = neighbors[connected[0]].element
+            if connectedElement != "C" :
+                continue
+            
+            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
+            
+            if newPath:
+                continue
+            
+            
+            nextNeighbors = graph.neighbors(connected[0])
+            
+            donorOK = True
+            for nn in nextNeighbors:
+                nextElement = neighbors[nn].element
+                
+                if nextElement == "N" :
+                    donorOK = False
+                    break
+                elif nextElement == "O" :
+                    oxygenNeigh = len(list(graph.neighbors(nn)))
+                    if oxygenNeigh > 1:
+                        donorOK = False
+                        break
+                    
+            if donorOK:
+                donors.append( neighbors[potentialDonorInd] )
+            
+        
+    return donors
+    
+    
+
 def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileId ):
     piAcidAtoms = list(piAcid.get_atoms())
     
@@ -293,10 +303,6 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
             newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
             
             if len(newPath) < len(shortestPath) or not shortestPath:
-#                print(len(newPath))
-#                print(catN.element)
-#                print(piAcid.get_resname(), piAcid.get_id(), piAcid.get_parent().get_id())
-#                print( cation.element )
                 shortestPath = newPath
                 
     if not somethingFound:

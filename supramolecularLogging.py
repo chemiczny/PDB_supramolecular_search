@@ -94,6 +94,21 @@ def writeAnionCationHeader( ):
     resultsFile.write("Model No\n")
     resultsFile.close()
     
+def writeHbondsHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/hBonds.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\tAcceptor code\tAcceptor chain\tAcceptor id\t")
+    resultsFile.write("Donor code\tDonor chain\tDonor id\t")
+    resultsFile.write("Acceptor group\tAcceptor atom\t")
+    resultsFile.write("Acceptor x coord\tAcceptor y coord\tAcceptor z coord\t")
+    resultsFile.write("Donor group\tDonor atom\t")
+    resultsFile.write("Donor x coord\tDonor y coord\tDonor z coord\t")
+    resultsFile.write("Distance\tModel No\n")
+    resultsFile.close()
+    
 def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
@@ -357,6 +372,59 @@ def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCati
     resultsFile.close()
     
     return newAtoms
+
+def writeHbondsResults( PDBcode ,hDonors, atom, modelIndex, fileId):
+    resultsFileName = "logs/hBonds.log"
+    if fileId != None:
+        resultsFileName = "logs/hBonds"+str(fileId)+".log"
+    
+    anionAtom = atom["Atom"]
+    anion = anionAtom.get_parent()
+    anionCode = anion.get_resname()
+    anionId = str(anion.get_id()[1])
+    anionChain = anion.get_parent().get_id()
+    anionCoord = anionAtom.get_coord()
+    
+    resultsFile = open(resultsFileName, "a+")
+
+    for hDon in hDonors:
+        distance = anionAtom - hDon
+        
+        hDonCoords = hDon.get_coord()
+        hDonRes = hDon.get_parent()
+        
+        residueName = hDonRes.get_resname()
+        resChain = hDonRes.get_parent().get_id()
+        resId = str(hDonRes.get_id()[1])
+        
+        resultsFile.write(PDBcode+"\t")
+        
+        resultsFile.write(anionCode+"\t")
+        resultsFile.write(anionChain+"\t")
+        resultsFile.write(anionId+"\t")
+        
+        resultsFile.write(residueName+"\t")
+        resultsFile.write(resChain+"\t")
+        resultsFile.write(resId+"\t")
+        
+        resultsFile.write(atom["AnionType"]+"\t")
+        resultsFile.write(anionAtom.element+"\t")
+        
+        resultsFile.write(str(anionCoord[0])+"\t")
+        resultsFile.write(str(anionCoord[1])+"\t")
+        resultsFile.write(str(anionCoord[2])+"\t")
+        
+        resultsFile.write(hDon.element+"\t"+hDon.element+"\t")
+        
+        resultsFile.write(str(hDonCoords[0])+"\t")
+        resultsFile.write(str(hDonCoords[1])+"\t")
+        resultsFile.write(str(hDonCoords[2])+"\t")
+        
+        resultsFile.write(str(distance)+"\t")
+        
+        resultsFile.write(str(modelIndex)+"\n")
+    
+    resultsFile.close()
 
 def atomDistanceFromCentroid( atom, centroid ):
     """
