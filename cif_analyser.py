@@ -240,7 +240,7 @@ def extractHbonds( atom , nsSmall, distance):
         
         if element == "N" :
             connected = list(graph.neighbors(potentialDonorInd))
-            if len(connected) > 2:
+            if len(connected) > 2  or len(connected) == 0:
                 continue
             
 #            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
@@ -264,7 +264,7 @@ def extractHbonds( atom , nsSmall, distance):
         
         elif element == "O" :
             connected = list(graph.neighbors(potentialDonorInd))
-            if len(connected) > 1 :
+            if len(connected) > 1 or len(connected) == 0:
                 continue
             
             connectedElement = neighbors[connected[0]].element

@@ -100,7 +100,7 @@ def writeHbondsHeader( ):
     """
     resultsFileName = "logs/hBonds.log"
     resultsFile = open(resultsFileName, "w")
-    resultsFile.write("PDB Code\tAcceptor code\tAcceptor chain\tAcceptor id\t")
+    resultsFile.write("PDB Code\tAnion code\tAnion chain\tAnion id\t")
     resultsFile.write("Donor code\tDonor chain\tDonor id\t")
     resultsFile.write("Acceptor group\tAcceptor atom\t")
     resultsFile.write("Acceptor x coord\tAcceptor y coord\tAcceptor z coord\t")

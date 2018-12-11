@@ -27,7 +27,7 @@ class SupramolecularComposition:
         self.guiHBonds = HBondsGUI( pageHBonds )
             
         self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds]
-        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation" ]
+        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds" ]
         self.actionLabels2Objects = { "AnionPi" : self.guiAnionPi, 
                                      "PiPi" : self.guiPiPi, 
                                      "CationPi" : self.guiCationPi,
@@ -40,10 +40,10 @@ class SupramolecularComposition:
         headersId ={ 
                     "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"]  }
+                    "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
+                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"] }
         
         selectedData = []
-        
         
         for label in self.actionLabels:
             if actionMenu[label]["checkValue"].get() > 0:
@@ -133,7 +133,8 @@ class SupramolecularComposition:
         headersId ={ 
                     "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"]  }
+                    "Cation" : ["Cation code", "Cation chain", "Cation id"],
+                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"] }
         
         for headerKey in headersId:
             if headerKey in lastSelectionMenu:

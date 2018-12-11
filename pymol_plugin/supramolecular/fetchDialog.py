@@ -155,13 +155,13 @@ def fetchdialog(simulation = False):
 #        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
-    but_merge.grid(row = 4, column = 6, columnspan = 2)
+    but_merge.grid(row = 4, column = 8, columnspan = 2)
     
     def showAllInteractions():
         supramolecularComposition.showAll(showMenu)
     
     but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
-    but_showMany.grid(row = 5, column = 6, columnspan = 2)
+    but_showMany.grid(row = 5, column = 8, columnspan = 2)
     
     ######################
     # ALL

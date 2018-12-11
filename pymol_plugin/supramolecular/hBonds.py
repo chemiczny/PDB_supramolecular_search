@@ -9,43 +9,43 @@ import sys
 if sys.version_info[0] < 3:
     from pymol import cmd
 from supramolecularGUI import SupramolecularGUI
-from simpleFilters import noAAinHAcceptors, noAAinHDonors, noNUinHAcceptors, noNUinHDonors
+from simpleFilters import noAAinAnions, noNUinAnions, noNUinHDonors
 
 class HBondsGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
         self.setNumericalParameters({ "R" : {"header" : "Distance"}  })
 
-        self.setListParameters({ "Acceptor" : { "header" : "Acceptor code" }, 
+        self.setListParameters({ "Acceptor" : { "header" : "Anion code" }, 
                   "Acceptor el." : { "header" : "Acceptor atom" } , 
                   "Donor" : { "header" : "Donor code" },
                   "Donor el." : { "header" : "Donor atom"} })
 
-        self.setSortingParameters({  "R" : "Distance", "Donor" : "Donor code", "Don. el." : "Donor atom" , "Acceptor" : "Acceptor code",
+        self.setSortingParameters({  "R" : "Distance", "Donor" : "Donor code", "Don. el." : "Donor atom" , "Acceptor" : "Anion code",
                      "Acc. el." : "Acceptor atom" }, [  "R" , "Donor" , "Don. el." , "Acceptor" ,
                      "Acc. el."  ])
 
-        self.setTreeData([ "ID" , "PDB" , "Acceptor", "Acceptor id", "Acc. el." , "Donor", "Donor id", "Donor el.", 
+        self.setTreeData([ "ID" , "PDB" , "Acceptor", "Anion id", "Acc. el." , "Donor", "Donor id", "Donor el.", 
                           "R" ])
 
-        self.setAdditionalCheckboxes( [ { "label" : "No AA in acceptors", "func" : noAAinHAcceptors } ,
+        self.setAdditionalCheckboxes( [ { "label" : "No AA in acceptors", "func" : noAAinAnions } ,
                                       # { "label" : "No AA in donors", "func" : noAAinHDonors } ,
-                                       { "label" : "No NU in acceptors", "func" : noNUinHAcceptors } ,
+                                       { "label" : "No NU in acceptors", "func" : noNUinAnions } ,
                                           { "label" : "No NU in donors", "func" : noNUinHDonors } ]  )
     
         self.arrowName = "HBondArrow"
-        self.arrowColor = "red orange"
+        self.arrowColor = "red violet"
         
     def getValues(self, rowId, row):
-        return ( rowId, row["PDB Code"] , row["Acceptor code"], 
-                                                    row["Acceptor chain"]+str(row["Acceptor id"]) ,row["Acceptor atom"], 
+        return ( rowId, row["PDB Code"] , row["Anion code"], 
+                                                    row["Anion chain"]+str(row["Anion id"]) ,row["Acceptor atom"], 
                                                     row["Donor code"], 
                                                     row["Donor chain"] + str(row["Donor id"]), row["Donor atom"], 
                                                     str(row["Distance"])[:3] ) 
         
     def getSelection(self,  data):
-        res1Id = data["Acceptor id"].values[0]
-        res1Chain = data["Acceptor chain"].values[0]
+        res1Id = data["Anion id"].values[0]
+        res1Chain = data["Anion chain"].values[0]
         
         res2Id = data["Donor id"].values[0]
         res2Chain = data["Donor chain"].values[0]
@@ -54,8 +54,8 @@ class HBondsGUI(SupramolecularGUI):
         return selection
     
     def getSelectionFromRow(self,  data):
-        res1Id = data["Acceptor id"]
-        res1Chain = data["Acceptor chain"]
+        res1Id = data["Anion id"]
+        res1Chain = data["Anion chain"]
         
         res2Id = data["Donor id"]
         res2Chain = data["Donor chain"]
