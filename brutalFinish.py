@@ -9,7 +9,6 @@ import glob
 from os import remove
 import time
 
-
 def mergeLogs( logFinal, logs  ):
     final_log = open(logFinal, "a+")
     log_files = glob.glob(logs)
@@ -33,6 +32,7 @@ mergeLogs("logs/anionPi.log", "logs/anionPi*.log"  )
 mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
 mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
 mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
+mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
 mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
 
 timeStop = time.time()

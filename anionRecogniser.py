@@ -188,18 +188,11 @@ def searchInAnionTemplates( atom, atoms, ns ):
         for guess in priority2template[priority]:
             if not dummyCompare(copy(composition), guess):
                  continue
-#            print("maczuje")
-#            matchstart = time()
+             
             matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
-#            matchingTemplate += time() - matchstart
-#            print("pomaczowane")
             if matchResult:
                 return matchResult, anionGroup
-#            
-#    fullTime = time() - start
-#    print("wszystko", fullTime)
-#    print("Konwersja na graf", graphConversion)
-#    print("maczowanie", matchingTemplate)
+            
     return False, element
 
 def searchInAnionTemplatesBis( atom, atoms, initGraph ):
@@ -301,9 +294,9 @@ def try2matchTemplate(moleculeGraph, atomId, graphTemplate, atoms):
             return False, moleculeGraph.node[atomId]["element"]
     elif graphTemplate.graph["geometry"] == "planar":
 #        print("Sprawdzam płaskosc")
-        flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ))
+        flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ), 0.5)
         if not flatAnalysis["isFlat"]:
-            print("nie je plaski", graphTemplate.graph["name"])
+#            print("nie je plaski", graphTemplate.graph["name"])
             moleculeGraph.node[atomId]["charged"] = False
             return False, moleculeGraph.node[atomId]["element"]
 #        else:

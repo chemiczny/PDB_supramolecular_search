@@ -5,7 +5,7 @@ Created on Mon Jan  1 18:00:25 2018
 @author: michal
 """
 from cif_analyser import findSupramolecular
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader
 from os.path import isdir, basename, isfile
 from os import makedirs, remove
 import glob
@@ -38,7 +38,7 @@ log_files += glob.glob("logs/cationPi*.log")
 log_files += glob.glob("logs/anionCation*.log")
 log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
-log_files += glob.glob("logs/piPiPi.log")
+log_files += glob.glob("logs/hBonds*.log")
 
 for log_file in log_files:
     remove(log_file)
@@ -47,6 +47,7 @@ writeAnionPiHeader()
 writeAnionCationHeader()
 writePiPiHeader()
 writeCationPiHeader()
+writeHbondsHeader()
 
 
 cif_files = glob.glob(cifFiles)                                                                                                                         
@@ -105,6 +106,7 @@ mergeLogs("logs/anionPi.log", "logs/anionPi*.log"  )
 mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
 mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
 mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
+mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
 mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
 
 timeStop = time.time()

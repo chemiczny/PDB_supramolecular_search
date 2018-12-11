@@ -5,7 +5,7 @@ Created on Mon Oct  1 14:26:23 2018
 
 @author: michal
 """
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader
 from os.path import isdir, isfile, join
 from os import makedirs, remove
 import glob, json
@@ -19,9 +19,6 @@ if isfile(configurationFileName):
     configFile = open(configurationFileName)
     config = json.load(configFile)
     configFile.close()
-    
-    if "N" in config:
-        numberOfProcesses = config["N"]
         
     if "cif" in config:
         cifFiles = config["cif"]
@@ -35,7 +32,7 @@ log_files += glob.glob("logs/cationPi*.log")
 log_files += glob.glob("logs/anionCation*.log")
 log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
-log_files += glob.glob("logs/piPiPi.log")
+log_files += glob.glob("logs/hBonds*.log")
 
 for log_file in log_files:
     remove(log_file)
@@ -44,6 +41,8 @@ writeAnionPiHeader()
 writeAnionCationHeader()
 writePiPiHeader()
 writeCationPiHeader()
+writeHbondsHeader()
+
 
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
@@ -58,6 +57,10 @@ cifNoFile.close()
 
 if not isdir("scr"):
     makedirs("scr")
+else:
+    files2remove = glob("scr/*")
+    for f in files2remove:
+        remove(f)
 
 filesForStep = 50
 actualId = 0

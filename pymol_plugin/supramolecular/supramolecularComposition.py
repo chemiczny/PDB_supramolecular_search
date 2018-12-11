@@ -9,6 +9,7 @@ from anionPi import AnionPiGUI
 from piPi import PiPiGUI
 from cationPi import CationPiGUI
 from anionCation import AnionCationGUI
+from hBonds import HBondsGUI
 from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
@@ -18,18 +19,20 @@ if sys.version_info[0] < 3:
     from pymol import cmd
     
 class SupramolecularComposition:
-    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation):
+    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds):
         self.guiAnionPi = AnionPiGUI(pageAnionPi)
         self.guiPiPi = PiPiGUI(pagePiPi)
         self.guiCationPi = CationPiGUI( pageCationPi)
         self.guiAnionCation = AnionCationGUI( pageAnionCation)
+        self.guiHBonds = HBondsGUI( pageHBonds )
             
-        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation]
+        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds]
         self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation" ]
         self.actionLabels2Objects = { "AnionPi" : self.guiAnionPi, 
                                      "PiPi" : self.guiPiPi, 
                                      "CationPi" : self.guiCationPi,
-                                     "AnionCation" : self.guiAnionCation }
+                                     "AnionCation" : self.guiAnionCation,
+                                     "HBonds" : self.guiHBonds }
         
         self.actualKeys = []
         

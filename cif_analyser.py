@@ -41,7 +41,6 @@ def findSupramolecular( cifData):
     Wyjscie:
     Hehehe, czas pokaze...
     """
-    print("cif analyser start")
     
     cifFile = cifData[0]
     PDBcode = cifData[1]
@@ -63,7 +62,6 @@ def findSupramolecular( cifData):
         #Zeby zobaczyc co sie dzieje
         return True        
         
-    print("biopython parsing end")
     supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
@@ -234,13 +232,36 @@ def extractHbonds( atom , nsSmall, distance):
     
     graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"] )
     
+    acceptorResidue = atom["Atom"].get_parent()
     donors = []
     
     for potentialDonorInd in graph.nodes():
         element = neighbors[potentialDonorInd].element
         
         if element == "N" :
-            pass
+            connected = list(graph.neighbors(potentialDonorInd))
+            if len(connected) > 2:
+                continue
+            
+#            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
+#            
+#            if newPath:
+#                continue
+                
+            if neighbors[potentialDonorInd].get_parent() == acceptorResidue:
+                continue
+            
+            connectedElements = [ neighbors[c].element for c in connected ]
+            connectedElements = list(set(connectedElements))
+            if connectedElements == [ "O" ] :
+                continue
+            
+            if not "N" in connectedElements and not "C" in connectedElements:
+                continue
+            
+            donors.append( neighbors[potentialDonorInd] )
+        
+        
         elif element == "O" :
             connected = list(graph.neighbors(potentialDonorInd))
             if len(connected) > 1 :
@@ -250,9 +271,12 @@ def extractHbonds( atom , nsSmall, distance):
             if connectedElement != "C" :
                 continue
             
-            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
-            
-            if newPath:
+#            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
+#            
+#            if newPath:
+#                continue
+                
+            if neighbors[potentialDonorInd].get_parent() == acceptorResidue:
                 continue
             
             
