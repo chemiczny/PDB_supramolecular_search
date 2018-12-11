@@ -44,12 +44,21 @@ class SupramolecularComposition:
                     "HBonds" : ["Anion code", "Anion chain" , "Anion id"] }
         
         selectedData = []
+        data2use = {}
         
         for label in self.actionLabels:
-            if actionMenu[label]["checkValue"].get() > 0:
+            use = actionMenu[label]["checkValue"].get() > 0 
+            exclude = actionMenu[label]["checkValueExclude"].get() > 0 
+            if use or exclude  :
                 if not "filtered" in  self.actionLabels2Objects[label].logData:
+                    self.actionLabels2Objects[label].dataIsMerged = False
                     continue
                 else:
+                    if use and exclude:
+                        self.actionLabels2Objects[label].dataIsMerged = False
+                        continue
+                    
+                    data2use[label] = use
                     selectedData.append(label)
             else:
                 self.actionLabels2Objects[label].dataIsMerged = False
@@ -58,7 +67,9 @@ class SupramolecularComposition:
             return
         
         uniqueData = []
+        dataExcluded =[]
         self.actualKeys = []
+        excludedKeys = []
         for key in selectedData:
             headers = [ "PDB Code", "Model No" ] 
             
@@ -68,16 +79,30 @@ class SupramolecularComposition:
                     
             if "Anion" in key and "Cation" in key:
                 headers += headersId["Pi"]
-                    
-            if len(uniqueData) == 0:
-                uniqueData = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
+            
+            if data2use[key]:
+                print("do wziecia", key)
+                if len(uniqueData) == 0:
+                    uniqueData = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
+                else:
+                    uniqueData = pd.merge( uniqueData,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
+                    uniqueData = uniqueData.drop_duplicates()
+                self.actualKeys = list(set( self.actualKeys + headers ))
             else:
-                uniqueData = pd.merge( uniqueData,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
-                uniqueData = uniqueData.drop_duplicates()
+                print("do wywalenia", key)
+                if len(dataExcluded) == 0:
+                    dataExcluded = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
+                else:
+                    dataExcluded = pd.merge( dataExcluded,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
+                    dataExcluded = dataExcluded.drop_duplicates()
+                excludedKeys = list(set( excludedKeys + headers ))
                 
-            self.actualKeys = list(set( self.actualKeys + headers ))
+        if len(dataExcluded) > 0:
+            mergingKeys = list(set(self.actualKeys) & set(excludedKeys) )
+            subMerged = pd.merge( uniqueData,  dataExcluded , on = mergingKeys, how='left', indicator=True )
+            uniqueData = subMerged[ subMerged['_merge'] == 'left_only' ]
             
-            
+        
         for key in selectedData:
             headers = [ "PDB Code", "Model No" ] 
             

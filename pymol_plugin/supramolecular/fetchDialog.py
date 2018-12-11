@@ -111,6 +111,10 @@ def fetchdialog(simulation = False):
     
     lab_usePage = Tkinter.Label(self, width = 10, text = "Use:")
     lab_usePage.grid(row = 4, column = 1)
+    
+    lab_doNotUsePage = Tkinter.Label(self, width = 10, text = "Exclude:" )
+    lab_doNotUsePage.grid(row = 5, column = 1 )
+    
     for label in supramolecularComposition.actionLabels:
         actionMenu[label] = {}
         
@@ -122,11 +126,19 @@ def fetchdialog(simulation = False):
         actionMenu[label]["checkValue"] = Tkinter.IntVar()
         actionMenu[label]["checkbox"] = Tkinter.Checkbutton(self, variable = actionMenu[label]["checkValue"])
         actionMenu[label]["checkbox"].grid(row = actual_row, column = column)
+        
+        actual_row += 1
+        
+        actionMenu[label]["checkValueExclude"] = Tkinter.IntVar()
+        actionMenu[label]["checkboxExclude"] = Tkinter.Checkbutton(self, variable = actionMenu[label]["checkValueExclude"])
+        actionMenu[label]["checkboxExclude"].grid(row = actual_row, column = column)
+        
+        
             
         column += 1
     
     lab_showInt = Tkinter.Label(self, width = 10, text = "Show:" )
-    lab_showInt.grid(row = 5, column = 1)
+    lab_showInt.grid(row = 6, column = 1)
     
     showMenu = {}
     column = 2
@@ -136,7 +148,7 @@ def fetchdialog(simulation = False):
         
         showMenu[label]["checkValue"] = Tkinter.IntVar()
         showMenu[label]["checkbox"] = Tkinter.Checkbutton(self, variable = showMenu[label]["checkValue"])
-        showMenu[label]["checkbox"].grid(row = 5, column = column)
+        showMenu[label]["checkbox"].grid(row = 6, column = column)
             
         column += 1
     
@@ -155,13 +167,13 @@ def fetchdialog(simulation = False):
 #        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
-    but_merge.grid(row = 4, column = 8, columnspan = 2)
+    but_merge.grid(row = 5, column = 8, columnspan = 2)
     
     def showAllInteractions():
         supramolecularComposition.showAll(showMenu)
     
     but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
-    but_showMany.grid(row = 5, column = 8, columnspan = 2)
+    but_showMany.grid(row = 6, column = 8, columnspan = 2)
     
     ######################
     # ALL
