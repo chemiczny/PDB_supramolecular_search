@@ -1,7 +1,7 @@
 #!/bin/env bash
 #SBATCH -N 18
 #SBATCH --ntasks-per-node=24
-#SBATCH --time=1:00:00
+#SBATCH --time=3:00:00
 #SBATCH --mem-per-cpu=2GB
 ##### Nazwa kolejki
 #SBATCH -p plgrid

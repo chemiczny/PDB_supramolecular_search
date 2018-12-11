@@ -58,11 +58,11 @@ cifNoFile.close()
 if not isdir("scr"):
     makedirs("scr")
 else:
-    files2remove = glob("scr/*")
+    files2remove = glob.glob("scr/*")
     for f in files2remove:
         remove(f)
 
-filesForStep = 50
+filesForStep = 70
 actualId = 0
 filesForCurrentStep = 0
 
