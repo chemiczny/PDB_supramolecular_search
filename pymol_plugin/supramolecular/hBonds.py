@@ -19,7 +19,8 @@ class HBondsGUI(SupramolecularGUI):
         self.setListParameters({ "Acceptor" : { "header" : "Anion code" }, 
                   "Acceptor el." : { "header" : "Acceptor atom" } , 
                   "Donor" : { "header" : "Donor code" },
-                  "Donor el." : { "header" : "Donor atom"} })
+                  "Donor el." : { "header" : "Donor atom"} ,
+                  "PDB" : { "header" : "PDB Code" } })
 
         self.setSortingParameters({  "R" : "Distance", "Donor" : "Donor code", "Don. el." : "Donor atom" , "Acceptor" : "Anion code",
                      "Acc. el." : "Acceptor atom" }, [  "R" , "Donor" , "Don. el." , "Acceptor" ,

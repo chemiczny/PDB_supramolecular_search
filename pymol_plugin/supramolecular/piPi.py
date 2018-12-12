@@ -18,7 +18,8 @@ class PiPiGUI(SupramolecularGUI):
                            "alpha" : { "header" : "Angle" }, "theta" : { "header" : "theta" }  }  )
     
         self.setListParameters( { "Pi 1" : { "header" : "Pi acid Code" }, 
-                      "Pi 2" : { "header" : "Pi res code" } } )
+                      "Pi 2" : { "header" : "Pi res code" }  ,
+                      "PDB" : { "header" : "PDB Code" }} )
     
         self.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
                          "theta" : "theta", "Pi 1" : "Pi acid Code" ,"Pi 2" : "Pi res code" }, [  "R" , "Angle" , "x" , "h" ,

@@ -22,7 +22,8 @@ class CationPiGUI(SupramolecularGUI):
                       "Element" : { "header" : "Atom symbol" },
                       "Chain" : {"header" : "RingChain" },
                       "Complex" : {"header" : "Complex" },
-                      "CoordNo" : {"header" : "CoordNo"}
+                      "CoordNo" : {"header" : "CoordNo"} ,
+                      "PDB" : { "header" : "PDB Code" }
                       })
     
     

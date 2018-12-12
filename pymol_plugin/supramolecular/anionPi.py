@@ -20,7 +20,8 @@ class AnionPiGUI(SupramolecularGUI):
         self.setListParameters( { "Pi acid" : { "header" : "Pi acid Code" }, 
                       "Anions" : { "header" : "Anion code" } , 
                       "Groups" : { "header" : "Anion type" },
-                      "Methods" : { "header" : "Method" }} )
+                      "Methods" : { "header" : "Method" } ,
+                      "PDB" : { "header" : "PDB Code" } } )
     
         self.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
                          "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [  "R" , "Angle" , "x" , "h" ,
