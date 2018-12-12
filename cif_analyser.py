@@ -228,11 +228,12 @@ def extractCationAtoms ( point,  ns, distance  ):
     return metalCationsFound
 
 def extractHbonds( atom , nsSmall, distance):
-    neighbors = list(nsSmall.search( np.array(atom["Atom"].get_coord()) , distance, 'A' ))
+    neighbors = nsSmall.search( np.array(atom["Atom"].get_coord()) , distance + 2, 'A' )
     
-    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"] )
+    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False )
     
     acceptorResidue = atom["Atom"].get_parent()
+    
     donors = []
     
     for potentialDonorInd in graph.nodes():
@@ -243,6 +244,8 @@ def extractHbonds( atom , nsSmall, distance):
             if len(connected) > 2  or len(connected) == 0:
                 continue
             
+            if atom["Atom"] - neighbors[potentialDonorInd] > distance:
+                continue
 #            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
 #            
 #            if newPath:
@@ -265,6 +268,9 @@ def extractHbonds( atom , nsSmall, distance):
         elif element == "O" :
             connected = list(graph.neighbors(potentialDonorInd))
             if len(connected) > 1 or len(connected) == 0:
+                continue
+            
+            if atom["Atom"] - neighbors[potentialDonorInd] > distance:
                 continue
             
             connectedElement = neighbors[connected[0]].element

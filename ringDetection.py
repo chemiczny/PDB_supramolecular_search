@@ -236,7 +236,7 @@ def getSubstituents( graphMolecule, cycle ):
 #    
 #    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
 
-def molecule2graph( atoms, atom = None ):
+def molecule2graph( atoms, atom = None, returnSubgraph = True ):
     """
     Konwersja czasteczki na graf (networkx)
     
@@ -318,20 +318,19 @@ def molecule2graph( atoms, atom = None ):
             print("Nie znalazlem "+ atom.element+" w grafie!")
             G.add_node( atoms_found[0] )
             
-        nodes2stay = [ ]
-        for node in G.nodes():
-            if nx.has_path(G, node, atoms_found[0]):
-                nodes2stay.append(node)
-            
-#        if atoms_found:
-        return G.subgraph(nodes2stay), atoms_found[0]
-#        else:
-#            return G.subgraph(nodes2stay), None
-#        return G, atoms_found[0]
+        if returnSubgraph:
+            nodes2stay = [ ]
+            for node in G.nodes():
+                if nx.has_path(G, node, atoms_found[0]):
+                    nodes2stay.append(node)
+                
+            return G.subgraph(nodes2stay), atoms_found[0]
+        else:
+            return G , atoms_found[0]
         
     return G
 
-def moleculeFragment2graph( atoms, atom , maxDist ):
+def moleculeFragment2graph( atoms, atom , maxDist, returnSubgraph = True ):
     """
     Konwersja czasteczki na graf (networkx)
     
@@ -417,13 +416,15 @@ def moleculeFragment2graph( atoms, atom , maxDist ):
             print("Nie znalazlem "+ atom.element+" w grafie!")
             G.add_node( atoms_found[0] )
             
-        nodes2stay = [ ]
-        for node in G.nodes():
-            if nx.has_path(G, node, atoms_found[0]):
-                nodes2stay.append(node)
-            
-        return G.subgraph(nodes2stay), atoms_found[0]
-#        return G, atoms_found[0]
+        if returnSubgraph:
+            nodes2stay = [ ]
+            for node in G.nodes():
+                if nx.has_path(G, node, atoms_found[0]):
+                    nodes2stay.append(node)
+                
+            return G.subgraph(nodes2stay), atoms_found[0]
+        else:
+            return G, atoms_found[0]
         
     return G
 

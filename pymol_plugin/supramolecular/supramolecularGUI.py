@@ -360,6 +360,12 @@ class SupramolecularGUI:
         if self.currentMolecule["PdbCode"] and self.currentMolecule["PdbCode"] != pdbCode:
             cmd.delete(self.currentMolecule["PdbCode"])
             
+        actual_objects = cmd.get_object_list()
+        
+        for obj in actual_objects:
+            if obj.upper() != pdbCode.upper():
+                cmd.delete(obj)
+            
         if self.currentMolecule["PdbCode"] != pdbCode:
             if self.logData["cifDir"] != None:
                 potentialPaths = [ path.join( self.logData["cifDir"] ,  pdbCode.lower() +".cif" ), path.join( self.logData["cifDir"] ,  pdbCode.upper() +".cif" )  ]

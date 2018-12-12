@@ -81,7 +81,6 @@ class SupramolecularComposition:
                 headers += headersId["Pi"]
             
             if data2use[key]:
-                print("do wziecia", key)
                 if len(uniqueData) == 0:
                     uniqueData = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
                 else:
@@ -89,7 +88,6 @@ class SupramolecularComposition:
                     uniqueData = uniqueData.drop_duplicates()
                 self.actualKeys = list(set( self.actualKeys + headers ))
             else:
-                print("do wywalenia", key)
                 if len(dataExcluded) == 0:
                     dataExcluded = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
                 else:
@@ -196,7 +194,6 @@ class SupramolecularComposition:
                     selection += "or (" + self.actionLabels2Objects[key].getSelectionFromRow(row) + " ) "
                     
         selectionName = "suprSelectionFull"
-        print(selection)
         cmd.select(selectionName, selection)
         cmd.show( "sticks" , selectionName  )
         cmd.center(selectionName)
