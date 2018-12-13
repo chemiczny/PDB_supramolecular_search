@@ -47,24 +47,33 @@ class primitiveCif2Dict:
                 self.interestingKeyIndex[key] = self.loopKeysSize-1
         else:
             if self.interestingKeyIndex:
-                lineSpl = shlex.split(line)
-                if len(lineSpl) == self.loopKeysSize:
-
-                    if self.interestingKeyIndex:
-                        for key in self.interestingKeyIndex:
-                            self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
-                else:
-                    while len(lineSpl) < self.loopKeysSize:
-                        nextLine = self.cifFile.readline()
-                        nextLineSpl =shlex.split(nextLine)
-                        lineSpl = lineSpl+nextLineSpl
-
-
-                    if self.interestingKeyIndex:
-                        for key in self.interestingKeyIndex:
-                            self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
-
-            else:
+                loopData = []
+                while not "_" in line and not "#" in line:
+                                    
+                    if not line.startswith(";"):
+                        lineSpl = shlex.split(line)
+                        loopData += lineSpl
+                    else:
+                        colonCounter = line.count(";")
+                        newData = ""
+                        while colonCounter < 2:
+                            newData += line.strip()
+                            line = self.cifFile.readline()
+                            colonCounter += line.count(";")
+                            
+                        newData += line.strip()
+                        loopData.append(newData)
+    
+                    line = self.cifFile.readline()
+                    
+                loopSize = len(loopData)
+                for key in self.interestingKeyIndex:
+                    index2look = self.interestingKeyIndex[key] 
+                    while index2look < loopSize:
+                        self.appendValue2Key(key, loopData[ index2look ])
+                        index2look += self.loopKeysSize
+                        
+                
                 self.loop = False
                 self.loopKeysSize = 0
                 self.interestingKeyIndex = {}
@@ -111,7 +120,7 @@ class primitiveCif2Dict:
                     
 if __name__ == "__main__":
     
-    cif = "cif/3lgu.cif"
+    cif = "cif/2n5t.cif"
     print(cif)
     test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
     print(test.result)

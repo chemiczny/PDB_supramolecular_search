@@ -1,8 +1,8 @@
 Do zrobienia mozliwie szybko:
 -jak dodac wodory do struktur?
 -obliczyc mapy esp
--wyswietlanie wszystkich oddzialywan w pymolu
 -jednoczesne zaznaczanie tego samego rekordu w wielu kartach
+-zoptymalizować kolejkowanie cifów do procesowania (nie wrzucać największych plików na jeden rdzeń)
 
 W koncu trzeba bd to zrobic:
 - TESTY
