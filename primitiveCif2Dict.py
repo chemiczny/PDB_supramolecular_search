@@ -53,15 +53,16 @@ class primitiveCif2Dict:
                     if self.interestingKeyIndex:
                         for key in self.interestingKeyIndex:
                             self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
-                elif len(lineSpl) > 15:
-                    nextLine = self.cifFile.readline()
-                    nextLineSpl =shlex.split(nextLine)
-                    newLineSpl = lineSpl+nextLineSpl
-                    if len(newLineSpl) == self.loopKeysSize:
+                else:
+                    while len(lineSpl) < self.loopKeysSize:
+                        nextLine = self.cifFile.readline()
+                        nextLineSpl =shlex.split(nextLine)
+                        lineSpl = lineSpl+nextLineSpl
 
-                        if self.interestingKeyIndex:
-                            for key in self.interestingKeyIndex:
-                                self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
+
+                    if self.interestingKeyIndex:
+                        for key in self.interestingKeyIndex:
+                            self.appendValue2Key(key, lineSpl[ self.interestingKeyIndex[key] ])
 
             else:
                 self.loop = False
@@ -102,15 +103,15 @@ class primitiveCif2Dict:
     
     def appendValue2Key(self, key, value):
         if not key in self.result:
-            self.result[key] = value
+            self.result[key] = [ value ]
         else:
-            self.result[key] = [ self.result[key] , value ]
+            self.result[key].append( value )
     
     
                     
 if __name__ == "__main__":
     
-    cif = "cif/4pdj.cif"
+    cif = "cif/3lgu.cif"
     print(cif)
     test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
     print(test.result)

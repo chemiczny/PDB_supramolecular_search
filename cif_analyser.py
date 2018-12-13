@@ -108,28 +108,22 @@ def readResolutionAndMethod( cifFile, fileId ):
     method = "Unknown"
     if "_exptl.method" in mmcif_dict:
         method = mmcif_dict["_exptl.method"]
-    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
-    res_list = []
-    for key in res_keys:
-        if key in mmcif_dict:
-            resolution = mmcif_dict[key]
-            
-            try:
-                resolution = float(resolution)
-            except:
-                return -2, method
-
-            res_list.append(resolution)
+        if len(method) == 1:
+            method = method[0]
+#    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
+    res_key = "_refine.ls_d_res_high"
+    resolution = []
+    if res_key in mmcif_dict:
+        resolution = mmcif_dict[res_key]
 
                 
-    if not res_list:
+    if not resolution:
         return -1, method
                 
-    variance = np.var(res_list)
-    if variance < 0.001:
-        return res_list[0], method
+    if len(resolution) == 1:
+        return resolution[0], method
     else:
-        return -3, method
+        return -2, method
 
 def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
 #    print("analysePiacid - start ")
