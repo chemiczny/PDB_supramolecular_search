@@ -120,9 +120,9 @@ class primitiveCif2Dict:
                     
 if __name__ == "__main__":
     
-    cif = "cif/2n5t.cif"
+    cif = "cif2verify/4lnc.cif"
     print(cif)
-    test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method" ])
+    test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high"  , "_exptl.method" ])
     print(test.result)
         
     

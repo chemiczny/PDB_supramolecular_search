@@ -96,6 +96,13 @@ def findSupramolecular( cifData):
 #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     return supramolecularFound
     
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+
 def readResolutionAndMethod( cifFile, fileId ):
     try:
         mmcif_dict_parser = primitiveCif2Dict(cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method"] )
@@ -110,6 +117,8 @@ def readResolutionAndMethod( cifFile, fileId ):
         method = mmcif_dict["_exptl.method"]
         if len(method) == 1:
             method = method[0]
+        else:
+            method = sorted(method)
 #    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
     res_key = "_refine.ls_d_res_high"
     resolution = []
@@ -120,10 +129,22 @@ def readResolutionAndMethod( cifFile, fileId ):
     if not resolution:
         return -1, method
                 
-    if len(resolution) == 1:
-        return resolution[0], method
+    if len(resolution) == 1  :
+        if isfloat( resolution[0] ):
+            return resolution[0], method
+        else:
+            return -1, method
     else:
-        return -2, method
+        resFloats = []
+        for res in resolution:
+            if isfloat(res):
+                resFloats.append(float(res))
+                
+        if not resFloats:
+            return -1, method
+        
+        resFloats = sorted(resFloats)
+        return resFloats[0], method
 
 def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
 #    print("analysePiacid - start ")
