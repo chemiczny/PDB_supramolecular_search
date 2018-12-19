@@ -12,12 +12,13 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 #fast ang ugly code especially for prometheus
 import sys
 from os.path import isdir
+from os import system
 #if isdir("/net/people/plgglanow/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
 #    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
 if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
     sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
 
-from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
+from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection, PDBIO, PDBParser
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
@@ -26,6 +27,7 @@ from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, norma
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
+from buildStructure import buildStructure
 
 #from time import time
 
@@ -67,7 +69,7 @@ def findSupramolecular( cifData):
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
     resolution, method = readResolutionAndMethod(cifFile, fileId)
-
+    hAtomsPresent = hydrogensPresent(structure)
 #    try:
     for modelIndex, model in enumerate(structure):
 #        print("model "+str(modelIndex))
@@ -86,7 +88,7 @@ def findSupramolecular( cifData):
         for residue in model.get_residues():
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
-                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId):
+                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent):
                     supramolecularFound = True
             
 #    fileId = current_process()
@@ -95,6 +97,13 @@ def findSupramolecular( cifData):
 #        fileId = current_process()
 #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     return supramolecularFound
+
+def hydrogensPresent(structure):
+    for a in structure.get_atoms():
+        if a.element == "H":
+            return True
+        
+    return False
     
 def isfloat(value):
   try:
@@ -146,7 +155,7 @@ def readResolutionAndMethod( cifFile, fileId ):
         resFloats = sorted(resFloats)
         return resFloats[0], method
 
-def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
+def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent):
 #    print("analysePiacid - start ")
     firstAtom = list(ligand.get_atoms())[0]
     if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
@@ -186,7 +195,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId):
                 cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
                 
-                hDonors = extractHbonds( atom , nsSmall, 3.5)
+                hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId)
                 writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
                 
             
@@ -242,82 +251,54 @@ def extractCationAtoms ( point,  ns, distance  ):
     
     return metalCationsFound
 
-def extractHbonds( atom , nsSmall, distance):
+def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId):
+    
     neighbors = nsSmall.search( np.array(atom["Atom"].get_coord()) , distance + 2, 'A' )
-    
-    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False )
-    
     acceptorResidue = atom["Atom"].get_parent()
+    
+    if not hAtomsPresent:
+#        return []
+        structure = buildStructure(neighbors, acceptorResidue)
+        io = PDBIO()
+        io.set_structure(structure)
+        pdbFileName = "hBondsScr/"+acceptorResidue.get_resname() +".pdb"
+        io.save(pdbFileName)
+        system("python primitiveAddHydrogens.py "+pdbFileName)
+        parser = PDBParser()
+        structure = parser.get_structure('hBondTemp', pdbFileName)
+        structureAtoms = structure.get_atoms()
+        hydrogensAtoms = [ ]
+        for sa in structureAtoms:
+            if sa.element == "H":
+                hydrogensAtoms.append(sa)
+        
+        neighbors += hydrogensAtoms
+    
+    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False )
     
     donors = []
     
     for potentialDonorInd in graph.nodes():
         element = neighbors[potentialDonorInd].element
         
-        if element == "N" :
+        if element in [ "O" , "N" ] :
             connected = list(graph.neighbors(potentialDonorInd))
-            if len(connected) > 2  or len(connected) == 0:
-                continue
             
             if atom["Atom"] - neighbors[potentialDonorInd] > distance:
                 continue
-#            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
-#            
-#            if newPath:
-#                continue
                 
             if neighbors[potentialDonorInd].get_parent() == acceptorResidue:
                 continue
             
             connectedElements = [ neighbors[c].element for c in connected ]
             connectedElements = list(set(connectedElements))
-            if connectedElements == [ "O" ] :
-                continue
             
-            if not "N" in connectedElements and not "C" in connectedElements:
-                continue
-            
-            donors.append( neighbors[potentialDonorInd] )
-        
-        
-        elif element == "O" :
-            connected = list(graph.neighbors(potentialDonorInd))
-            if len(connected) > 1 or len(connected) == 0:
-                continue
-            
-            if atom["Atom"] - neighbors[potentialDonorInd] > distance:
-                continue
-            
-            connectedElement = neighbors[connected[0]].element
-            if connectedElement != "C" :
-                continue
-            
-#            newPath = nx.shortest_path(graph, potentialDonorInd, anionAtomInd)
-#            
-#            if newPath:
-#                continue
-                
-            if neighbors[potentialDonorInd].get_parent() == acceptorResidue:
-                continue
-            
-            
-            nextNeighbors = graph.neighbors(connected[0])
-            
-            donorOK = True
-            for nn in nextNeighbors:
-                nextElement = neighbors[nn].element
-                
-                if nextElement == "N" :
-                    donorOK = False
-                    break
-                elif nextElement == "O" :
-                    oxygenNeigh = len(list(graph.neighbors(nn)))
-                    if oxygenNeigh > 1:
-                        donorOK = False
-                        break
-                    
-            if donorOK:
-                donors.append( neighbors[potentialDonorInd] )
+            for c in connected:
+                element = neighbors[c].element
+                if element != "H":
+                    continue
+                else:
+                    donors.append( { "donor" : neighbors[potentialDonorInd], "hydrogen" : neighbors[c] , "HFromExp" : hAtomsPresent} )
             
         
     return donors

@@ -106,7 +106,9 @@ def writeHbondsHeader( ):
     resultsFile.write("Acceptor x coord\tAcceptor y coord\tAcceptor z coord\t")
     resultsFile.write("Donor group\tDonor atom\t")
     resultsFile.write("Donor x coord\tDonor y coord\tDonor z coord\t")
-    resultsFile.write("Distance\tModel No\n")
+    resultsFile.write("Hydrogen x coord\tHydrogen y coord\tHydrogen z coord\t")
+    resultsFile.write("H from Experm\tAngle\tDistance H Acc\t")
+    resultsFile.write("Distance Don Acc\tModel No\n")
     resultsFile.close()
     
 def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, fileId = None ):
@@ -387,7 +389,8 @@ def writeHbondsResults( PDBcode ,hDonors, atom, modelIndex, fileId):
     
     resultsFile = open(resultsFileName, "a+")
 
-    for hDon in hDonors:
+    for hDonData in hDonors:
+        hDon = hDonData["donor"]
         distance = anionAtom - hDon
         
         hDonCoords = hDon.get_coord()
@@ -419,6 +422,23 @@ def writeHbondsResults( PDBcode ,hDonors, atom, modelIndex, fileId):
         resultsFile.write(str(hDonCoords[0])+"\t")
         resultsFile.write(str(hDonCoords[1])+"\t")
         resultsFile.write(str(hDonCoords[2])+"\t")
+        
+        hydrogenAtom = hDonData["hydrogen"]
+        hydrogenCoords = hydrogenAtom.get_coord()
+        
+        resultsFile.write(str(hydrogenCoords[0])+"\t")
+        resultsFile.write(str(hydrogenCoords[1])+"\t")
+        resultsFile.write(str(hydrogenCoords[2])+"\t")
+        
+        resultsFile.write(str(hDonData["HFromExp"])+"\t")
+        
+        vec1 = normalize(anionCoord - hydrogenCoords)
+        vec2 = normalize(hDonCoords - hydrogenCoords)
+        angle = degrees( acos( np.inner(vec1, vec2 ) ))
+        hDistance = anionAtom - hydrogenAtom
+        
+        resultsFile.write(str(angle)+"\t")
+        resultsFile.write(str(hDistance)+"\t")
         
         resultsFile.write(str(distance)+"\t")
         

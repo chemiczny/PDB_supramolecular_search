@@ -236,7 +236,7 @@ def getSubstituents( graphMolecule, cycle ):
 #    
 #    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
 
-def molecule2graph( atoms, atom = None, returnSubgraph = True ):
+def molecule2graph( atoms, atom = None, returnSubgraph = True, omitHydrogens = True ):
     """
     Konwersja czasteczki na graf (networkx)
     
@@ -278,7 +278,7 @@ def molecule2graph( atoms, atom = None, returnSubgraph = True ):
     atoms_found = []
     for atom1Ind, atom1 in enumerate(atoms):
 
-        if atom1.element == "H":
+        if atom1.element == "H" and omitHydrogens:
             continue
         
         if not atom1.element in radius:
@@ -294,11 +294,14 @@ def molecule2graph( atoms, atom = None, returnSubgraph = True ):
         
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
           
-            if atom2.element == "H":
+            if atom2.element == "H" and omitHydrogens:
                 continue
             
             if not atom2.element in radius:
                 continue
+            
+#            if omitHydrogens and atom1.element == "H" and atom2.element == "H":
+#                
             
             radius2 = radius[atom2.element]
             
