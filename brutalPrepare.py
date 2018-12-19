@@ -24,7 +24,10 @@ if isfile(configurationFileName):
         cifFiles = config["cif"]
         
 if not isdir("logs"):
-        makedirs("logs")
+    makedirs("logs")
+        
+if not isdir("hBondsScr"):
+    makedirs("hBondsScr")
         
 log_files = glob.glob("logs/anionPi*.log")
 log_files += glob.glob("logs/piPi*.log")
