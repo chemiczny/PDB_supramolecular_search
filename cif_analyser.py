@@ -19,6 +19,7 @@ if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/people/pl
     sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection, PDBIO, PDBParser
+from Bio.PDB.PDBIO import Select
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
@@ -27,7 +28,7 @@ from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, norma
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
-from buildStructure import primitiveBuildStructure
+#from buildStructure import primitiveBuildStructure
 
 #from time import time
 
@@ -56,6 +57,8 @@ def findSupramolecular( cifData):
         fileId = fileId.replace("(", "")
         fileId = fileId.replace(")", "")
         fileId = fileId.replace(",", "")
+        fileId = fileId.replace("<", "")
+        fileId = fileId.replace(">", "")
     else:
         fileId = logId
     
@@ -93,7 +96,7 @@ def findSupramolecular( cifData):
         for residue in model.get_residues():
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
-                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent):
+                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent, structure):
                     supramolecularFound = True
             
 #    fileId = current_process()
@@ -160,7 +163,7 @@ def readResolutionAndMethod( cifFile, fileId ):
         resFloats = sorted(resFloats)
         return resFloats[0], method
 
-def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent):
+def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent, structure):
 #    print("analysePiacid - start ")
     firstAtom = list(ligand.get_atoms())[0]
     if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
@@ -200,7 +203,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
                 cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
                 
-                hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId)
+                hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId, structure)
                 writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
                 
             
@@ -256,18 +259,26 @@ def extractCationAtoms ( point,  ns, distance  ):
     
     return metalCationsFound
 
-def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId):
+def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
     
     neighbors = nsSmall.search( np.array(atom["Atom"].get_coord()) , distance + 2, 'A' )
     acceptorResidue = atom["Atom"].get_parent()
     
     if not hAtomsPresent:
 #        return []
-        structure = primitiveBuildStructure(neighbors, acceptorResidue)
+#        structure = primitiveBuildStructure(neighbors, acceptorResidue)
         io = PDBIO()
         io.set_structure(structure)
         pdbFileName = "hBondsScr/"+str(fileId)+".pdb"
-        io.save(pdbFileName)
+        
+        class MySelect(Select):
+            def accept_atom(self, atom):
+                if atom in neighbors and atom.get_parent()!= acceptorResidue:
+                    return 1
+                else:
+                    return 0
+        
+        io.save(pdbFileName, MySelect())
         system("python primitiveAddHydrogens.py "+pdbFileName)
         parser = PDBParser()
         structure = parser.get_structure('hBondTemp', pdbFileName)
@@ -300,10 +311,10 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId):
             
             for c in connected:
                 element = neighbors[c].element
-                if element != "H":
-                    continue
-                else:
-                    donors.append( { "donor" : neighbors[potentialDonorInd], "hydrogen" : neighbors[c] , "HFromExp" : hAtomsPresent} )
+#                if element != "H":
+#                    continue
+#                else:
+                donors.append( { "donor" : neighbors[potentialDonorInd], "hydrogen" : neighbors[c] , "HFromExp" : hAtomsPresent} )
             
         
     return donors
