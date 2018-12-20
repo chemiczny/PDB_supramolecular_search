@@ -14,7 +14,7 @@ from simpleFilters import noAAinAnions, noNUinAnions, noNUinHDonors
 class HBondsGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
-        self.setNumericalParameters({ "R" : {"header" : "Distance"} , "RH" : { "header" : "Distance H Acc" } , "Angle" : { "header" : "Angle" }  })
+        self.setNumericalParameters({ "R" : {"header" : "Distance Don Acc"} , "RH" : { "header" : "Distance H Acc" } , "Angle" : { "header" : "Angle" }  })
 
         self.setListParameters({ "Acceptor" : { "header" : "Anion code" }, 
                   "Acceptor el." : { "header" : "Acceptor atom" } , 
@@ -28,7 +28,7 @@ class HBondsGUI(SupramolecularGUI):
                      "Acc. el." , "RH" , "Angle" ])
 
         self.setTreeData([ "ID" , "PDB" , "Acceptor", "Anion id", "Acc. el." , "Donor", "Donor id", "Donor el.", 
-                          "R", "RH", "Angle" ])
+                          "R", "RH", "Angle" , "H orig"])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in acceptors", "func" : noAAinAnions } ,
                                       # { "label" : "No AA in donors", "func" : noAAinHDonors } ,
@@ -43,7 +43,7 @@ class HBondsGUI(SupramolecularGUI):
                                                     row["Anion chain"]+str(row["Anion id"]) ,row["Acceptor atom"], 
                                                     row["Donor code"], 
                                                     row["Donor chain"] + str(row["Donor id"]), row["Donor atom"], 
-                                                    str(row["Distance Don Acc"])[:3], str(row["Distance H Acc"])[:3], str(row["Angle"]) ) 
+                                                    str(row["Distance Don Acc"])[:3], str(row["Distance H Acc"])[:3], str(row["Angle"]), str(row["H from Experm"]) ) 
         
     def getSelection(self,  data):
         res1Id = data["Anion id"].values[0]

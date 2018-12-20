@@ -277,8 +277,10 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
                     return 1
                 else:
                     return 0
-        
-        io.save(pdbFileName, MySelect())
+        try :
+            io.save(pdbFileName, MySelect())
+        except:
+            return
         system("python primitiveAddHydrogens.py "+pdbFileName)
         parser = PDBParser()
         structure = parser.get_structure('hBondTemp', pdbFileName)
@@ -311,10 +313,10 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
             
             for c in connected:
                 element = neighbors[c].element
-#                if element != "H":
-#                    continue
-#                else:
-                donors.append( { "donor" : neighbors[potentialDonorInd], "hydrogen" : neighbors[c] , "HFromExp" : hAtomsPresent} )
+                if element != "H":
+                    continue
+                else:
+                    donors.append( { "donor" : neighbors[potentialDonorInd], "hydrogen" : neighbors[c] , "HFromExp" : hAtomsPresent} )
             
         
     return donors
