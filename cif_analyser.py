@@ -27,7 +27,7 @@ from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, norma
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
-from buildStructure import buildStructure
+from buildStructure import primitiveBuildStructure
 
 #from time import time
 
@@ -51,6 +51,11 @@ def findSupramolecular( cifData):
     
     if logId == "default":
         fileId = current_process()
+        fileId = str(fileId)
+        fileId = fileId.replace(" ", "")
+        fileId = fileId.replace("(", "")
+        fileId = fileId.replace(")", "")
+        fileId = fileId.replace(",", "")
     else:
         fileId = logId
     
@@ -258,7 +263,7 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId):
     
     if not hAtomsPresent:
 #        return []
-        structure = buildStructure(neighbors, acceptorResidue)
+        structure = primitiveBuildStructure(neighbors, acceptorResidue)
         io = PDBIO()
         io.set_structure(structure)
         pdbFileName = "hBondsScr/"+str(fileId)+".pdb"

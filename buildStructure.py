@@ -8,7 +8,7 @@ Created on Wed Dec 19 20:18:20 2018
 
 from Bio.PDB.StructureBuilder import StructureBuilder
 
-def buildStructure(atomList, exceptResidue):
+def primitiveBuildStructure(atomList, exceptResidue):
     sb = StructureBuilder() 
     sb.init_structure('pdb') 
     sb.init_seg(' ') 
