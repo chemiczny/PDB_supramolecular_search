@@ -261,7 +261,7 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId):
         structure = buildStructure(neighbors, acceptorResidue)
         io = PDBIO()
         io.set_structure(structure)
-        pdbFileName = "hBondsScr/"+acceptorResidue.get_resname() +".pdb"
+        pdbFileName = "hBondsScr/"+str(fileId)+".pdb"
         io.save(pdbFileName)
         system("python primitiveAddHydrogens.py "+pdbFileName)
         parser = PDBParser()
