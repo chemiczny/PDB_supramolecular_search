@@ -120,7 +120,9 @@ def isFlatPrimitive(allAtomsList, atomsIndList, maxDist = 0.15):
     """
         
     verdict = { 'isFlat' : False, 'normVec' : [ 0, 0, 0] }
-    
+#    if allAtomsList[0].get_parent().get_resname() != "GLU":
+#        return verdict
+#    print("Analizuje: ", allAtomsList[0].get_parent().get_resname(),allAtomsList[0].get_parent().get_id(), allAtomsList[0].get_parent().get_parent().get_id() )
     if len(atomsIndList) < 3:
         print("Znaleziono 2-wu elementowy cykl!!!")
         return verdict
@@ -137,8 +139,11 @@ def isFlatPrimitive(allAtomsList, atomsIndList, maxDist = 0.15):
     for atomInd in atomsIndList:
         atomCoord = np.array(allAtomsList[ atomInd ].get_coord() )
         atomDist = abs( np.inner(norm_vec, atomCoord) + D  )
-        
+#        print(atomDist)
         if atomDist > maxDist:
+#            print("nieplaski!!!!")
+#            for ai in atomsIndList:
+#                print(allAtomsList[ai].element, allAtomsList[ai].get_coord())
             return verdict
             
     verdict['isFlat'] = True
@@ -185,7 +190,7 @@ def getRingsCentroids( molecule, returnGraph = False ):
         normVec (wektor normalnych plaszczyzny pierscienia)
     """
     atoms = list(molecule.get_atoms())
-    G = molecule2graph(atoms)
+    G = molecule2graph(atoms, None, True, True , True)
                 
     cycles = list(nx.cycle_basis(G))
 #    print("Znalazlem cykli: ", len(cycles))
@@ -236,7 +241,7 @@ def getSubstituents( graphMolecule, cycle ):
 #    
 #    return str(atomCoords[0])+str(atomCoords[1])+str(atomCoords[2])
 
-def molecule2graph( atoms, atom = None, returnSubgraph = True, omitHydrogens = True ):
+def molecule2graph( atoms, atom = None, returnSubgraph = True, omitHydrogens = True, omitMetals = False ):
     """
     Konwersja czasteczki na graf (networkx)
     
@@ -273,12 +278,22 @@ def molecule2graph( atoms, atom = None, returnSubgraph = True, omitHydrogens = T
               "TH" : 1.75, "PA" : 1.69, "U" : 1.70, "NP" : 1.71, "PU" : 1.72, 
               "AM" : 1.66, "CM" : 1.66, "BK" : 1.68, "CF" : 1.68, "ES" : 1.65, 
               "FM" : 1.67, "MD" : 1.73, "NO" : 1.76, "LR" : 1.61}
+    metals =  [
+        "LI", "BE", 
+        "NA", "MG", "AL", 
+        "K", "CA", "SC", "TI", "V", "CR", "MN", "FE", "CO", "NI", "CU", "ZN", "GA", "GE", "AS", 
+        "RB", "SR", "Y", "ZR", "NB", "MO", "TC", "RU", "RH", "PD", "AG", "CD", "IN", "SN", "SB", "TE", 
+        "CS", "BA", "LA", "CE", "PR", "ND", "PM", "SM", "EU", "GD", "TB", "DY", "HO", "ER", "TM", "YB", "LU", "HF", "TA", "W", "RE", "OS", "IR", "PT", "AU", "HG", "TL", "PB", "BI", "PO", "AT", 
+        "FR", "RA", "AC", "TH", "PA", "U", "NP", "PU", "AM", "CM", "BK", "CF", "ES", "FM", "MD", "NO", "LR", "RF", "DB", "SG", "BH", "HS", "MT", "DS", "RG"]
     
     G = nx.Graph()
     atoms_found = []
     for atom1Ind, atom1 in enumerate(atoms):
 
         if atom1.element == "H" and omitHydrogens:
+            continue
+        
+        if atom1.element.upper() in metals and omitMetals:
             continue
         
         if not atom1.element in radius:
@@ -295,6 +310,9 @@ def molecule2graph( atoms, atom = None, returnSubgraph = True, omitHydrogens = T
         for atom2Ind, atom2 in enumerate(atoms[atom1Ind+1:], atom1Ind+1):
           
             if atom2.element == "H" and omitHydrogens:
+                continue
+            
+            if atom2.element.upper() in metals and omitMetals:
                 continue
             
             if not atom2.element in radius:

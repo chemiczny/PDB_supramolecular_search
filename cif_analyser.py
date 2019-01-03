@@ -28,6 +28,7 @@ from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, norma
 from anionRecogniser import extractAnionAtoms, createResId
 from multiprocessing import current_process
 import networkx as nx
+from time import time
 #from buildStructure import primitiveBuildStructure
 
 #from time import time
@@ -72,6 +73,8 @@ def findSupramolecular( cifData):
         #Zeby zobaczyc co sie dzieje
         return True        
         
+    writeAdditionalInfo("Zaczynam analize: "+PDBcode, fileId)
+    timeStart = time()
     supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
@@ -104,6 +107,9 @@ def findSupramolecular( cifData):
 #    except:
 #        fileId = current_process()
 #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
+    timeStop = time()
+    timeTaken = timeStop - timeStart
+    writeAdditionalInfo("Analiza skonczona "+PDBcode+ " czas: "+str(timeTaken), fileId)
     return supramolecularFound
 
 def hydrogensPresent(structure):
@@ -171,7 +177,6 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
     
     
     centroids, ligandGraph = getRingsCentroids( ligand, True )
-    
     ligandWithAnions = False
     
     for centroid in centroids:
@@ -186,21 +191,27 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
         extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
 
         if len(extractedAnionAtoms) > 0:
-            extractedCationAtoms = extractCationAtoms( centroid["coords"], nsSmall, 10 )
+            extractedMetalCations, extractedAAcations = extractCationAtoms( centroid["coords"], nsSmall, 10 )
             
             cationRingLenChains = []
             cationComplexData = []
-            for cat in extractedCationAtoms:
+            
+            for cat in extractedMetalCations:
                 cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph, fileId) )
                 cationComplexData.append( findCationComplex( cat, ns ) )
                     
-            writeCationPiResults(ligand, PDBcode, centroid, extractedCationAtoms, cationRingLenChains, cationComplexData, modelIndex, fileId )
+            extractedCations = extractedMetalCations + extractedAAcations
+            cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False) ]
+            cationComplexDataFull = cationComplexData + len(extractedAAcations)* [ { "complex" : False, "coordNo" : 0 } ]
+            
+            writeCationPiResults(ligand, PDBcode, centroid, extractedCations, cationRingLenChainsFull, cationComplexDataFull, modelIndex, fileId )
             
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
-                cationNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
+                metalsNearAnion, aaCationsNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
+                cationNearAnion = metalsNearAnion + aaCationsNearAnion
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
                 
                 hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId, structure)
@@ -245,6 +256,8 @@ def extractCationAtoms ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')
     
     metalCationsFound = []
+    aaCationsFound = []
+    
     metalCations =  [
         "Li", "Be", 
         "Na", "Mg", "Al", 
@@ -256,8 +269,11 @@ def extractCationAtoms ( point,  ns, distance  ):
     for atom in neighbors:
         if atom.element.upper() in [ element.upper() for element in metalCations ]:
             metalCationsFound.append( atom )
+            
+        elif atom.get_parent().get_resname().upper() in [ "ARG" , "LYS" ] and atom.get_name() != "N":
+            aaCationsFound.append(atom)
     
-    return metalCationsFound
+    return metalCationsFound, aaCationsFound
 
 def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
     
@@ -280,7 +296,7 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
         try :
             io.save(pdbFileName, MySelect())
         except:
-            return
+            return []
         system("python primitiveAddHydrogens.py "+pdbFileName)
         parser = PDBParser()
         structure = parser.get_structure('hBondTemp', pdbFileName)
@@ -330,8 +346,11 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
     firstAtomInRing = centroidData["cycleAtoms"][0]
     shortestPath = []
     somethingFound = False
+#    print("Analizuje :", piAcid.get_resname())
     for catN in cationNeighbours:
         if catN.element == "H":
+            continue
+        if catN == cation:
             continue
         if catN.get_parent() == piAcid:
             tempG, catNIndex = findInGraph( ligandGraph, catN, piAcidAtoms )
@@ -342,12 +361,17 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
             if not  nx.has_path(ligandGraph, firstAtomInRing, catNIndex):
                 continue 
             
-            somethingFound = True
             newPath = nx.shortest_path(ligandGraph, firstAtomInRing, catNIndex)
+#            print(catN.get_name())
+#            print("przed obieciem: ", len(newPath))
             newPath = [ node for node in newPath if not node in centroidData["cycleAtoms"] ]
-            
-            if len(newPath) < len(shortestPath) or not shortestPath:
+#            print("znalazlem sciezke dlugosci", len(newPath))
+            if len(newPath) < len(shortestPath) or not somethingFound:
+#                print("znalazlem krotsza sciezke")
+#                print("stara dlugosc: ", len(shortestPath))
                 shortestPath = newPath
+                
+            somethingFound = True
                 
     if not somethingFound:
         return 0, False

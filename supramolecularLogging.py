@@ -263,8 +263,12 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
         
         h = abs(cos(radians( angle ))*distance)
         x = sin(radians( angle ))*distance
+        
         if angle > 90.0 :
             angle = 180 - angle
+            
+        if theta > 90.0 :
+            theta = 180 - theta
             
         centroid2Coords = cent["coords"]
         centroidCoords = centroid["coords"]        

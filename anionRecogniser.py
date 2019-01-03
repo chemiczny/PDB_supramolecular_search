@@ -189,7 +189,7 @@ def searchInAnionTemplates( atom, atoms, ns ):
             if not dummyCompare(copy(composition), guess):
                  continue
              
-            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
+            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms5)
             if matchResult:
                 return matchResult, anionGroup
             
