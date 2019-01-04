@@ -10,4 +10,4 @@
 module add plgrid/tools/python/3.6.5
 module load plgrid/tools/pymol/2.2.0
 
-cat cif2process.dat | xargs -t -d "\n" -P ${SLURM_NTASKS} -n 1 srun -n 1 -N 1 --mem=2gb python3 brutalRun.py
+cat cif2process.dat | xargs -t -d "\n" -P ${SLURM_NTASKS} -n 1 srun -n 1 -N 1 --mem=3gb python3 brutalRun.py

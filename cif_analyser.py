@@ -191,7 +191,8 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
         extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
 
         if len(extractedAnionAtoms) > 0:
-            extractedMetalCations, extractedAAcations = extractCationAtoms( centroid["coords"], nsSmall, 10 )
+            extractedMetalCations = extractMetalCations( centroid["coords"], nsSmall, 10 )
+            extractedAAcations = extractAACations( centroid["coords"], nsSmall, 4.5 )
             
             cationRingLenChains = []
             cationComplexData = []
@@ -210,7 +211,9 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
-                metalsNearAnion, aaCationsNearAnion = extractCationAtoms( atom["Atom"].get_coord(), nsSmall, 4.5  )
+                metalsNearAnion = extractMetalCations( atom["Atom"].get_coord(), nsSmall, 4.5  )
+                aaCationsNearAnion = extractAACations( atom["Atom"].get_coord(), nsSmall, 4.5  )
+                
                 cationNearAnion = metalsNearAnion + aaCationsNearAnion
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
                 
@@ -252,11 +255,10 @@ def findCationComplex(cation, ns):
     else:
          return  { "complex" : False, "coordNo" : coordNo }
 
-def extractCationAtoms ( point,  ns, distance  ):
+def extractMetalCations ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')
     
     metalCationsFound = []
-    aaCationsFound = []
     
     metalCations =  [
         "Li", "Be", 
@@ -269,11 +271,20 @@ def extractCationAtoms ( point,  ns, distance  ):
     for atom in neighbors:
         if atom.element.upper() in [ element.upper() for element in metalCations ]:
             metalCationsFound.append( atom )
+    
+    return metalCationsFound
+
+def extractAACations ( point,  ns, distance  ):
+    neighbors = ns.search(np.array(point), distance, 'A')
+    
+    aaCationsFound = []
+    
+    for atom in neighbors:
             
-        elif atom.get_parent().get_resname().upper() in [ "ARG" , "LYS" ] and atom.get_name() != "N":
+        if atom.get_parent().get_resname().upper() in [ "ARG" , "LYS" ] and atom.get_name() != "N" and atom.element.upper() == "N":
             aaCationsFound.append(atom)
     
-    return metalCationsFound, aaCationsFound
+    return  aaCationsFound
 
 def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
     
@@ -283,6 +294,7 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
     if not hAtomsPresent:
 #        return []
 #        structure = primitiveBuildStructure(neighbors, acceptorResidue)
+        
         io = PDBIO()
         io.set_structure(structure)
         pdbFileName = "hBondsScr/"+str(fileId)+".pdb"
