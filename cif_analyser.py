@@ -211,11 +211,7 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
-                metalsNearAnion = extractMetalCations( atom["Atom"].get_coord(), nsSmall, 4.5  )
-                aaCationsNearAnion = extractAACations( atom["Atom"].get_coord(), nsSmall, 4.5  )
-                
-                cationNearAnion = metalsNearAnion + aaCationsNearAnion
-                writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, cationNearAnion, modelIndex, fileId)
+                writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, extractedCations, modelIndex, fileId)
                 
                 hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId, structure)
                 writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
