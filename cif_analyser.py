@@ -13,10 +13,9 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 import sys
 from os.path import isdir
 from os import system
-#if isdir("/net/people/plgglanow/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
-#    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
-if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
-    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
+
+if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/archive/groups/plggsuprm/pythonPackages" in sys.path :
+    sys.path.insert(0, "/net/archive/groups/plggsuprm/pythonPackages" )
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection, PDBIO, PDBParser
 from Bio.PDB.PDBIO import Select

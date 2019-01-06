@@ -2,6 +2,8 @@ import sys
 sys.path.insert(0, "/net/archive/groups/plggsuprm/pythonPackages/" )
 
 from Bio.PDB import PDBList
+import json
+from os.path import dirname
 
 configurationFileName = "config.json"
 configFile = open(configurationFileName)

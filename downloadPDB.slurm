@@ -4,6 +4,7 @@
 #SBATCH --time=70:00:00
 ##### Nazwa kolejki
 #SBATCH -p plgrid
+#SBATCH -A supraml
 
 module add plgrid/tools/python/3.6.5
 

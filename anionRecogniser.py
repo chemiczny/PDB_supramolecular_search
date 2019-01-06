@@ -8,10 +8,9 @@ Created on Sat Apr 21 14:04:23 2018
 #fast ang ugly code especially for prometheus
 import sys
 from os.path import isdir
-#if isdir("/net/people/plgglanow/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
-#    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
-if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/people/plgglanow/pythonPackages" in sys.path :
-    sys.path.insert(0, "/net/people/plgglanow/pythonPackages" )
+
+if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/archive/groups/plggsuprm/pythonPackages" in sys.path :
+    sys.path.insert(0, "/net/archive/groups/plggsuprm/pythonPackages" )
     
 from Bio.PDB import Selection, NeighborSearch
 from ringDetection import getSubstituents, isFlat, isFlatPrimitive, findInGraph, molecule2graph
