@@ -21,8 +21,6 @@ class CationPiGUI(SupramolecularGUI):
                       "Cation" : { "header" : "Cation code" },
                       "Element" : { "header" : "Atom symbol" },
                       "Chain" : {"header" : "RingChain" },
-                      "Complex" : {"header" : "Complex" },
-                      "CoordNo" : {"header" : "CoordNo"} ,
                       "PDB" : { "header" : "PDB Code" }
                       })
     
@@ -31,8 +29,7 @@ class CationPiGUI(SupramolecularGUI):
                           "Pi acid" : "Pi acid Code" ,"Cation" : "Cation code", "Cat. el." : "Atom symbol" }, [  "R" , "Angle" , "x" , "h" ,
                           "Pi acid" ,"Cation" , "Cat. el." ] )
     
-        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h", "chain", "chain Flat",
-                          "complex", "coord No" ])
+        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h", "chain", "chain Flat" ])
     
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
                                            { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ]  )
@@ -45,7 +42,7 @@ class CationPiGUI(SupramolecularGUI):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Cation code"], 
                                                         row["Cation chain"] + str(row["Cation id"]), row["Atom symbol"], 
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3] , str(row["RingChain"]), str(row["ChainFlat"]) , str(row["Complex"]), str(row["CoordNo"]) )
+                                                        str(row["h"])[:3] , str(row["RingChain"]), str(row["ChainFlat"])  )
         
     def getSelection(self,  data):
         res1Id = data["Piacid id"].values[0]

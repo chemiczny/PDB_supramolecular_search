@@ -5,7 +5,7 @@ Created on Mon Jan  1 18:00:25 2018
 @author: michal
 """
 from cif_analyser import findSupramolecular
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
 from os.path import isdir, basename, isfile
 from os import makedirs, remove
 import glob
@@ -42,6 +42,7 @@ log_files += glob.glob("logs/anionCation*.log")
 log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
 log_files += glob.glob("logs/hBonds*.log")
+log_files += glob.glob("logs/metalLigand*.log")
 
 for log_file in log_files:
     remove(log_file)
@@ -51,6 +52,7 @@ writeAnionCationHeader()
 writePiPiHeader()
 writeCationPiHeader()
 writeHbondsHeader()
+writeMetalLigandHeader()
 
 
 cif_files = glob.glob(cifFiles)                                                                                                                         
@@ -105,12 +107,31 @@ def mergeLogs( logFinal, logs  ):
     
     final_log.close()
 #
+def mergeProgressFiles():
+    cifProcessed = 0
+    log_files = glob.glob("logs/partialProgress*")
+    for log_file in log_files:
+        log = open(log_file, 'r')
+        cifProcessed += int(log.readline())
+        log.close()
+        remove(log_file)
+    
+    cifNoFile = open("logs/cif2process.log", 'r')
+    cifNo = int(cifNoFile.readline())
+    cifNoFile.close()
+    
+    progressSummary = open("logs/progressSummary.log", 'w')
+    progressSummary.write("Przetworzono: " +str( cifProcessed ) + "/"+  str(cifNo)+"\n")
+    progressSummary.close()
+    
 mergeLogs("logs/anionPi.log", "logs/anionPi*.log"  )
 mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
 mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
 mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
 mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
+mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
 mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
+mergeProgressFiles()
 
 timeStop = time.time()
 timeFile = open("logs/timeStop.log", 'w')

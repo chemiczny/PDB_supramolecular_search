@@ -166,6 +166,29 @@ def getNormVec( allAtomsList, atomsIndList ):
         
     return normalize(norm_vec)
 
+def getRingElements ( cycle, atoms):
+    elementDict = {}
+    
+    for ai in cycle:
+        a = atoms[ai]
+        newElement = a.element
+        if newElement in elementDict:
+            elementDict[newElement] += 1
+        else:
+            elementDict[newElement] = 1
+            
+    ringElements = ""
+    elements = sorted(list(elementDict.keys()))
+    
+    for e in elements:
+        elNo = elementDict[e]
+        if elNo ==1:
+            ringElements += e
+        else:
+            ringElements += e + str(elNo)
+            
+    return ringElements
+
 def getRingsCentroids( molecule, returnGraph = False ):
     """
     Znajdz pierscienie w czasteczce i wyznacz wspolrzedne ich srodkow jesli
@@ -211,8 +234,9 @@ def getRingsCentroids( molecule, returnGraph = False ):
 #        else:
 #            print("cykl jest plaski")
         
+        ringElements = getRingElements(cycle, atoms)
         centroids.append({ "coords" : flatAnalyse["coords"], "normVec" : flatAnalyse["normVec"], "ringSize" : len(cycle) ,
-                          "cycleAtoms" : cycle, "cycleId" : cycleId })
+                          "cycleAtoms" : cycle, "cycleId" : cycleId, "ringElements" : ringElements })
         
     if returnGraph:
         return centroids, G

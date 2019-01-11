@@ -21,7 +21,8 @@ class AnionPiGUI(SupramolecularGUI):
                       "Anions" : { "header" : "Anion code" } , 
                       "Groups" : { "header" : "Anion type" },
                       "Methods" : { "header" : "Method" } ,
-                      "PDB" : { "header" : "PDB Code" } } )
+                      "PDB" : { "header" : "PDB Code" },
+                      "Ring" : { "header" : "Ring elements" }}  )
     
         self.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
                          "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [  "R" , "Angle" , "x" , "h" ,

@@ -5,7 +5,7 @@ Created on Mon Oct  1 14:26:23 2018
 
 @author: michal
 """
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader
+from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
 from os.path import isdir, isfile, join
 from os import makedirs, remove
 import glob, json
@@ -36,6 +36,7 @@ log_files += glob.glob("logs/anionCation*.log")
 log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
 log_files += glob.glob("logs/hBonds*.log")
+log_files += glob.glob("logs/metalLigand*.log")
 
 for log_file in log_files:
     remove(log_file)
@@ -45,6 +46,7 @@ writeAnionCationHeader()
 writePiPiHeader()
 writeCationPiHeader()
 writeHbondsHeader()
+writeMetalLigandHeader()
 
 
 timeStart = time.time()

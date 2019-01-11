@@ -50,7 +50,9 @@ mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
 mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
 mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
 mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
+mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
 mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
+mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
 
 mergeProgressFiles()
 

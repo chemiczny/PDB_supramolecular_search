@@ -11,7 +11,7 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 """
 #fast ang ugly code especially for prometheus
 import sys
-from os.path import isdir
+from os.path import isdir, getsize
 from os import system
 
 if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/archive/groups/plggsuprm/pythonPackages" in sys.path :
@@ -22,9 +22,9 @@ from Bio.PDB.PDBIO import Select
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
-from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults
+from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults, writeMetalLigandResults
 from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
-from anionRecogniser import extractAnionAtoms, createResId
+from anionRecogniser import extractAnionAtoms, createResId, searchInAnionTemplates
 from multiprocessing import current_process
 import networkx as nx
 from time import time
@@ -73,6 +73,7 @@ def findSupramolecular( cifData):
         return True        
         
     writeAdditionalInfo("Zaczynam analize: "+PDBcode, fileId)
+    writeAdditionalInfo("Rozmiar pliku: " + str(getsize(cifFile)), fileId)
     timeStart = time()
     supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
@@ -198,13 +199,13 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
             
             for cat in extractedMetalCations:
                 cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph, fileId) )
-                cationComplexData.append( findCationComplex( cat, ns ) )
+                cationComplexData.append( findCationComplex( cat, ns, ligand ) )
                     
             extractedCations = extractedMetalCations + extractedAAcations
             cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False) ]
-            cationComplexDataFull = cationComplexData + len(extractedAAcations)* [ { "complex" : False, "coordNo" : 0 } ]
             
-            writeCationPiResults(ligand, PDBcode, centroid, extractedCations, cationRingLenChainsFull, cationComplexDataFull, modelIndex, fileId )
+            writeCationPiResults(ligand, PDBcode, centroid, extractedCations, cationRingLenChainsFull, modelIndex, fileId )
+            writeMetalLigandResults( PDBcode , extractedMetalCations, cationComplexData, modelIndex, fileId)
             
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
@@ -215,8 +216,6 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
                 hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId, structure)
                 writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
                 
-            
-
         extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, method, fileId)
 
         if len(extractedAtoms) > 0:
@@ -224,14 +223,29 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
         
     return ligandWithAnions
 
-def findCationComplex(cation, ns):
+def findCationComplex(cation, ns, ligand):
     potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
+    anionSpaceWithCation = ns.search(cation.get_coord(), 4.5 , 'A') 
+    metals =  [
+        "LI", "BE", 
+        "NA", "MG", "AL", 
+        "K", "CA", "SC", "TI", "V", "CR", "MN", "FE", "CO", "NI", "CU", "ZN", "GA", "GE", "AS", 
+        "RB", "SR", "Y", "ZR", "NB", "MO", "TC", "RU", "RH", "PD", "AG", "CD", "IN", "SN", "SB", "TE", 
+        "CS", "BA", "LA", "CE", "PR", "ND", "PM", "SM", "EU", "GD", "TB", "DY", "HO", "ER", "TM", "YB", "LU", "HF", "TA", "W", "RE", "OS", "IR", "PT", "AU", "HG", "TL", "PB", "BI", "PO", "AT", 
+        "FR", "RA", "AC", "TH", "PA", "U", "NP", "PU", "AM", "CM", "BK", "CF", "ES", "FM", "MD", "NO", "LR", "RF", "DB", "SG", "BH", "HS", "MT", "DS", "RG"]
     
+    anionSpace = []
+    for a in anionSpaceWithCation:
+        if not a.element.upper() in metals:
+            anionSpace.append(a)
+            
+    nsSmall = NeighborSearch(anionSpace)
 #    if not potentialLigands:
 #        return  { "complex" : False, "coordNo" : 0 }
     
     resultantVector = np.array([0.0 , 0.0, 0.0])
     coordNo = 0
+    ligands = []
     for atom in potentialLigands:
         if atom.element == "H":
             continue
@@ -239,16 +253,18 @@ def findCationComplex(cation, ns):
             newVector = normalize( atom.get_coord() - cation.get_coord() )
             resultantVector += newVector
             coordNo += 1
+            isAnion, anionType = searchInAnionTemplates(atom, anionSpace, nsSmall)
+            ligands.append({ "isAnion" : isAnion, "anionType" : anionType, "atom" :atom })
             
     if coordNo == 0 :
-        return  { "complex" : False, "coordNo" : 0 }
+        return  { "complex" : False, "coordNo" : 0, "ligands" : [] }
             
     vectorLen = np.linalg.norm(resultantVector)
      
     if vectorLen < 0.2:
-         return { "complex" : True, "coordNo" : coordNo }
+         return { "complex" : True, "coordNo" : coordNo , "ligands" : ligands}
     else:
-         return  { "complex" : False, "coordNo" : coordNo }
+         return  { "complex" : False, "coordNo" : coordNo , "ligands" : ligands }
 
 def extractMetalCations ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')

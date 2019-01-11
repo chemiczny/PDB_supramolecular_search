@@ -10,6 +10,7 @@ from piPi import PiPiGUI
 from cationPi import CationPiGUI
 from anionCation import AnionCationGUI
 from hBonds import HBondsGUI
+from metalLigand import MetalLigandGUI
 from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
@@ -19,20 +20,22 @@ if sys.version_info[0] < 3:
     from pymol import cmd
     
 class SupramolecularComposition:
-    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds):
+    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand):
         self.guiAnionPi = AnionPiGUI(pageAnionPi)
         self.guiPiPi = PiPiGUI(pagePiPi)
         self.guiCationPi = CationPiGUI( pageCationPi)
         self.guiAnionCation = AnionCationGUI( pageAnionCation)
         self.guiHBonds = HBondsGUI( pageHBonds )
+        self.guiMetalLigand = MetalLigandGUI(pageMetalLigand)
             
-        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds]
-        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds" ]
+        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, self.guiMetalLigand]
+        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand" ]
         self.actionLabels2Objects = { "AnionPi" : self.guiAnionPi, 
                                      "PiPi" : self.guiPiPi, 
                                      "CationPi" : self.guiCationPi,
                                      "AnionCation" : self.guiAnionCation,
-                                     "HBonds" : self.guiHBonds }
+                                     "HBonds" : self.guiHBonds,
+                                     "MetalLigand" : self.guiMetalLigand }
         
         self.actualKeys = []
         
@@ -41,7 +44,9 @@ class SupramolecularComposition:
                     "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
                     "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
-                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"] }
+                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
+                    "Metal" : ["Cation code", "Cation chain", "Cation id"],
+                    "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
         
         selectedData = []
         data2use = {}
@@ -156,8 +161,10 @@ class SupramolecularComposition:
         headersId ={ 
                     "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"],
-                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"] }
+                    "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
+                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
+                    "Metal" : ["Cation code", "Cation chain", "Cation id"],
+                    "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
         
         for headerKey in headersId:
             if headerKey in lastSelectionMenu:

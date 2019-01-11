@@ -34,7 +34,7 @@ def writeAnionPiHeader( ):
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Model No\tDisordered\t")
-    resultsFile.write("Ring size\t")
+    resultsFile.write("Ring size\tRing elements\t")
     resultsFile.write("Resolution\t")
     resultsFile.write("Method\n")
     resultsFile.close()
@@ -54,6 +54,23 @@ def writeCationPiHeader( ):
     resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
+    resultsFile.write("Model No\n")
+    resultsFile.close()
+    
+def writeMetalLigandHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/metalLigand.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\t")
+    resultsFile.write("Cation code\tCation chain\tCation id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\t")
+    resultsFile.write("Cation element\t")
+    resultsFile.write("Ligand element\t")
+    resultsFile.write("isAnion\tanionType\tDistance\t")
+    resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
+    resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Complex\tCoordNo\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
@@ -172,6 +189,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
         resultsFile.write(str(modelIndex)+"\t")
         resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
         resultsFile.write(str(centroid["ringSize"])+"\t")
+        resultsFile.write(str(centroid["ringElements"])+"\t")
         resultsFile.write(str(resolution)+"\t")
         resultsFile.write(str(method)+"\n")
     
@@ -179,7 +197,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
     
     return newAtoms
             
-def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , cationComplexData, modelIndex, fileId = None ):
+def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , modelIndex, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -194,7 +212,7 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
     ligandChain = ligand.get_parent().get_id()
     resultsFile = open(resultsFileName, "a+")
     
-    for atom, chainLen, complexData in zip(extractedAtoms , cationRingChainLens, cationComplexData):
+    for atom, chainLen in zip(extractedAtoms , cationRingChainLens):
         distance = atomDistanceFromCentroid( atom, centroid )
         angle = atomAngleNomVecCentroid( atom, centroid )
         
@@ -237,13 +255,75 @@ def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingC
         resultsFile.write(str(atomCoords[1])+"\t")
         resultsFile.write(str(atomCoords[2])+"\t")
         
-        resultsFile.write(str(complexData["complex"])+"\t")
-        resultsFile.write(str(complexData["coordNo"])+"\t")
-        
         resultsFile.write(str(modelIndex)+"\n")
     
     resultsFile.close()
 
+def writeMetalLigandResults(  PDBcode,  extractedAtoms, complexData , modelIndex, fileId = None ):
+    """
+    Zapisz dane do pliku z wynikami
+    """
+    if not extractedAtoms:
+        return
+    
+    resultsFileName = "logs/metalLigand.log"
+    if fileId != None:
+        resultsFileName = "logs/metalLigand"+str(fileId)+".log"
+    resultsFile = open(resultsFileName, "a+")
+    
+    for atom, compData in zip(extractedAtoms , complexData):
+        if not compData["ligands"]:
+            continue
+        
+        cation = atom.get_parent()
+        cationResidueName = cation.get_resname()
+        cationChain = cation.get_parent().get_id()
+        cationId = str(cation.get_id()[1])
+        cationCoords = atom.get_coord()
+        
+        for ligandData in compData["ligands"]:
+            distance = atom - ligandData["atom"]
+            
+            ligand = ligandData["atom"].get_parent()
+            ligandResidueName = ligand.get_resname()
+            ligandChain = ligand.get_parent().get_id()
+            ligandId = str(ligand.get_id()[1])
+            
+            resultsFile.write(PDBcode+"\t")
+            
+            resultsFile.write(cationResidueName+"\t")
+            resultsFile.write(cationChain+"\t")
+            resultsFile.write(cationId+"\t")
+            
+            resultsFile.write(ligandResidueName+"\t")
+            resultsFile.write(ligandChain+"\t")
+            resultsFile.write(ligandId+"\t")
+            
+            resultsFile.write(atom.element+"\t")
+            resultsFile.write(ligandData["atom"].element+"\t")
+            
+            resultsFile.write(str(ligandData["isAnion"])+"\t")
+            resultsFile.write(ligandData["anionType"]+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
+            
+            ligandCoords = ligandData["atom"].get_coord()
+            
+            resultsFile.write(str(cationCoords[0])+"\t")
+            resultsFile.write(str(cationCoords[1])+"\t")
+            resultsFile.write(str(cationCoords[2])+"\t")
+            
+            resultsFile.write(str(ligandCoords[0])+"\t")
+            resultsFile.write(str(ligandCoords[1])+"\t")
+            resultsFile.write(str(ligandCoords[2])+"\t")
+            
+            resultsFile.write(str(compData["complex"])+"\t")
+            resultsFile.write(str(compData["coordNo"])+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\n")
+    
+    resultsFile.close()
+    
 def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroids, modelIndex, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
