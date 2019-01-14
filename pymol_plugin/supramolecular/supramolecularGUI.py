@@ -212,7 +212,7 @@ class SupramolecularGUI:
         if not self.sorting_keys2header:
             return
         
-        for i in range(4):
+        for i in range(2):
             self.sortingMenu.append( { }  )
             
             self.sortingMenu[i]["label"] = Tkinter.Label(self.page, text = "Sorting"+str(i))

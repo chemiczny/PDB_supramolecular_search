@@ -36,7 +36,7 @@ def fetchdialog(simulation = False):
     self = Tkinter.Toplevel(root)
     self.title('Supramolecular analyser')
     self.minsize(1500, 800)
-    self.resizable(0,0)
+    self.resizable(1,1)
     
     nb = ttk.Notebook(self, height = 700, width = 1400)
 

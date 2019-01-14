@@ -75,12 +75,20 @@ def findSupramolecular( cifData):
     writeAdditionalInfo("Zaczynam analize: "+PDBcode, fileId)
     writeAdditionalInfo("Rozmiar pliku: " + str(getsize(cifFile)), fileId)
     timeStart = time()
-    supramolecularFound = False 
+#    supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
     resolution, method = readResolutionAndMethod(cifFile, fileId)
     hAtomsPresent = hydrogensPresent(structure)
+    
+    times = { "getCentroidTime" : 0,
+        "extractAnionsAroundRingTime" : 0,
+        "extractCationsTime" : 0,
+        "cationAnalysisTime" : 0,
+        "extractPiPiTime" : 0,
+        "extractHBondsTime" :  0 }
+    
 #    try:
     for modelIndex, model in enumerate(structure):
 #        print("model "+str(modelIndex))
@@ -99,8 +107,9 @@ def findSupramolecular( cifData):
         for residue in model.get_residues():
             residueName = residue.get_resname().upper()
             if not residueName in notPiacids  :
-                if analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent, structure):
-                    supramolecularFound = True
+                supramolecularFound , newTimes = analysePiacid(residue, PDBcode, modelIndex, ns, resolution, method, fileId, hAtomsPresent, structure)
+                for key in newTimes:
+                    times[key] += newTimes[key]
             
 #    fileId = current_process()
     incrementPartialProgress(fileId)
@@ -109,8 +118,12 @@ def findSupramolecular( cifData):
 #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
     timeStop = time()
     timeTaken = timeStop - timeStart
+    
+    for key in times:
+        writeAdditionalInfo("time "+key+" "+str(times[key]), fileId)
+    
     writeAdditionalInfo("Analiza skonczona "+PDBcode+ " czas: "+str(timeTaken), fileId)
-    return supramolecularFound
+#    return supramolecularFound
 
 def hydrogensPresent(structure):
     for a in structure.get_atoms():
@@ -173,10 +186,19 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
 #    print("analysePiacid - start ")
     firstAtom = list(ligand.get_atoms())[0]
     if firstAtom.is_disordered() and firstAtom.get_altloc() != 'A':
-        return False
+        return False, {}
     
+    getCentroidTime = 0
+    extractAnionsAroundRingTime = 0
+    extractCationsTime = 0
+    cationAnalysisTime = 0
+    extractPiPiTime = 0
+    extractHBondsTime = 0
     
+    time0 = time()
     centroids, ligandGraph = getRingsCentroids( ligand, True )
+    getCentroidTime += time() - time0
+    
     ligandWithAnions = False
     
     for centroid in centroids:
@@ -188,18 +210,24 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
         nsSmall = NeighborSearch(atoms)
         neighbors = nsSmall.search(np.array(centroid["coords"]), distance, 'A')
         
+        time1 = time()
         extractedAnionAtoms = extractAnionAtoms( neighbors, ligand, nsSmall )
+        extractAnionsAroundRingTime += time()-time1
 
         if len(extractedAnionAtoms) > 0:
+            time2 = time()
             extractedMetalCations = extractMetalCations( centroid["coords"], nsSmall, 10 )
             extractedAAcations = extractAACations( centroid["coords"], nsSmall, 4.5 )
+            extractCationsTime += time() - time2
             
             cationRingLenChains = []
             cationComplexData = []
             
+            time3 = time()
             for cat in extractedMetalCations:
                 cationRingLenChains.append( findChainLenCationRing(cat, ligand, centroid , ns, ligandGraph, fileId) )
                 cationComplexData.append( findCationComplex( cat, ns, ligand ) )
+            cationAnalysisTime += time() - time3
                     
             extractedCations = extractedMetalCations + extractedAAcations
             cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False) ]
@@ -207,21 +235,34 @@ def analysePiacid(ligand, PDBcode, modelIndex, ns, resolution, method, fileId, h
             writeCationPiResults(ligand, PDBcode, centroid, extractedCations, cationRingLenChainsFull, modelIndex, fileId )
             writeMetalLigandResults( PDBcode , extractedMetalCations, cationComplexData, modelIndex, fileId)
             
+            time4 = time()
             extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
+            extractPiPiTime += time() - time4
+            
             writePiPiResults(ligand, PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, fileId)
             
             for atom in extractedAnionAtoms:
                 writeAnionCationResults(atom["Atom"], PDBcode, ligand, centroid, extractedCations, modelIndex, fileId)
                 
+                time5 = time()
                 hDonors = extractHbonds( atom , nsSmall, 3.5, hAtomsPresent, fileId, structure)
+                extractHBondsTime += time() - time5
+                
                 writeHbondsResults( PDBcode,hDonors, atom, modelIndex, fileId)
                 
         extractedAtoms =  writeAnionPiResults(ligand, PDBcode, centroid, extractedAnionAtoms, modelIndex, resolution, method, fileId)
 
         if len(extractedAtoms) > 0:
             ligandWithAnions = True
+            
+    times = { "getCentroidTime" : getCentroidTime,
+        "extractAnionsAroundRingTime" : extractAnionsAroundRingTime,
+        "extractCationsTime" : extractCationsTime,
+        "cationAnalysisTime" : cationAnalysisTime,
+        "extractPiPiTime" : extractPiPiTime,
+        "extractHBondsTime" :  extractHBondsTime }
         
-    return ligandWithAnions
+    return ligandWithAnions, times
 
 def findCationComplex(cation, ns, ligand):
     potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
