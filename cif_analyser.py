@@ -63,7 +63,9 @@ def findSupramolecular( cifData):
         fileId = logId
     
     try:
+        time1 = time()
         structure = parser.get_structure('temp', cifFile)
+        timeBioParsing = time()-time1
     except:
         errorMessage = "FastMMCIFParser cannot handle with: " + cifFile
 #        fileId = current_process()
@@ -79,7 +81,10 @@ def findSupramolecular( cifData):
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
         
+    time2 = time()
     resolution, method = readResolutionAndMethod(cifFile, fileId)
+    timeResolutionReading = time() - time2
+    
     hAtomsPresent = hydrogensPresent(structure)
     
     times = { "getCentroidTime" : 0,
@@ -87,7 +92,9 @@ def findSupramolecular( cifData):
         "extractCationsTime" : 0,
         "cationAnalysisTime" : 0,
         "extractPiPiTime" : 0,
-        "extractHBondsTime" :  0 }
+        "extractHBondsTime" :  0,
+        "timeBioParsing" : timeBioParsing,
+        "timeResolutionReading" : timeResolutionReading}
     
 #    try:
     for modelIndex, model in enumerate(structure):
