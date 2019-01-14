@@ -50,6 +50,7 @@ def findSupramolecular( cifData):
     logId = cifData[2]
     parser = FastMMCIFParser()
     
+    timeStart = time()
     if logId == "default":
         fileId = current_process()
         fileId = str(fileId)
@@ -76,7 +77,7 @@ def findSupramolecular( cifData):
         
     writeAdditionalInfo("Zaczynam analize: "+PDBcode, fileId)
     writeAdditionalInfo("Rozmiar pliku: " + str(getsize(cifFile)), fileId)
-    timeStart = time()
+    
 #    supramolecularFound = False 
     notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
         "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
@@ -322,7 +323,7 @@ def extractMetalCations ( point,  ns, distance  ):
     metalCations =  [
         "Li", "Be", 
         "Na", "Mg", "Al", 
-        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", 
+        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge",  
         "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", 
         "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", 
         "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg"]
