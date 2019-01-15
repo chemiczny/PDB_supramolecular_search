@@ -223,7 +223,7 @@ def getRingsCentroids( molecule, returnGraph = False ):
         if not onlyLighAtomsInCycle(cycle, atoms):
             continue
         
-        if len(cycle) > 6:
+        if len(cycle) > 6 or len(cycle) < 5:
             continue
         
         substituents = getSubstituents( G, cycle )        
