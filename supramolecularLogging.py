@@ -27,7 +27,7 @@ def writeAnionPiHeader( ):
     resultsFileName = "logs/anionPi.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
-    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion type\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion type\tAnion group id\t")
     resultsFile.write("Atom symbol\tDistance\tAngle\t")
     resultsFile.write("x\th\t")
     resultsFile.write("CentroidId\t")
@@ -65,7 +65,7 @@ def writeMetalLigandHeader( ):
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\t")
     resultsFile.write("Cation code\tCation chain\tCation id\t")
-    resultsFile.write("Anion code\tAnion chain\tAnion id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
     resultsFile.write("Cation element\t")
     resultsFile.write("Ligand element\t")
     resultsFile.write("isAnion\tanionType\tDistance\t")
@@ -102,7 +102,7 @@ def writeAnionCationHeader( ):
     resultsFile.write("PDB Code\tCation code\tCation chain\tCation id\t")
     resultsFile.write("Pi acid Code\tPi acid chain\tPiacid id\t")
     resultsFile.write("CentroidId\t")
-    resultsFile.write("Anion code\tAnion chain\tAnion id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
     resultsFile.write("Anion symbol\tCation symbol\tDistance\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
@@ -119,7 +119,7 @@ def writeHbondsHeader( ):
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tAnion code\tAnion chain\tAnion id\t")
     resultsFile.write("Donor code\tDonor chain\tDonor id\t")
-    resultsFile.write("Acceptor group\tAcceptor atom\t")
+    resultsFile.write("Acceptor group\tAcceptor atom\tAnion group id\t")
     resultsFile.write("Acceptor x coord\tAcceptor y coord\tAcceptor z coord\t")
     resultsFile.write("Donor group\tDonor atom\t")
     resultsFile.write("Donor x coord\tDonor y coord\tDonor z coord\t")
@@ -169,6 +169,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
         resultsFile.write(anionChain+"\t")
         resultsFile.write(anionId+"\t")
         resultsFile.write(atomData["AnionType"]+"\t")
+        resultsFile.write(str(atomData["AnionId"])+"\t")
         resultsFile.write(atomData["Atom"].element+"\t")
         
         resultsFile.write(str(distance)+"\t")
@@ -298,6 +299,7 @@ def writeMetalLigandResults(  PDBcode,  extractedAtoms, complexData , modelIndex
             resultsFile.write(ligandResidueName+"\t")
             resultsFile.write(ligandChain+"\t")
             resultsFile.write(ligandId+"\t")
+            resultsFile.write(str(ligandData["AnionId"])+"\t")
             
             resultsFile.write(atom.element+"\t")
             resultsFile.write(ligandData["atom"].element+"\t")
@@ -437,6 +439,7 @@ def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCati
         resultsFile.write(anionCode+"\t")
         resultsFile.write(anionChain+"\t")
         resultsFile.write(anionId+"\t")
+        resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
         
         resultsFile.write(anionAtom.element+"\t")
         resultsFile.write(cat.element+"\t")
@@ -496,6 +499,7 @@ def writeHbondsResults( PDBcode ,hDonors, atom, modelIndex, fileId):
         
         resultsFile.write(atom["AnionType"]+"\t")
         resultsFile.write(anionAtom.element+"\t")
+        resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
         
         resultsFile.write(str(anionCoord[0])+"\t")
         resultsFile.write(str(anionCoord[1])+"\t")

@@ -42,8 +42,9 @@ def addAtribute( graph, nodes, key ):
         
 
 def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases = {},
-              notAliases = {}, geometry = {}, fullIsomorphism = False, nameMapping = {}  ):
+              notAliases = {}, geometry = {}, fullIsomorphism = False, nameMapping = {} , nonUniqueCharge = []  ):
     graph = nx.Graph()
+    nonUniqueCharge = set(nonUniqueCharge)
     
     for i, el in enumerate(atoms):
         graph.add_node(i, element = el, terminating = False, bonded = False, aliases = [], charged = False )
@@ -71,12 +72,16 @@ def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases
     fileName = str(priority)+"_"+name
     
     if isinstance( charged , list ) :
-        for nodeId in charged:
-            saveAnionJson(graph, fileName, nodeId)
-    else:
-       saveAnionJson(graph, fileName, charged)
+        uniqueCharges = set(charged)
         
-def saveAnionJson( graph, fileName, charged):
+        for nodeId in charged:
+            nuc = uniqueCharges | nonUniqueCharge
+            nuc.remove(nodeId)
+            saveAnionJson(graph, fileName, nodeId, nuc)
+    else:
+        saveAnionJson(graph, fileName, charged, nonUniqueCharge)
+        
+def saveAnionJson( graph, fileName, charged, nonUniqueCharges = []):
     mainElement = graph.node[charged]["element"]
     elements = [ mainElement ] 
     
@@ -86,6 +91,7 @@ def saveAnionJson( graph, fileName, charged):
     
     graph.node[charged]["charged"] = True
     graph.graph["charged"] = charged 
+    graph.graph["otherCharges"] = list(nonUniqueCharges)
     
     oldName = ""
     nameMapping = False
@@ -143,7 +149,7 @@ if __name__ == "__main__":
 #    #RCOOH
     saveAnion( [ "C" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RCOO", 0, terminating = [1, 2, 3], 
-              geometry = "planar" )
+              geometry = "planar", nonUniqueCharge = [3] )
     
     #ClO, BrO, IO, 
     saveAnion([ "CL",  "O" ], [(0, 1)], 
@@ -152,17 +158,19 @@ if __name__ == "__main__":
     
     #NO2, ClO2, BRO2, 
     saveAnion([ "N",  "O" , "O" ], [(0, 1), (0,2)], 
-              1, "XO2", 10, fullIsomorphism = True, aliases = { 0 : ["CL", "BR"]}, nameMapping = { 0 : "X" })
+              1, "XO2", 10, fullIsomorphism = True, aliases = { 0 : ["CL", "BR"]}, nameMapping = { 0 : "X" }, nonUniqueCharge=[2])
     
     #NO3, CO3, PO3, SO3, AsO3, BO3, ClO3, BRO3
     saveAnion( ["N", "O", "O", "O"], [(0,1), (0,2), (0,3)],
               1, "XO3", 15, fullIsomorphism = True, 
-              aliases = { 0 : [ "C", "P", "B", "S", "AS", "CL", "BR", "I" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "C", "P", "B", "S", "AS", "CL", "BR", "I" ] }, nameMapping = { 0 : "X" },
+              nonUniqueCharge= [2, 3])
     
     #PO4, SO4, AsO4, ClO4, BRO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
               1, "XO4", 20, fullIsomorphism = True, 
-              aliases = { 0 : [ "S", "AS", "CL", "BR", "I" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "S", "AS", "CL", "BR", "I" ] }, nameMapping = { 0 : "X" },
+              nonUniqueCharge=[2, 3, 4])
     
 #   Ph-OH
 #    saveAnion( [ "C" , "C" , "C" , "C" , "C", "C" , "O" ], [(0,1),(1,2), (2,3), (3,4),( 4, 5), (5, 0), (5,6)],
@@ -171,21 +179,24 @@ if __name__ == "__main__":
     #    #RBOOH
     saveAnion( [ "X" , "B", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RBOO", 30, terminating = [2, 3], 
-              notAliases = {0 : [ "O" ] } )
+              notAliases = {0 : [ "O" ] },
+              nonUniqueCharge=[3])
         
     #COO
     saveAnion( [  "C", "O", "O" ], [ (0,1), (0,2) ], 
-              1, "COO", 35, terminating = [1, 2],  )
+              1, "COO", 35, terminating = [1, 2], nonUniqueCharge=[2] )
     
     #R-PO4, R-SO4, R-AsO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
               1, "R-XO4", 45, terminating = [ 1, 2, 3 ] ,
-              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" },
+              nonUniqueCharge=[2,3])
     
     #R2-PO4, R2-SO4, R2-AsO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
               1, "R2-XO4", 47, terminating = [ 1, 2 ] ,
-              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" },
+              nonUniqueCharge=[2])
     
     #R3-PO4, R3-SO4, R3-AsO4
 #    saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
@@ -195,7 +206,8 @@ if __name__ == "__main__":
     #RAsO3, RPO3, RSO3
     saveAnion( ["P", "O", "O", "O", "C"], [(0,1), (0,2), (0,3), (0, 4)],
               1, "RXO3", 50,  terminating = [1, 2, 3] , 
-              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" } )
+              aliases = { 0 : [ "S", "AS" ] }, nameMapping = { 0 : "X" },
+              nonUniqueCharge=[2,3])
     
     #R2AsO2, R2PO2, RRSO2
 #    saveAnion( ["P", "O", "O", "C", "C"], [(0,1), (0,2), (0,3), (0, 4)],
@@ -218,7 +230,7 @@ if __name__ == "__main__":
     
     #N3
     saveAnion([ "N",  "N" , "N" ], [(0, 1), (0,2)], 
-              [0,1], "N3", 70, fullIsomorphism = True)
+              [0,1], "N3", 70, fullIsomorphism = True, nonUniqueCharge=[2])
     
     #CN
     saveAnion([  "C" , "N" ], [(0, 1)], 

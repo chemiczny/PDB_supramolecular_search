@@ -28,7 +28,7 @@ class AnionPiGUI(SupramolecularGUI):
                          "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [  "R" , "Angle" , "x" , "h" ,
                          "res" , "Pi acid" ,"Anion" ] )
     
-        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" , "R", "alpha", "x", "h", "res", "Method" ])
+        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" ,"Anion gr. id", "R", "alpha", "x", "h", "res", "Method" ])
      
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
                                          { "label" : "No AA in anions" ,  "func" : noAAinAnions } ,
@@ -41,7 +41,7 @@ class AnionPiGUI(SupramolecularGUI):
     def getValues(self, rowId, row):
         return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
-                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], 
+                                                        row["Anion chain"] + str(row["Anion id"]), row["Anion type"], row["Anion group id"],
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
                                                         str(row["h"])[:3], row["Resolution"] , row["Method"]  )
         

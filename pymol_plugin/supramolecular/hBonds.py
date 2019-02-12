@@ -27,7 +27,7 @@ class HBondsGUI(SupramolecularGUI):
                      "Acc. el." : "Acceptor atom", "RH" : "Distance H Acc", "Angle" : "Angle" }, [  "R" , "Donor" , "Don. el." , "Acceptor" ,
                      "Acc. el." , "RH" , "Angle" ])
 
-        self.setTreeData([ "ID" , "PDB" , "Acceptor", "Anion id", "Acc. el." , "Donor", "Donor id", "Donor el.", 
+        self.setTreeData([ "ID" , "PDB" , "Acceptor", "Anion id", "Acc. el." ,"Anion gr. id", "Donor", "Donor id", "Donor el.", 
                           "R", "RH", "Angle" , "H orig"])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in acceptors", "func" : noAAinAnions } ,
@@ -40,7 +40,7 @@ class HBondsGUI(SupramolecularGUI):
         
     def getValues(self, rowId, row):
         return ( rowId, row["PDB Code"] , row["Anion code"], 
-                                                    row["Anion chain"]+str(row["Anion id"]) ,row["Acceptor atom"], 
+                                                    row["Anion chain"]+str(row["Anion id"]) ,row["Acceptor atom"], row["Anion group id"],
                                                     row["Donor code"], 
                                                     row["Donor chain"] + str(row["Donor id"]), row["Donor atom"], 
                                                     str(row["Distance Don Acc"])[:3], str(row["Distance H Acc"])[:3], str(row["Angle"]), str(row["H from Experm"]) ) 

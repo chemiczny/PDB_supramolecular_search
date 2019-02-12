@@ -29,7 +29,7 @@ class AnionCationGUI(SupramolecularGUI):
                      "An. el." : "Anion symbol", "Lat dif" : "Latitude diff" }, [  "R" , "Cation" , "Cat. el." , "Anion" ,
                      "An. el." , "Lat dif"  ])
 
-        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Anion", "Anion id", "Anion el.", "Pi acid", "Pi acid id"  , 
+        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Anion", "Anion id", "Anion el.", "Anion gr. id", "Pi acid", "Pi acid id"  , 
                           "R", "Same semisphere", "Lat dif" ])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
@@ -42,7 +42,7 @@ class AnionCationGUI(SupramolecularGUI):
         return ( rowId, row["PDB Code"] , row["Cation code"], 
                                                     row["Cation chain"]+str(row["Cation id"]) ,row["Cation symbol"], 
                                                     row["Anion code"], 
-                                                    row["Anion chain"] + str(row["Anion id"]), row["Anion symbol"], 
+                                                    row["Anion chain"] + str(row["Anion id"]), row["Anion symbol"], row["Anion group id"],
                                                     row["Pi acid Code"], 
                                                     row["Pi acid chain"]+str(row["Piacid id"]) ,
                                                     str(row["Distance"])[:3] , str(row["Same semisphere"]) , str(row["Latitude diff"])) 

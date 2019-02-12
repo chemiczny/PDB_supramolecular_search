@@ -30,7 +30,7 @@ class MetalLigandGUI(SupramolecularGUI):
                      "Lig. el." : "Ligand element", "Anion type" : "anionType" }, [  "R" , "Cation" , "Cat. el." , "Ligand" ,
                      "Lig. el." , "Anion type"  ])
 
-        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Ligand", "Ligand id", "Ligand el.", "Is Anion", "Anion type"  , 
+        self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Ligand", "Ligand id", "Ligand el.", "Is Anion", "Anion type"  , "Anion gr. id",
                           "R", "Complex", "Coord No" ])
 
 #        self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
@@ -45,7 +45,7 @@ class MetalLigandGUI(SupramolecularGUI):
                                                     row["Anion code"], 
                                                     row["Anion chain"] + str(row["Anion id"]), row["Ligand element"], 
                                                     str(row["isAnion"]), 
-                                                    row["anionType"] ,
+                                                    row["anionType"] , row["Anion group id"],
                                                     str(row["Distance"])[:3] , str(row["Complex"]) , str(row["CoordNo"])) 
         
     def getSelection(self,  data):

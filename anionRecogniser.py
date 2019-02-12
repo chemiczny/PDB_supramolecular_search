@@ -21,69 +21,191 @@ from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
 from biopythonUtilities import createResId, createResIdFromAtom
-
+#from supramolecularLogging import writeAdditionalInfo
 #from time import time
-def extractAnionAtoms( atomList, ligand, ns ):
-    """
-    Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
-    
-    Wejscie:
-    atomList - lista obiektow Atom (Biopython)
-    ligandCode - kod liganda
-    
-    Wysjcie:
-    extractedAtoms - lista slownikow z informacjami o potencjalnym anionie,
-        klucze: Atom - atom, AnionType - rodzaj anionu
-    """
-#    print("ekstrackja start")
-#    print("wyszukiwanie anionow start ", ligand.get_resname(), ligand.get_id())
-    extractedAtoms = []
-#    print("wyciagam somsiasow")
-    residuesNeighbor = Selection.unfold_entities(atomList, 'R')  
-#    print("wyciagnente")
-#    dictStart = time()
-    resId2atoms, resId2res = createResDicts(atomList, residuesNeighbor, ligand)
-#    dictTime = time() - dictStart
-#    print("atomy przetransformowane")
-    aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
-        "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
-    
-#    findConnectionsTime = 0
-#    graphSearch = 0
-#    loopStart = time()
-    for resId in resId2atoms:
-        resAtoms = resId2atoms[resId]
-        elements = atomsList2ElementsList( resAtoms )
-        resName = resId2res[ resId ].get_resname()
+
+class AnionData:
+    def __init__(self, anionType, charged, anionId):
+        self.anionType = anionType
+        self.charged = charged
+        self.anionId = anionId
+
+
+class AnionRecogniser:
+    def __init__(self):
+        self.freeAnionId = 0
+        self.templates = getAllTemplates()
+
+    def extractAnionAtoms(self, atomListOrig, ligand, ns ):
+        """
+        Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
         
-        if resName.upper() in aminoacids and not ( "O" in elements or "S" in elements ):
-            continue
-#        print("Wyciagam polaczenia")
-#        getResStart = time()
-        atoms = getResidueWithConnections( resAtoms, ns )
-        nsRes = NeighborSearch(atoms)
-#        findConnectionsTime += time() - getResStart
-#        initGraph = molecule2graph(atoms)
-#        print("Polaczenia wyciagniete")
-        for atom in resAtoms:
-            potentiallySupramolecular = False
-            anionType = ""
-#            startSearch = time()
-            potentiallySupramolecular, anionType = searchInAnionTemplates(atom, atoms, nsRes)            
-#            graphSearch += time() - startSearch
+        Wejscie:
+        atomList - lista obiektow Atom (Biopython)
+        ligandCode - kod liganda
+        
+        Wysjcie:
+        extractedAtoms - lista slownikow z informacjami o potencjalnym anionie,
+            klucze: Atom - atom, AnionType - rodzaj anionu
+        """
+    #    print("ekstrackja start")
+    #    print("wyszukiwanie anionow start ", ligand.get_resname(), ligand.get_id())
+        extractedAtoms = []
+        atomList = []
+        
+        for atom in atomListOrig:
+            if hasattr(atom, "anionData"):
+                if atom.anionData.charged:
+                    extractedAtoms.append({ "Atom" : atom, "AnionType" : atom.anionData.anionType, "AnionId" : atom.anionData.anionId})
+            else:
+                atomList.append(atom)
                 
-            if potentiallySupramolecular:
-    #            print("cos watergo uwagi :D", atom.get_fullname())
-                extractedAtoms.append({ "Atom" : atom, "AnionType" : anionType})
+    #    print("wyciagam somsiasow")
+        residuesNeighbor = Selection.unfold_entities(atomList, 'R')  
+    #    print("wyciagnente")
+    #    dictStart = time()
+        resId2atoms, resId2res = createResDicts(atomList, residuesNeighbor, ligand)
+    #    dictTime = time() - dictStart
+    #    print("atomy przetransformowane")
+        aminoacids = [ "ALA", "ARG", "ASN", "CYS", "GLN", "GLY", "HIS", "GLU", "ASP",
+            "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL" ]
+        
+    #    findConnectionsTime = 0
+    #    graphSearch = 0
+    #    loopStart = time()
+        for resId in resId2atoms:
+            resAtoms = resId2atoms[resId]
+            elements = atomsList2ElementsList( resAtoms )
+            resName = resId2res[ resId ].get_resname()
             
-#    print("Wyszukiwanie anionow stop")
-#    loopTime = time() - loopStart
-#    print("preparacja :", dictTime)
-#    print("petelka: ", loopTime)
-#    
-#    print("wycinanie reziduum ", findConnectionsTime)
-#    print("przeszukiwanie grafu", graphSearch)
-    return extractedAtoms
+            if resName.upper() in aminoacids and not ( "O" in elements or "S" in elements ):
+                continue
+    #        print("Wyciagam polaczenia")
+    #        getResStart = time()
+            atoms = getResidueWithConnections( resAtoms, ns )                                        
+            
+            nsRes = NeighborSearch(atoms)
+    #        findConnectionsTime += time() - getResStart
+    #        initGraph = molecule2graph(atoms)
+    #        print("Polaczenia wyciagniete")
+            for atom in resAtoms:
+                potentiallySupramolecular = False
+                anionType = ""
+    #            startSearch = time()
+                potentiallySupramolecular, anionType = self.searchInAnionTemplates(atom, atoms, nsRes)            
+    #            graphSearch += time() - startSearch
+                    
+                if potentiallySupramolecular:
+        #            print("cos watergo uwagi :D", atom.get_fullname())
+                    extractedAtoms.append({ "Atom" : atom, "AnionType" : atom.anionData.anionType, "AnionId" : atom.anionData.anionId})
+                
+    #    print("Wyszukiwanie anionow stop")
+    #    loopTime = time() - loopStart
+    #    print("preparacja :", dictTime)
+    #    print("petelka: ", loopTime)
+    #    
+    #    print("wycinanie reziduum ", findConnectionsTime)
+    #    print("przeszukiwanie grafu", graphSearch)
+        return extractedAtoms
+    
+    def searchInAnionTemplates(self,  atom, atoms, ns ):
+    #    fullTime = 0
+    #    graphConversion = 0
+    #    matchingTemplate = 0
+    #    
+    #    start = time()
+        if hasattr(atom, "anionData"):
+            if atom.anionData.charged:
+                return True, atom.anionData.anionType
+            else:
+                return False, atom.anionData.anionType
+                
+        element = atom.element.upper()
+        
+        
+        if not element in self.templates:
+            return False, element
+                
+    #    print("transformuje na graf")
+    #    graphStart = time()
+        atoms5 = ns.search(atom.get_coord(), 5.0, 'A')
+        graph, atomInd = molecule2graph( atoms5, atom )
+    #    graphConversion += time() - graphStart
+    #    print("rozmiar grafu: ", len(graph.nodes()))
+    #    print("Przetransformowalem")
+        composition = graph2Composition(graph)
+    #    print("Kompozycja zrobiena")
+        
+        priority2template = self.templates[element]
+    #    print("templaty dla atomu znaleziene")
+        for priority in sorted(priority2template.keys()):
+            for guess in priority2template[priority]:
+                if not dummyCompare(copy(composition), guess):
+                     continue
+                 
+                matchResult, anionGroup = self.try2matchTemplate(graph, atomInd, guess, atoms5)
+                if matchResult:
+                    return matchResult, anionGroup
+                
+        return False, element
+    
+    def try2matchTemplate(self, moleculeGraph, atomId, graphTemplate, atoms):
+        moleculeGraph.node[atomId]["charged"] = True
+    #    print("Tworze obiekta")
+        anMatcher = anionMatcher(moleculeGraph, graphTemplate)
+    #    print("Potworzylem")
+        
+        if graphTemplate.graph["fullIsomorphism"]:
+    #        print("pelny izo")
+            result = anMatcher.is_isomorphic()
+        else:
+    #        print("czastkowy izo")
+            result = anMatcher.subgraph_is_isomorphic()
+    #    print("mom rezultat")
+        if not result:
+            moleculeGraph.node[atomId]["charged"] = False
+            return result, moleculeGraph.node[atomId]["element"]
+        
+        matching = anMatcher.mapping
+        
+        if graphTemplate.graph["geometry"] == "planarWithSubstituents":
+            flatAnalysis = isFlat(atoms, list(matching.keys()), getSubstituents( moleculeGraph, list(matching.keys()) ) )
+            if not flatAnalysis["isFlat"]:
+                moleculeGraph.node[atomId]["charged"] = False
+                return False, moleculeGraph.node[atomId]["element"]
+        elif graphTemplate.graph["geometry"] == "planar":
+    #        print("Sprawdzam płaskosc")
+            flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ), 0.5)
+            if not flatAnalysis["isFlat"]:
+    #            print("nie je plaski", graphTemplate.graph["name"])
+                moleculeGraph.node[atomId]["charged"] = False
+                return False, moleculeGraph.node[atomId]["element"]
+    #        else:
+    #            print("jest plaski", graphTemplate.graph["name"])
+        
+        anionGroup = graphTemplate.graph["name"]
+        
+        if "X" in graphTemplate.graph["name"] and  graphTemplate.graph["nameMapping"]:
+            matching = anMatcher.mapping
+            for node in graphTemplate.graph["nameMapping"]:
+                element = getElementFromMatch( matching, int(node), moleculeGraph)
+                anionGroup = anionGroup.replace( "X", element )
+                break
+        
+        moleculeGraph.node[atomId]["charged"] = False
+        
+        for aId in matching:
+            templateAtomId = matching[aId]
+            
+            if templateAtomId in graphTemplate.graph["otherCharges"]:
+                atoms[aId].anionData = AnionData(anionGroup, True, self.freeAnionId)
+            else:
+                atoms[aId].anionData = AnionData(anionGroup, False, self.freeAnionId)
+                
+        atoms[atomId].anionData = AnionData(anionGroup, True, self.freeAnionId)
+                        
+        self.freeAnionId += 1
+        return True, anionGroup
 
 def getResidueWithConnections( atoms, ns ):
     atomParent = atoms[0].get_parent()
@@ -157,65 +279,30 @@ def graph2Composition( graph ):
             
     return composition
 
-def searchInAnionTemplates( atom, atoms, ns ):
-#    fullTime = 0
-#    graphConversion = 0
-#    matchingTemplate = 0
+
+#
+#def searchInAnionTemplatesBis( atom, atoms, initGraph ):
+#    if not hasattr(searchInAnionTemplates, "templates"):
+#        searchInAnionTemplates.templates =  getAllTemplates()
+#    element = atom.element.upper()
 #    
-#    start = time()
-    if not hasattr(searchInAnionTemplates, "templates"):
-        searchInAnionTemplates.templates =  getAllTemplates()
-    element = atom.element.upper()
-    
-    
-    if not element in searchInAnionTemplates.templates:
-        return False, element
-            
-#    print("transformuje na graf")
-#    graphStart = time()
-    atoms5 = ns.search(atom.get_coord(), 5.0, 'A')
-    graph, atomInd = molecule2graph( atoms5, atom )
-#    graphConversion += time() - graphStart
-#    print("rozmiar grafu: ", len(graph.nodes()))
-#    print("Przetransformowalem")
-    composition = graph2Composition(graph)
-#    print("Kompozycja zrobiena")
-    
-    priority2template = searchInAnionTemplates.templates[element]
-#    print("templaty dla atomu znaleziene")
-    for priority in sorted(priority2template.keys()):
-        for guess in priority2template[priority]:
-            if not dummyCompare(copy(composition), guess):
-                 continue
-             
-            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms5)
-            if matchResult:
-                return matchResult, anionGroup
-            
-    return False, element
-
-def searchInAnionTemplatesBis( atom, atoms, initGraph ):
-    if not hasattr(searchInAnionTemplates, "templates"):
-        searchInAnionTemplates.templates =  getAllTemplates()
-    element = atom.element.upper()
-    
-    if not element in searchInAnionTemplates.templates:
-        return False, element
-            
-    graph, atomInd = findInGraph( initGraph, atom, atoms )
-    composition = graph2Composition(graph)
-    
-    priority2template = searchInAnionTemplates.templates[element]
-
-    for priority in sorted(priority2template.keys()):
-        for guess in priority2template[priority]:
-            if not dummyCompare(copy(composition), guess):
-                 continue
-            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
-            if matchResult:
-                return matchResult, anionGroup
-            
-    return False, element
+#    if not element in searchInAnionTemplates.templates:
+#        return False, element
+#            
+#    graph, atomInd = findInGraph( initGraph, atom, atoms )
+#    composition = graph2Composition(graph)
+#    
+#    priority2template = searchInAnionTemplates.templates[element]
+#
+#    for priority in sorted(priority2template.keys()):
+#        for guess in priority2template[priority]:
+#            if not dummyCompare(copy(composition), guess):
+#                 continue
+#            matchResult, anionGroup = try2matchTemplate(graph, atomInd, guess, atoms)
+#            if matchResult:
+#                return matchResult, anionGroup
+#            
+#    return False, element
 
 
 def dummyCompare(composition, template):
@@ -265,53 +352,6 @@ def getAllTemplates():
             graphTemplates[element][priority].append(graphTemplate)
             
     return graphTemplates
-    
-def try2matchTemplate(moleculeGraph, atomId, graphTemplate, atoms):
-    
-    moleculeGraph.node[atomId]["charged"] = True
-#    print("Tworze obiekta")
-    anMatcher = anionMatcher(moleculeGraph, graphTemplate)
-#    print("Potworzylem")
-    
-    if graphTemplate.graph["fullIsomorphism"]:
-#        print("pelny izo")
-        result = anMatcher.is_isomorphic()
-    else:
-#        print("czastkowy izo")
-        result = anMatcher.subgraph_is_isomorphic()
-#    print("mom rezultat")
-    if not result:
-        moleculeGraph.node[atomId]["charged"] = False
-        return result, moleculeGraph.node[atomId]["element"]
-    
-    matching = anMatcher.mapping
-    
-    if graphTemplate.graph["geometry"] == "planarWithSubstituents":
-        flatAnalysis = isFlat(atoms, list(matching.keys()), getSubstituents( moleculeGraph, list(matching.keys()) ) )
-        if not flatAnalysis["isFlat"]:
-            moleculeGraph.node[atomId]["charged"] = False
-            return False, moleculeGraph.node[atomId]["element"]
-    elif graphTemplate.graph["geometry"] == "planar":
-#        print("Sprawdzam płaskosc")
-        flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ), 0.5)
-        if not flatAnalysis["isFlat"]:
-#            print("nie je plaski", graphTemplate.graph["name"])
-            moleculeGraph.node[atomId]["charged"] = False
-            return False, moleculeGraph.node[atomId]["element"]
-#        else:
-#            print("jest plaski", graphTemplate.graph["name"])
-    
-    anionGroup = graphTemplate.graph["name"]
-    
-    if "X" in graphTemplate.graph["name"] and  graphTemplate.graph["nameMapping"]:
-        matching = anMatcher.mapping
-        for node in graphTemplate.graph["nameMapping"]:
-            element = getElementFromMatch( matching, int(node), moleculeGraph)
-            anionGroup = anionGroup.replace( "X", element )
-            break
-    
-    moleculeGraph.node[atomId]["charged"] = False
-    return True, anionGroup
 
 def getElementFromMatch( matching, node, graph):
     for match in matching:

@@ -14,10 +14,13 @@ from metalLigand import MetalLigandGUI
 from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
-
 import sys
+
 if sys.version_info[0] < 3:
     from pymol import cmd
+    import tkMessageBox
+else:
+    from tkinter import messagebox as tkMessageBox
     
 class SupramolecularComposition:
     def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand):
@@ -42,7 +45,7 @@ class SupramolecularComposition:
     def merge(self, actionMenu):
         headersId ={ 
                     "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
-                    "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
+                    "Anion" : ["Anion code", "Anion chain" , "Anion id" ] , 
                     "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
                     "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
                     "Metal" : ["Cation code", "Cation chain", "Cation id"],
@@ -88,14 +91,14 @@ class SupramolecularComposition:
             if data2use[key]:
                 if len(uniqueData) == 0:
                     uniqueData = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
-                else:
+                elif len(self.actionLabels2Objects[ key ].logData["filtered"]) > 0:
                     uniqueData = pd.merge( uniqueData,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
                     uniqueData = uniqueData.drop_duplicates()
                 self.actualKeys = list(set( self.actualKeys + headers ))
             else:
                 if len(dataExcluded) == 0:
                     dataExcluded = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
-                else:
+                elif len(self.actionLabels2Objects[ key ].logData["filtered"]) > 0:
                     dataExcluded = pd.merge( dataExcluded,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
                     dataExcluded = dataExcluded.drop_duplicates()
                 excludedKeys = list(set( excludedKeys + headers ))
@@ -116,6 +119,10 @@ class SupramolecularComposition:
             if "Anion" in key and "Cation" in key:
                 headers += headersId["Pi"]
                     
+            if len(uniqueData) == 0 :
+                tkMessageBox.showwarning(title = "Merging error!", message = "No data left after merge!")
+                break
+            
             mergingKeys = list(set(self.actualKeys) & set(headers) )
             tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
             mergedData = pd.merge( self.actionLabels2Objects[ key ].logData["filtered"], tempDataFrame, on = mergingKeys )
