@@ -26,9 +26,6 @@ if isfile(configurationFileName):
 if not isdir("logs"):
     makedirs("logs")
         
-if not isdir("hBondsScr"):
-    makedirs("hBondsScr")
-        
 log_files = glob.glob("logs/anionPi*.log")
 log_files += glob.glob("logs/piPi*.log")
 log_files += glob.glob("logs/cationPi*.log")

@@ -1,5 +1,4 @@
 Do zrobienia mozliwie szybko:
--jak dodac wodory do struktur?
 -obliczyc mapy esp
 -jednoczesne zaznaczanie tego samego rekordu w wielu kartach
 -zoptymalizować kolejkowanie cifów do procesowania (nie wrzucać największych plików na jeden rdzeń)
@@ -13,5 +12,4 @@ Dowiedziec sie:
 -przykladowy skrypt z uruchomieniem esp
 
 Proste i przydatne rzeczy:
-- zapisywać czasy procesowania poszczególnych plików
 - wprowadzić plik konfiguracyjny: ściezka do dodatkowych bibliotek

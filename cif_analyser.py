@@ -12,25 +12,21 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 #fast ang ugly code especially for prometheus
 import sys
 from os.path import isdir, getsize
-from os import system
 
 if isdir("/net/archive/groups/plggsuprm/pythonPackages") and not "/net/archive/groups/plggsuprm/pythonPackages" in sys.path :
     sys.path.insert(0, "/net/archive/groups/plggsuprm/pythonPackages" )
 
-from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection, PDBIO, PDBParser
-from Bio.PDB.PDBIO import Select
+from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
 from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults, writeMetalLigandResults
 from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
+from protonate import Protonate
 from anionRecogniser import AnionRecogniser, createResId
 from multiprocessing import current_process
 import networkx as nx
 from time import time
-#from buildStructure import primitiveBuildStructure
-
-#from time import time
 
 def findSupramolecular( cifData):
     """
@@ -77,7 +73,7 @@ class CifAnalyser:
         self.anionRecogniser = AnionRecogniser()
     
     def analyseCif(self):
-        parser = FastMMCIFParser()
+        parser = FastMMCIFParser(QUIET=True)
         
         timeStart = time()
         try:
@@ -291,6 +287,9 @@ class CifAnalyser:
             if not a.element.upper() in metals:
                 anionSpace.append(a)
                 
+        if len(anionSpace) == 0:
+            return  { "complex" : False, "coordNo" : 0, "ligands" : [] }
+        
         nsSmall = NeighborSearch(anionSpace)
     #    if not potentialLigands:
     #        return  { "complex" : False, "coordNo" : 0 }
@@ -359,23 +358,13 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
     acceptorResidue = atom["Atom"].get_parent()
     
     if not hAtomsPresent:       
-        pass
-#        try :
-#            io.save(pdbFileName, MySelect())
-#        except:
-#            return []
-#        system("python primitiveAddHydrogens.py "+pdbFileName)
-#        parser = PDBParser()
-#        structure = parser.get_structure('hBondTemp', pdbFileName)
-#        structureAtoms = structure.get_atoms()
-#        hydrogensAtoms = [ ]
-#        for sa in structureAtoms:
-#            if sa.element == "H":
-#                hydrogensAtoms.append(sa)
-        
-#        neighbors += hydrogensAtoms
-    
-    graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False )
+        protonationWorker = Protonate()
+        protonationWorker.protonate(neighbors, atom["Atom"])
+        graph = protonationWorker.moleculeGraph
+        neighbors = protonationWorker.atomList
+        anionAtomInd = protonationWorker.anionId
+    else:
+        graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False )
     
     donors = []
     
