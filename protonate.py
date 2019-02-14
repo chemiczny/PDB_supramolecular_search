@@ -371,6 +371,10 @@ def get_ortonormal(vec):
     aInd = (closest2zeroIndex+1)%3
     bInd = (closest2zeroIndex+2)%3
     
+    if abs(vec[bInd]) < 0.001:
+        vecOut[bInd]=1
+        return vecOut
+    
     vecOut[aInd] =1
     vecOut[bInd] = -vec[aInd]/vec[bInd]
     
