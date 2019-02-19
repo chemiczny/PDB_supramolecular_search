@@ -269,7 +269,7 @@ class SupramolecularGUI:
             
     def gridSaveFiltered(self):
         self.but_saveFiltered = Tkinter.Button(self.page, width = 10, command = self.saveFiltered, text = "Save filtered")
-        self.but_saveFiltered.grid(row = 50, column = 1)
+        self.but_saveFiltered.grid(row = 25, column = 16, columnspan=2)
         
     def setAdditionalCheckboxes(self, additionalCheckboxes):
         self.additionalCheckboxes = additionalCheckboxes
@@ -557,7 +557,7 @@ class SupramolecularGUI:
         self.ent_rangeStop.insert("end", 1000)
         
         self.but_showInteraction = Tkinter.Button(self.page, width = 10, command = self.showInteractions, text = "Show interact")
-        self.but_showInteraction.grid(row = 50, column =0)
+        self.but_showInteraction.grid(row = 25, column =14, columnspan=2)
         
         self.but_rangeShow = Tkinter.Button(self.page, width = 6, text = "Show", command = self.showRange)
         self.but_rangeShow.grid(row = 25, column = 8, columnspan = 2)
