@@ -190,16 +190,43 @@ class SupramolecularGUI:
             self.listParameters[parameter]["checkbox"] = Tkinter.Checkbutton(self.page, variable = self.checkboxVars[parameter] )
             self.listParameters[parameter]["checkbox"].grid(row = 0, column = self.actualColumn+1)
             
-            self.listParameters[parameter]["listbox"] = Tkinter.Listbox(self.page, width =10, height = 15, exportselection = False)
-            self.listParameters[parameter]["listbox"].grid(row = 1, column = self.actualColumn, rowspan = 15, columnspan = 2)
+            self.listParameters[parameter]["listbox"] = Tkinter.Listbox(self.page, width =10, height = 8, exportselection = False)
+            self.listParameters[parameter]["listbox"].grid(row = 0, column = self.actualColumn, rowspan = 8, columnspan = 2)
+            self.listParameters[parameter]["listbox"].bind("<<ListboxSelect>>", lambda e, arg = parameter:self.moveSelectedFromListbox(e, arg) )
             
             self.listParameters[parameter]["entry"] = Tkinter.Entry(self.page, width = 5)
-            self.listParameters[parameter]["entry"].grid(row =20, column = self.actualColumn)
+            self.listParameters[parameter]["entry"].grid(row =7, column = self.actualColumn)
              
             self.listParameters[parameter]["button"] = Tkinter.Button(self.page, width = 1, text = "*", command = lambda arg = parameter : self.listFilter(arg))
-            self.listParameters[parameter]["button"].grid(row = 20, column = self.actualColumn + 1)
+            self.listParameters[parameter]["button"].grid(row = 7, column = self.actualColumn + 1)
+            
+            self.listParameters[parameter]["listboxSelected"] = Tkinter.Listbox(self.page, width =10, height = 6, exportselection = False)
+            self.listParameters[parameter]["listboxSelected"].grid(row = 8, column = self.actualColumn, rowspan = 8, columnspan = 2)
+            
+            self.listParameters[parameter]["buttonSelClear"] = Tkinter.Button(self.page, width = 1, text = "clear", command = lambda arg = parameter : self.clearListboxSelected(arg))
+            self.listParameters[parameter]["buttonSelClear"].grid(row = 16, column = self.actualColumn)
+            
+            self.listParameters[parameter]["buttonSelDel"] = Tkinter.Button(self.page, width = 1, text = "del", command = lambda arg = parameter : self.removeFromListBoxSelected(arg))
+            self.listParameters[parameter]["buttonSelDel"].grid(row = 16, column = self.actualColumn + 1)
             
             self.actualColumn += 2
+            
+    def moveSelectedFromListbox(self, event, key):
+        listIndex = self.listParameters[key]["listbox"].curselection()
+        if listIndex:
+            selection = str(self.listParameters[key]["listbox"].get(listIndex))
+            alreadySelected = self.listParameters[key]["listboxSelected"].get(0, 'end')
+            
+            if selection not in alreadySelected:
+                self.listParameters[key]["listboxSelected"].insert("end", selection)
+            
+    def clearListboxSelected(self, key):
+        self.listParameters[key]["listboxSelected"].delete(0,"end")
+        
+    def removeFromListBoxSelected(self, key):
+        listIndex = self.listParameters[key]["listboxSelected"].curselection()
+        if listIndex:
+            self.listParameters[key]["listboxSelected"].delete(listIndex, listIndex)
             
     def setSortingParameters(self, keys2header, keysCol):
         self.sorting_keys2header = keys2header
@@ -280,10 +307,9 @@ class SupramolecularGUI:
 #                anythingSet = True
                 
                 if key in self.listParameters:
-                    listIndex = self.listParameters[key]["listbox"].curselection()
-                    if listIndex:
-                        query = str(self.listParameters[key]["listbox"].get(listIndex))
-                        actualData = actualData[  actualData[ self.listParameters[key]["header"] ].astype(str) == query ]
+                    selectedValues = self.listParameters[key]["listboxSelected"].get(0, 'end')
+                    if selectedValues:
+                        actualData = actualData[  actualData[ self.listParameters[key]["header"] ].astype(str).isin(selectedValues) ]
 
                 elif key in self.numericalParameters:
                     minValue = self.numericalParameters[key]["entry_low"].get()
