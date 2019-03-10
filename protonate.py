@@ -39,8 +39,11 @@ class Protonate:
                                 }
 
         self.standard_charges= {'ARG-NH1':1.0,
+                                'ASP-OD2':-1.0,
+                                'GLU-OE2':-1.0,
                                 'HIS-ND1':1.0,
                                 'LYS-NZ':1.0,
+                                'ARG-NE' :1,
                                 'N+':1.0,
                                 'C-':-1.0}
 
@@ -70,8 +73,7 @@ class Protonate:
                                                               'ASP-OD1':1,
                                                               'GLU-OE1':1,
                                                               'GLN-OE1':1,
-                                                              'HIS-ND1':1,
-                                                              'ARG-NE' :1}
+                                                              'HIS-ND1':1}
         
         self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains = {
                                                                 'ARG-NH2':1,
@@ -80,7 +82,8 @@ class Protonate:
                                                                 'HIS-NE2':1,
                                                                 'TRP-NE1':1,
                                                                 'GLU-OE2':1,
-                                                                'ASP-OD2':1}
+                                                                'ASP-OD2':1,
+                                                                'ARG-NE' :1}
 
 
         self.number_of_pi_electrons_in_bonds_ligands = {'N.pl3':0,

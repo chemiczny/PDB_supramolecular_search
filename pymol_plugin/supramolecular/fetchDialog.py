@@ -46,6 +46,7 @@ def fetchdialog(simulation = False):
     pageAnionCation  = ttk.Frame(nb)
     pageHBonds = ttk.Frame(nb)
     pageMetalLigand = ttk.Frame(nb)
+    pageQM = ttk.Frame(nb)
     
     nb.add(pageAnionPi, text = "AnionPi")
     nb.add(pagePiPi, text = "PiPi")
@@ -53,11 +54,12 @@ def fetchdialog(simulation = False):
     nb.add(pageAnionCation, text = "AnionCation")
     nb.add(pageHBonds, text = "HBonds")
     nb.add(pageMetalLigand, text = "MetalLigand")
+    nb.add(pageQM, text = "QM assistant")
     
     nb.grid(column = 0, row = 0, columnspan = 20)
     
     supramolecularComposition = SupramolecularComposition(pageAnionPi, pagePiPi,
-                                                          pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand)
+                                                          pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM)
     
     
     ######################

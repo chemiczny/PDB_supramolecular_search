@@ -54,6 +54,8 @@ class AnionRecogniser:
         atomList = []
         
         for atom in atomListOrig:
+            if atom.get_parent() == ligand:
+                continue
             if hasattr(atom, "anionData"):
                 if atom.anionData.charged:
                     extractedAtoms.append({ "Atom" : atom, "AnionType" : atom.anionData.anionType, "AnionId" : atom.anionData.anionId})

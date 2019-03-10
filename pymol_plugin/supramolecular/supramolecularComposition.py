@@ -11,6 +11,7 @@ from cationPi import CationPiGUI
 from anionCation import AnionCationGUI
 from hBonds import HBondsGUI
 from metalLigand import MetalLigandGUI
+from QMGUI import QMGUI
 from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
@@ -23,13 +24,14 @@ else:
     from tkinter import messagebox as tkMessageBox
     
 class SupramolecularComposition:
-    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand):
+    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM):
         self.guiAnionPi = AnionPiGUI(pageAnionPi)
         self.guiPiPi = PiPiGUI(pagePiPi)
         self.guiCationPi = CationPiGUI( pageCationPi)
         self.guiAnionCation = AnionCationGUI( pageAnionCation)
         self.guiHBonds = HBondsGUI( pageHBonds )
         self.guiMetalLigand = MetalLigandGUI(pageMetalLigand)
+        self.guiQM = QMGUI(pageQM)
             
         self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, self.guiMetalLigand]
         self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand" ]
@@ -234,4 +236,6 @@ class SupramolecularComposition:
     def grid(self):
         for gui in self.guis:
             gui.grid()
+            
+        self.guiQM.grid()
             
