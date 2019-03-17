@@ -111,8 +111,14 @@ class CifAnalyser:
             "timeResolutionReading" : timeResolutionReading}
         
     #    try:
+        interestingResidues = [ "GLU", "ASP", "A", "G", "U", "C", "SO4", "PO4", "CL", "ACT", "CIT", "FMT", "NAP"
+                               , "OGA", "HIS", "TYR", "TRP", "PHE", "FAD", "PLP", "NAD", "FOL", "NAP" ]
         for modelIndex, model in enumerate(structure):
     #        print("model "+str(modelIndex))
+            residue2counts = {  }
+            for res in interestingResidues:
+                residue2counts[res] = 0
+                
             atoms = Selection.unfold_entities(model, 'A')  
             not_disordered_atoms = []
             for atom in atoms:
@@ -127,10 +133,17 @@ class CifAnalyser:
     #        print("neighbor search utworzony")
             for residue in model.get_residues():
                 residueName = residue.get_resname().upper()
+                if residueName in residue2counts:
+                    residue2counts[residueName] += 1
+                    
                 if not residueName in notPiacids  :
                     supramolecularFound , newTimes = self.analysePiacid(residue, modelIndex, structure)
                     for key in newTimes:
                         times[key] += newTimes[key]
+                        
+            writeAdditionalInfo("model: "+str(modelIndex), self.fileId)
+            for rc in residue2counts:
+                writeAdditionalInfo(rc + " " +str(residue2counts[rc]), self.fileId)
                 
     #    fileId = current_process()
         incrementPartialProgress(self.fileId)
