@@ -70,6 +70,9 @@ class CifAnalyser:
         self.method = None
         self.hAtomsPresent = False
         
+        self.proteinAtoms = -1
+        self.nucleaicAcidAtoms = -1
+        
         self.anionRecogniser = AnionRecogniser()
     
     def analyseCif(self):
@@ -96,7 +99,7 @@ class CifAnalyser:
             "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
             
         time2 = time()
-        self.resolution, self.method = self.readResolutionAndMethod()
+        self.resolution, self.method, self.proteinAtoms, self.nucleaicAcidAtoms = self.readResolutionAndMethod()
         timeResolutionReading = time() - time2
         
         self.hAtomsPresent = hydrogensPresent(structure)
@@ -161,12 +164,14 @@ class CifAnalyser:
 
     def readResolutionAndMethod( self ):
         try:
-            mmcif_dict_parser = primitiveCif2Dict(self.cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , "_exptl.method"] )
+            mmcif_dict_parser = primitiveCif2Dict(self.cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , 
+                                                                 "_exptl.method", "_refine_hist.pdbx_number_atoms_protein", 
+                                                                 "_refine_hist.pdbx_number_atoms_nucleic_acid"] )
             mmcif_dict = mmcif_dict_parser.result
         except:
             errorMessage = "primitiveCif2Dict cannot handle with: "+self.cifFile
             writeAdditionalInfo(errorMessage, self.fileId)
-            return -666, -666
+            return -666, -666, -1, -1
         
         method = "Unknown"
         if "_exptl.method" in mmcif_dict:
@@ -175,6 +180,16 @@ class CifAnalyser:
                 method = method[0]
             else:
                 method = sorted(method)
+                
+        proteinAtoms = -1
+        nucleicAcidAtoms = -1
+        
+        if "_refine_hist.pdbx_number_atoms_protein" in mmcif_dict:
+            proteinAtoms = mmcif_dict["_refine_hist.pdbx_number_atoms_protein"][0]
+        
+        if "_refine_hist.pdbx_number_atoms_nucleic_acid" in mmcif_dict:
+            nucleicAcidAtoms = mmcif_dict["_refine_hist.pdbx_number_atoms_nucleic_acid"][0]
+            
     #    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
         res_key = "_refine.ls_d_res_high"
         resolution = []
@@ -183,13 +198,13 @@ class CifAnalyser:
     
                     
         if not resolution:
-            return -1, method
+            return -1, method, proteinAtoms, nucleicAcidAtoms
                     
         if len(resolution) == 1  :
             if isfloat( resolution[0] ):
-                return resolution[0], method
+                return resolution[0], method, proteinAtoms, nucleicAcidAtoms
             else:
-                return -1, method
+                return -1, method, proteinAtoms, nucleicAcidAtoms
         else:
             resFloats = []
             for res in resolution:
@@ -197,10 +212,10 @@ class CifAnalyser:
                     resFloats.append(float(res))
                     
             if not resFloats:
-                return -1, method
+                return -1, method, proteinAtoms, nucleicAcidAtoms
             
             resFloats = sorted(resFloats)
-            return resFloats[0], method
+            return resFloats[0], method, proteinAtoms, nucleicAcidAtoms
 
     def analysePiacid(self, ligand, modelIndex, structure):
     #    print("analysePiacid - start ")
@@ -270,7 +285,7 @@ class CifAnalyser:
                     
                     writeHbondsResults( self.PDBcode,hDonors, atom, modelIndex, self.fileId)
                     
-            extractedAtoms =  writeAnionPiResults(ligand, self.PDBcode, centroid, extractedAnionAtoms, modelIndex, self.resolution, self.method, self.fileId)
+            extractedAtoms =  writeAnionPiResults(ligand, self.PDBcode, centroid, extractedAnionAtoms, modelIndex, self.resolution, self.method, self.proteinAtoms, self.nucleaicAcidAtoms, self.fileId)
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True

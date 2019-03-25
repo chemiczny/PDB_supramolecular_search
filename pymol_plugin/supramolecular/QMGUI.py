@@ -29,23 +29,34 @@ class QMGUI:
         self.page = page
         
     def gridBasicLabels(self):
+        actualRow = 1
         chargeLabel = Tkinter.Label(self.page, text = "charge")
-        chargeLabel.grid(row=1, column=0)
+        chargeLabel.grid(row=actualRow, column=0)
+        
+        actualRow+=1
         
         spinLabel = Tkinter.Label(self.page, text = "spin")
-        spinLabel.grid(row=2, column=0)
+        spinLabel.grid(row=actualRow, column=0)
+        
+        actualRow +=1
         
         seleLabel = Tkinter.Label(self.page, text = "sele")
-        seleLabel.grid(row=3, column=0)
+        seleLabel.grid(row=actualRow, column=0, rowspan=2)
+        
+        actualRow +=2
         
         frozenLabel = Tkinter.Label(self.page, text = "frozen")
-        frozenLabel.grid(row=4, column=0, rowspan=2)
+        frozenLabel.grid(row=actualRow, column=0, rowspan=2)
+        
+        actualRow+=2
         
         addAtomsLabel = Tkinter.Label(self.page, text = "Add atoms")
-        addAtomsLabel.grid(row=6, column=0, rowspan=2)
+        addAtomsLabel.grid(row=actualRow, column=0, rowspan=2)
+        
+        actualRow+=2
         
         self.countAtoms = Tkinter.Button(self.page, width=5, text = "count at", command = self.countAtoms)
-        self.countAtoms.grid(row=8, column=0)
+        self.countAtoms.grid(row=actualRow, column=0)
         
 #        seleAroundLabel = Tkinter.Label(self.page, text = "around sele")
 #        seleAroundLabel.grid(row=4, column=0)
@@ -80,36 +91,68 @@ class QMGUI:
 
         
     def gridHost(self):
+        actualRow = 0
+        
         hostLabel = Tkinter.Label(self.page, text = "Host")
-        hostLabel.grid(row=0, column = 1)
+        hostLabel.grid(row=actualRow, column = 1)
+        
+        actualRow +=1
         
         self.hostCharge = Tkinter.Entry(self.page, width = 5)
-        self.hostCharge.grid(row=1, column=1)
+        self.hostCharge.grid(row=actualRow, column=1)
+        
+        actualRow +=1
         
         self.hostSpin = Tkinter.Entry(self.page, width = 5)
-        self.hostSpin.grid(row=2, column =1)
+        self.hostSpin.grid(row=actualRow, column =1)
         self.hostSpin.insert( 'end', "1")
         
+        actualRow +=1
+        
         self.hostSele = Tkinter.Button(self.page, width = 5, text = "get", command = self.readHost)
-        self.hostSele.grid(row=3, column =1)
+        self.hostSele.grid(row=actualRow, column =1)
+        
+        actualRow+=1
+        
+        self.hostAddSele = Tkinter.Button(self.page, width = 5, text = "add", command = self.addSele2Host)
+        self.hostAddSele.grid(row=actualRow, column =1)
+        
+        actualRow+=1
         
         self.hostFrozenClear = Tkinter.Button(self.page, width =5, text = "clear", command = self.clearHostFrozen)
-        self.hostFrozenClear.grid(row=4, column=1)
+        self.hostFrozenClear.grid(row=actualRow, column=1)
+        
+        actualRow+=1
         
         self.hostFrozenDefault = Tkinter.Button(self.page, width = 5, text = "default", command = self.defaultHostFrozen)
-        self.hostFrozenDefault.grid(row=5, column=1)
+        self.hostFrozenDefault.grid(row=actualRow, column=1)
+        
+        actualRow+=1
         
         self.hostAddH = Tkinter.Button(self.page, width = 5, text = "addH", command = self.addHHost)
-        self.hostAddH.grid(row=6, column=1)
+        self.hostAddH.grid(row=actualRow, column=1)
+        
+        actualRow+=1
         
         self.hostAddNCA = Tkinter.Button(self.page, width = 5, text = "chop", command = self.hostChop)
-        self.hostAddNCA.grid(row=7, column=1)
+        self.hostAddNCA.grid(row=actualRow, column=1)
+        
+        actualRow+=1
         
         self.hostAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.hostAtomsNo.grid(row=8, column=1)
+        self.hostAtomsNo.grid(row=actualRow, column=1)
+        
+        actualRow+=1
         
 #        self.hostAroundSele = Tkinter.Button(self.page, width = 5, text = "get", command = self.readHostFromSeleAround)
 #        self.hostAroundSele.grid(row=4, column = 1)
+        
+    def addSele2Host(self):
+        try:
+            stateNo = cmd.get_state()
+            cmd.create("host", "%host or sele", stateNo)
+        except:
+            print("lo kurla")
         
     def clearHostFrozen(self):
         cmd.select( "hostFrozen", "none")
@@ -183,36 +226,67 @@ class QMGUI:
             print("lo kurla")
         
     def gridGuest(self):
+        actualRow = 0
         guestLabel = Tkinter.Label(self.page, text = "Guest")
-        guestLabel.grid(row=0, column = 2)
+        guestLabel.grid(row=actualRow, column = 2)
+        
+        actualRow+=1
         
         self.guestCharge = Tkinter.Entry(self.page, width = 5)
-        self.guestCharge.grid(row=1, column=2)
+        self.guestCharge.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestSpin = Tkinter.Entry(self.page, width = 5)
-        self.guestSpin.grid(row=2, column =2)
+        self.guestSpin.grid(row=actualRow, column =2)
         self.guestSpin.insert('end', '1')
         
+        actualRow+=1
+        
         self.guestSele = Tkinter.Button(self.page, text = "get" ,  width = 5, command = self.readGuest)
-        self.guestSele.grid(row=3, column =2)
+        self.guestSele.grid(row=actualRow, column =2)
+        
+        actualRow+=1
+        
+        self.guestSeleAdd = Tkinter.Button(self.page, text = "add", width = 5, command = self.addSele2Guest)
+        self.guestSeleAdd.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestFrozenClear = Tkinter.Button(self.page, width = 5, text = "clear", command = self.clearGuestFrozen)
-        self.guestFrozenClear.grid(row=4, column=2)
+        self.guestFrozenClear.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestFrozenDefault = Tkinter.Button(self.page, width = 5, text = "default", command = self.defaultGuestFrozen)
-        self.guestFrozenDefault.grid(row=5, column=2)
+        self.guestFrozenDefault.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestAddH = Tkinter.Button(self.page, width = 5, text = "addH", command = self.addHGuest)
-        self.guestAddH.grid(row=6, column=2)
+        self.guestAddH.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestAddNCA = Tkinter.Button(self.page, width = 5, text = "chop", command = self.guestChop)
-        self.guestAddNCA.grid(row=7, column=2)
+        self.guestAddNCA.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
         self.guestAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.guestAtomsNo.grid(row=8, column=2)
+        self.guestAtomsNo.grid(row=actualRow, column=2)
+        
+        actualRow+=1
         
 #        self.guestAround = Tkinter.Button(self.page, text = "get", width = 5, command = self.readGuestFromSeleAround)
 #        self.guestAround.grid(row=4, column=2)
+        
+    def addSele2Guest(self):
+        try:
+            stateNo = cmd.get_state()
+            cmd.create("guest", "%guest or sele", stateNo)
+        except:
+            print("lo kurla")
         
     def guestChop(self):
         try:
@@ -298,7 +372,7 @@ class QMGUI:
         self.complexSpin.insert('end', '1')
         
         self.complexAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.complexAtomsNo.grid(row=8, column=3)
+        self.complexAtomsNo.grid(row=9, column=3)
         
     
     def gridWrite(self):
@@ -417,7 +491,10 @@ class QMGUI:
             
             inpF.write(element+"(Fragment=2, PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") "+x+" "+y+" "+z+"\n" )
             
-        inpF.write("\neps=4\n")
+        inpF.write("\n")
+        
+        additionaInput = self.additionalSection.get("1.0", "end")
+        inpF.write(additionaInput)
         inpF.write("\n\n")
         
         inpF.close()
@@ -430,6 +507,14 @@ class QMGUI:
         self.routeSection.grid(row = 2, column = 5, columnspan = 5, rowspan = 5)
         self.routeSection.insert("end", "%Mem=100GB\n#P B3LYP/6-31G(d,p)\n# Opt Counterpoise=2\n# SCRF(Solvent=Water, Read)\n# Gfinput IOP(6/7=3)  Pop=full  Density  Test \n# Units(Ang,Deg)")
         
+    def gridGaussianAdditionalInput(self):
+        additionalInputLabel = Tkinter.Label(self.page, text="Additional input")
+        additionalInputLabel.grid(row=7, column = 5, columnspan = 5)
+        
+        self.additionalSection = Tkinter.Text(self.page, width = 50, height = 10)
+        self.additionalSection.grid(row=8, column=5, columnspan = 5, rowspan = 5)
+        self.additionalSection.insert("end", "eps=4\n")
+                                 
     def gridSlurmSection(self):
         slurmSection = Tkinter.Label(self.page, text = "Slurm input")
         slurmSection.grid(row = 1, column = 10, columnspan = 10)
@@ -448,3 +533,4 @@ class QMGUI:
         self.gridSlurmSection()
         
         self.gridGaussianRouteSection()
+        self.gridGaussianAdditionalInput()
