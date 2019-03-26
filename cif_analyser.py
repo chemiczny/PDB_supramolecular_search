@@ -280,7 +280,7 @@ class CifAnalyser:
                     writeHbondsResults( self.PDBcode,hDonors, atom, modelIndex, self.fileId)
                     
             extractedAtoms =  writeAnionPiResults(ligand, self.PDBcode, centroid, extractedAnionAtoms, modelIndex,
-                                                  self.resolution, self.method,  self.structureType)
+                                                  self.resolution, self.method,  self.structureType, self.fileId)
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True
