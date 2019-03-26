@@ -36,7 +36,7 @@ def writeAnionPiHeader( ):
     resultsFile.write("Model No\tDisordered\t")
     resultsFile.write("Ring size\tRing elements\t")
     resultsFile.write("Resolution\t")
-    resultsFile.write("Method\tProtein atoms\tNucleic acid atoms\n")
+    resultsFile.write("Method\tStructure type\n")
     resultsFile.close()
     
 def writeCationPiHeader( ):
@@ -128,7 +128,7 @@ def writeHbondsHeader( ):
     resultsFile.write("Distance Don Acc\tModel No\n")
     resultsFile.close()
     
-def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, proteinAtoms, nucleicAcidAtoms, fileId = None ):
+def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, structureType, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
     """
@@ -193,8 +193,7 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
         resultsFile.write(str(centroid["ringElements"])+"\t")
         resultsFile.write(str(resolution)+"\t")
         resultsFile.write(str(method)+"\t")
-        resultsFile.write(str(proteinAtoms)+"\t")
-        resultsFile.write(str(nucleicAcidAtoms)+"\n")
+        resultsFile.write(str(structureType)+"\n")
     
     resultsFile.close()
     

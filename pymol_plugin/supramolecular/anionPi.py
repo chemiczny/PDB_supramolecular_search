@@ -22,13 +22,14 @@ class AnionPiGUI(SupramolecularGUI):
                       "Groups" : { "header" : "Anion type" },
                       "Methods" : { "header" : "Method" } ,
                       "PDB" : { "header" : "PDB Code" },
-                      "Ring" : { "header" : "Ring elements" }}  )
+                      "Ring" : { "header" : "Ring elements" },
+                      "Type" : { "header" : "Structure type" } }  )
     
         self.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
                          "res" : "Resolution", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [  "R" , "Angle" , "x" , "h" ,
                          "res" , "Pi acid" ,"Anion" ] )
     
-        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" ,"Anion gr. id", "R", "alpha", "x", "h", "res", "Method" ])
+        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id", "Anion type" ,"Anion gr. id", "R", "alpha", "x", "h", "res", "Method", "Type" ])
      
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
                                          { "label" : "No AA in anions" ,  "func" : noAAinAnions } ,
@@ -43,7 +44,7 @@ class AnionPiGUI(SupramolecularGUI):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
                                                         row["Anion chain"] + str(row["Anion id"]), row["Anion type"], row["Anion group id"],
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], row["Resolution"] , row["Method"]  )
+                                                        str(row["h"])[:3], row["Resolution"] , row["Method"], row["Structure type"]  )
         
     def getSelection(self,  data):
         res1Id = data["Piacid id"].values[0]
