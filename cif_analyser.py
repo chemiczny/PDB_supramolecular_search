@@ -91,7 +91,6 @@ class CifAnalyser:
             #Zeby zobaczyc co sie dzieje
             return True        
             
-        writeAdditionalInfo("Zaczynam analize: "+self.PDBcode, self.fileId)
         writeAdditionalInfo("Rozmiar pliku: " + str(getsize(self.cifFile)), self.fileId)
         
     #    supramolecularFound = False 
