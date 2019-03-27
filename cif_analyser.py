@@ -75,6 +75,7 @@ class CifAnalyser:
         self.anionRecogniser = AnionRecogniser()
     
     def analyseCif(self):
+        writeAdditionalInfo("Zaczynam analize: "+self.PDBcode, self.fileId)
         parser = FastMMCIFParser(QUIET=True)
         
         timeStart = time()
