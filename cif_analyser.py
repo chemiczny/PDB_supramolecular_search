@@ -113,8 +113,11 @@ class CifAnalyser:
             "timeResolutionReading" : timeResolutionReading}
         
     #    try:
-        interestingResidues = [ "GLU", "ASP", "A", "G", "U", "C", "SO4", "PO4", "CL", "ACT", "CIT", "FMT", "NAP"
-                               , "OGA", "HIS", "TYR", "TRP", "PHE", "FAD", "PLP", "NAD", "FOL", "NAP" ]
+        interestingResidues = ["GLU","ASP","HIS","TYR","TRP","PHE","A","G","T","C","U","I",
+             "DA","DC","DG","DT","DI",
+             "SO4","ACT","CL","FMT","HEM","PO4","ACY","NO3","MLI","DAL","CIT",
+             "FAD","FMN","NAP","NAD","PEB","PSU","ATP","ADP","OMZ","HEM","NDP","NAI","IMD"]
+        
         for modelIndex, model in enumerate(structure):
     #        print("model "+str(modelIndex))
             residue2counts = {  }

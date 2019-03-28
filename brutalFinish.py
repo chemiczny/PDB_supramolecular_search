@@ -6,10 +6,15 @@ Created on Mon Oct  1 14:29:26 2018
 @author: michal
 """
 import glob
+from os.path import isfile
 from os import remove
 import time
+import json
+from multiprocessing import Pool
 
-def mergeLogs( logFinal, logs  ):
+def mergeLogs( logList  ):
+    logFinal = logList[0]
+    logs = logList[1]
     final_log = open(logFinal, "a+")
     log_files = glob.glob(logs)
     for log_file in log_files:
@@ -44,15 +49,34 @@ def mergeProgressFiles():
     progressSummary = open("logs/progressSummary.log", 'w')
     progressSummary.write("Przetworzono: " +str( cifProcessed ) + "/"+  str(cifNo)+"\n")
     progressSummary.close()
+    
+    
+numberOfProcesses = 6
+
+configurationFileName = "config.json"
+
+if isfile(configurationFileName):
+    configFile = open(configurationFileName)
+    config = json.load(configFile)
+    configFile.close()
+    
+    if "N" in config:
+        numberOfProcesses = config["N"]
+        
 #
-mergeLogs("logs/anionPi.log", "logs/anionPi*.log"  )
-mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
-mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
-mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
-mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
-mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
-mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
-mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
+pool = Pool(numberOfProcesses)
+
+argumentsList = []
+argumentsList.append( ["logs/anionPi.log", "logs/anionPi*.log"]  )
+argumentsList.append(["logs/cationPi.log", "logs/cationPi*.log" ] )
+argumentsList.append(["logs/piPi.log", "logs/piPi*.log"]  )
+argumentsList.append(["logs/anionCation.log", "logs/anionCation*.log"]  )
+argumentsList.append(["logs/hBonds.log", "logs/hBonds*.log"]  )
+argumentsList.append(["logs/metalLigand.log", "logs/metalLigand*.log"]  )
+argumentsList.append(["logs/additionalInfo.log", "logs/additionalInfo*.log"]  )
+argumentsList.append(["logs/metalLigand.log", "logs/metalLigand*.log"]  )
+
+pool.map(mergeLogs, argumentsList)
 
 mergeProgressFiles()
 
