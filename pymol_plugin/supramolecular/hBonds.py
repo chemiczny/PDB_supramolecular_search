@@ -9,7 +9,7 @@ import sys
 if sys.version_info[0] < 3:
     from pymol import cmd
 from supramolecularGUI import SupramolecularGUI
-from simpleFilters import noAAinAnions, noNUinAnions, noNUinHDonors
+from simpleFilters import noAAinAnions, noNUinAnions, noNUinHDonors, noAAinHDonors
 
 class HBondsGUI(SupramolecularGUI):
     def __init__(self, page):
@@ -31,7 +31,7 @@ class HBondsGUI(SupramolecularGUI):
                           "R", "RH", "Angle" , "H orig"])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in acceptors", "func" : noAAinAnions } ,
-                                      # { "label" : "No AA in donors", "func" : noAAinHDonors } ,
+                                       { "label" : "No AA in donors", "func" : noAAinHDonors } ,
                                        { "label" : "No NU in acceptors", "func" : noNUinAnions } ,
                                           { "label" : "No NU in donors", "func" : noNUinHDonors } ]  )
     

@@ -8,6 +8,7 @@ Created on Fri Aug  3 10:37:23 2018
 cationicAA = ["LYS","ARG"]
 acidicAA = ["ASP","GLU"]
 restAA = ["ALA", "CYS","GLY","ILE","LEU","MET","ASN","PRO","GLN","SER","THR","VAL"]
+allAA = restAA + acidicAA
 ringAA = ["PHE", "HIS", "TRP", "TYR"]
 NU = ["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI" ]
 
@@ -18,7 +19,7 @@ def noAAinPiRes(actualData):
     return actualData[ ~actualData["Pi res code"].isin(ringAA) ]
 
 def noAAinAnions(actualData):
-    return actualData[~actualData["Anion code"].isin( acidicAA) ]
+    return actualData[~actualData["Anion code"].isin( allAA ) ]
    
 def noNUinAnions(actualData):
     return actualData[ ~actualData["Anion code"].isin( NU) ]
@@ -36,7 +37,7 @@ def noNUinHAcceptors(actualData):
     return actualData[~actualData["Acceptor code"].isin( NU ) ]
 
 def noAAinHDonors(actualData):
-    return actualData[~actualData["Donor code"].isin([ "TYR" , "PHE" , "HIS" ,"TRP" ]) ]
+    return actualData[~actualData["Donor code"].isin([ "TYR" , "PHE" , "HIS" ,"TRP", "LYS","ARG" ]) ]
 
 def noNUinHDonors(actualData):
     return actualData[~actualData["Donor code"].isin( NU ) ]
