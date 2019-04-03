@@ -111,7 +111,7 @@ class Protonate:
 
     def protonate(self, atomList, anionAtom):
         self.atomList = atomList
-        self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom)
+        self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom, False)
         self.moleculeGraph = self.moleculeGraph.copy()
         
         # protonate all atoms

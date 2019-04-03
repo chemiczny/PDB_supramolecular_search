@@ -379,7 +379,7 @@ def extractAACations ( point,  ns, distance  ):
     return  aaCationsFound
 
 def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
-    
+        
     neighbors = nsSmall.search( np.array(atom["Atom"].get_coord()) , distance + 2, 'A' )
     acceptorResidue = atom["Atom"].get_parent()
     
@@ -391,20 +391,21 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
         anionAtomInd = protonationWorker.anionId
     else:
         graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False )
-    
+            
     donors = []
     
     for potentialDonorInd in graph.nodes():
         element = neighbors[potentialDonorInd].element
-        
+                
         if element in [ "O" , "N" ] :
             connected = list(graph.neighbors(potentialDonorInd))
-            
+                
             if atom["Atom"] - neighbors[potentialDonorInd] > distance:
                 continue
                 
             if neighbors[potentialDonorInd].get_parent() == acceptorResidue:
                 continue
+            
             
             connectedElements = [ neighbors[c].element for c in connected ]
             connectedElements = list(set(connectedElements))
