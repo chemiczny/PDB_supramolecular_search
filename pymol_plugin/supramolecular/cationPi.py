@@ -9,7 +9,7 @@ import sys
 if sys.version_info[0] < 3:
     from pymol import cmd
 from supramolecularGUI import SupramolecularGUI
-from simpleFilters import noAAinPiAcids, noNUinPiAcids
+from simpleFilters import noAAinPiAcids, noNUinPiAcids, noAAinCations
 
 class CationPiGUI(SupramolecularGUI):
     def __init__(self, page):
@@ -32,7 +32,8 @@ class CationPiGUI(SupramolecularGUI):
         self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Cation", "Cation id", "Cat. el." , "R", "alpha", "x", "h", "chain", "chain Flat" ])
     
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
-                                           { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ]  )
+                                           { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ,
+                                           { "label" : "No AA in cations", "func" : noAAinCations }]  )
     
         self.arrowName = "cationPiArrow"
         self.arrowColor = "blue orange"

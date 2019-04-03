@@ -5,33 +5,41 @@ Created on Fri Aug  3 10:37:23 2018
 
 @author: michal
 """
+cationicAA = ["LYS","ARG"]
+acidicAA = ["ASP","GLU"]
+restAA = ["ALA", "CYS","GLY","ILE","LEU","MET","ASN","PRO","GLN","SER","THR","VAL"]
+ringAA = ["PHE", "HIS", "TRP", "TYR"]
+NU = ["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI" ]
 
 def noAAinPiAcids(actualData):
-    return actualData[(actualData["Pi acid Code"] != "TYR") & (actualData[ "Pi acid Code" ] != "PHE" ) & ( actualData["Pi acid Code"] != "HIS" ) & ( actualData["Pi acid Code"] != "TRP" ) ]
+    return actualData[ ~actualData["Pi acid Code"].isin(ringAA ) ]
 
 def noAAinPiRes(actualData):
-    return actualData[(actualData["Pi res code"] != "TYR") & (actualData[ "Pi res code" ] != "PHE" ) & ( actualData["Pi res code"] != "HIS" ) & ( actualData["Pi res code"] != "TRP" ) ]
+    return actualData[ ~actualData["Pi res code"].isin(ringAA) ]
 
 def noAAinAnions(actualData):
-    return actualData[(actualData["Anion code"] != "GLU") & (actualData[ "Anion code" ] != "ASP" ) & ( actualData["Anion code"] != "TYR" ) & ( actualData["Anion code"] != "CYS") ]
+    return actualData[~actualData["Anion code"].isin( acidicAA) ]
    
 def noNUinAnions(actualData):
-    return actualData[(actualData["Anion code"] != "G") & (actualData[ "Anion code" ] != "A" ) & ( actualData["Anion code"] != "C" ) & ( actualData["Anion code"] != "T") & ( actualData["Anion code"] != "U") ]
+    return actualData[ ~actualData["Anion code"].isin( NU) ]
    
 def noNUinPiAcids(actualData):
-    return actualData[(actualData["Pi acid Code"] != "G") & (actualData[ "Pi acid Code" ] != "A" ) & ( actualData["Pi acid Code"] != "C" ) & ( actualData["Pi acid Code"] != "T" ) & ( actualData["Pi acid Code"] != "U" )  ]
+    return actualData[~actualData["Pi acid Code"].isin(NU )  ]
 
 def noNUinPiRes(actualData):
-    return actualData[(actualData["Pi res code"] != "G") & (actualData[ "Pi res code" ] != "A" ) & ( actualData["Pi res code"] != "C" ) & ( actualData["Pi res code"] != "T" ) & ( actualData["Pi res code"] != "U" ) ]
+    return actualData[~actualData["Pi res code"].isin( NU ) ]
 
 def noAAinHAcceptors(actualData):
-    return actualData[(actualData["Acceptor code"] != "GLU") & (actualData[ "Acceptor code" ] != "ASP" ) & ( actualData["Acceptor code"] != "TYR" ) & ( actualData["Acceptor code"] != "CYS") ]
+    return actualData[~actualData["Acceptor code"].isin( acidicAA) ]
 
 def noNUinHAcceptors(actualData):
-    return actualData[(actualData["Acceptor code"] != "G") & (actualData[ "Acceptor code" ] != "A" ) & ( actualData["Acceptor code"] != "C" ) & ( actualData["Acceptor code"] != "T" ) & ( actualData["Acceptor code"] != "U" ) ]
+    return actualData[~actualData["Acceptor code"].isin( NU ) ]
 
 def noAAinHDonors(actualData):
-    return actualData[(actualData["Donor code"] != "TYR") & (actualData[ "Donor code" ] != "PHE" ) & ( actualData["Donor code"] != "HIS" ) & ( actualData["Donor code"] != "TRP" ) ]
+    return actualData[~actualData["Donor code"].isin([ "TYR" , "PHE" , "HIS" ,"TRP" ]) ]
 
 def noNUinHDonors(actualData):
-    return actualData[(actualData["Donor code"] != "G") & (actualData[ "Donor code" ] != "A" ) & ( actualData["Donor code"] != "C" ) & ( actualData["Donor code"] != "T" ) & ( actualData["Donor code"] != "U" ) ]
+    return actualData[~actualData["Donor code"].isin( NU ) ]
+
+def noAAinCations(actualData):
+    return actualData[~actualData["Cation code"].isin(cationicAA)]

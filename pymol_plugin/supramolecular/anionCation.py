@@ -9,7 +9,7 @@ import sys
 if sys.version_info[0] < 3:
     from pymol import cmd
 from supramolecularGUI import SupramolecularGUI
-from simpleFilters import noAAinAnions, noNUinAnions
+from simpleFilters import noAAinAnions, noNUinAnions, noAAinCations
 
 class AnionCationGUI(SupramolecularGUI):
     def __init__(self, page):
@@ -33,7 +33,8 @@ class AnionCationGUI(SupramolecularGUI):
                           "R", "Same semisphere", "Lat dif" ])
 
         self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
-                                          { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
+                                          { "label" : "No NU in anions", "func" : noNUinAnions },
+                                          { "label" : "No AA in cations", "func" : noAAinCations }]  )
     
         self.arrowName = "AnionCationArrow"
         self.arrowColor = "red orange"
