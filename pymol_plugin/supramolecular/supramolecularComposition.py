@@ -245,6 +245,9 @@ class SupramolecularComposition:
     def loadState(self):
         jsonFile = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Json files","*.json"), ("all files","*.*")) )
         
+        if not jsonFile:
+            return
+            
         with open(jsonFile, 'r') as fp:
             state = json.load(fp)
         
