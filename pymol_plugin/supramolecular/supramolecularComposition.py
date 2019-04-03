@@ -16,12 +16,15 @@ from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
 import sys
+import json
 
 if sys.version_info[0] < 3:
     from pymol import cmd
     import tkMessageBox
+    import tkFileDialog
 else:
     from tkinter import messagebox as tkMessageBox
+    from tkinter import filedialog as tkFileDialog
     
 class SupramolecularComposition:
     def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM):
@@ -238,4 +241,23 @@ class SupramolecularComposition:
             gui.grid()
             
         self.guiQM.grid()
+        
+    def loadState(self):
+        jsonFile = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Json files","*.json"), ("all files","*.*")) )
+        
+        with open(jsonFile, 'r') as fp:
+            state = json.load(fp)
+        
+        for label in self.actionLabels2Objects:
+            self.actionLabels2Objects[label].loadState( state[label] )
+    
+    def saveState(self):
+        state = {}
+        for label in self.actionLabels2Objects:
+            state[label] = self.actionLabels2Objects[label].getState()
+            
+        file2save = tkFileDialog.asksaveasfilename(defaultextension = ".json", filetypes = (("Json files","*.json"),  ("all files","*.*")) )
+        if file2save:
+            with open(file2save, 'w') as fp:
+                json.dump(state, fp)
             

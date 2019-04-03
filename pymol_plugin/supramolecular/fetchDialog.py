@@ -179,6 +179,12 @@ def fetchdialog(simulation = False):
     but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
     but_showMany.grid(row = 6, column = 8, columnspan = 2)
     
+    but_saveState = Tkinter.Button(self, width = 20, text = "Save GUI state", command = supramolecularComposition.saveState)
+    but_saveState.grid(row = 5, column = 10, columnspan = 2)
+    
+    but_loadState = Tkinter.Button(self, width = 20, text = "Load GUI state", command = supramolecularComposition.loadState)
+    but_loadState.grid(row = 6, column = 10, columnspan = 2)
+    
     ######################
     # ALL
     ######################
