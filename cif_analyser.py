@@ -73,6 +73,22 @@ class CifAnalyser:
         self.structureType = "Unknown"
         
         self.anionRecogniser = AnionRecogniser()
+        
+        self.AAcationRadius = 4.5
+        self.metalCationRadius = 10
+        self.hBondsRadius = 3.5
+        
+        self.smallCuttingRadius = 4.5
+        self.bigCuttingRadius = 12
+        
+        self.aromaticAAcounter = {}
+        self.aromaticAA = ["PHE", "HIS", "TRP", "TYR"]
+        
+    def initAromaticAAcounter(self):
+        self.aromaticAAcounter = {}
+        
+        for aaCode in self.aromaticAA:
+            self.aromaticAAcounter[aaCode] = 0
     
     def analyseCif(self):
         writeAdditionalInfo("Zaczynam analize: "+self.PDBcode, self.fileId)
@@ -119,6 +135,7 @@ class CifAnalyser:
              "FAD","FMN","NAP","NAD","PEB","PSU","ATP","ADP","OMZ","HEM","NDP","NAI","IMD"]
         
         for modelIndex, model in enumerate(structure):
+            self.initAromaticAAcounter()
     #        print("model "+str(modelIndex))
             residue2counts = {  }
             for res in interestingResidues:
@@ -149,6 +166,10 @@ class CifAnalyser:
             writeAdditionalInfo("model: "+str(modelIndex), self.fileId)
             for rc in residue2counts:
                 writeAdditionalInfo(rc + " " +str(residue2counts[rc]), self.fileId)
+                
+            writeAdditionalInfo("Recognised aromatic AA", self.fileId)
+            for aaCode in self.aromaticAAcounter:
+                writeAdditionalInfo(aaCode + " " +str(self.aromaticAAcounter[aaCode]), self.fileId)
                 
     #    fileId = current_process()
         incrementPartialProgress(self.fileId)
@@ -232,10 +253,15 @@ class CifAnalyser:
         getCentroidTime += time() - time0
         
         ligandWithAnions = False
+        ligandCode = ligand.get_resname().upper()
         
         for centroid in centroids:
-            bigDistance =12
-            distance = 4.5
+            
+            if ligandCode in self.aromaticAA:
+                self.aromaticAAcounter[ligandCode] += 1
+            
+            bigDistance = self.bigCuttingRadius
+            distance = self.smallCuttingRadius
             
             atoms = self.ns.search(np.array(centroid["coords"]), bigDistance, 'A')
             
@@ -248,8 +274,8 @@ class CifAnalyser:
     
             if len(extractedAnionAtoms) > 0:
                 time2 = time()
-                extractedMetalCations = extractMetalCations( centroid["coords"], nsSmall, 10 )
-                extractedAAcations = extractAACations( centroid["coords"], nsSmall, 4.5 )
+                extractedMetalCations = extractMetalCations( centroid["coords"], nsSmall, self.metalCationRadius )
+                extractedAAcations = extractAACations( centroid["coords"], nsSmall, self.AAcationRadius )
                 extractCationsTime += time() - time2
                 
                 cationRingLenChains = []
@@ -277,7 +303,7 @@ class CifAnalyser:
                     writeAnionCationResults(atom["Atom"], self.PDBcode, ligand, centroid, extractedCations, modelIndex, self.fileId)
                     
                     time5 = time()
-                    hDonors = extractHbonds( atom , nsSmall, 3.5, self.hAtomsPresent, self.fileId, structure)
+                    hDonors = extractHbonds( atom , nsSmall, self.hBondsRadius , self.hAtomsPresent, self.fileId, structure)
                     extractHBondsTime += time() - time5
                     
                     writeHbondsResults( self.PDBcode,hDonors, atom, modelIndex, self.fileId)
