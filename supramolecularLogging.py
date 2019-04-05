@@ -86,6 +86,7 @@ def writePiPiHeader( ):
     resultsFile.write("Distance\tAngle\t")
     resultsFile.write("x\th\t")
     resultsFile.write("theta\t")
+    resultsFile.write("omega\t")
     resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Centroid 2 x coord\tCentroid 2 y coord\tCentroid 2 z coord\t")
@@ -343,6 +344,7 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
         distance = cent["distance"]
         angle = angleBetweenNormVec(centroid, cent)
         theta = angleNormVecPoint(centroid, cent["coords"])
+        omega = calcOmega(centroid, cent)
         
         h = abs(cos(radians( angle ))*distance)
         x = sin(radians( angle ))*distance
@@ -352,6 +354,9 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
             
         if theta > 90.0 :
             theta = 180 - theta
+            
+        if omega > 90.0:
+            omega = 180 - omega
             
         centroid2Coords = cent["coords"]
         centroidCoords = centroid["coords"]        
@@ -374,6 +379,7 @@ def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroid
         resultsFile.write(str(h)+"\t")
         
         resultsFile.write(str(theta)+"\t")
+        resultsFile.write(str(omega)+"\t")
         
         resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
@@ -576,6 +582,16 @@ def atomAngleNomVecCentroid( atom, centroid ):
     inner_prod = np.inner( normVec, centrAtomVec )
     
     return degrees( acos(inner_prod) )
+
+def calcOmega( piAcidCentroid, piResCentroid ):
+    cent1cent2Vec = np.array(piResCentroid["coords"]) - np.array(piAcidCentroid["coords"])
+    cent1cent2Vec = normalize(cent1cent2Vec)
+    
+    planeNormVec = np.cross(cent1cent2Vec, piAcidCentroid["normVec"])
+    planeNormVec = normalize(planeNormVec)
+    
+    return degrees( acos( np.inner(planeNormVec, piResCentroid["normVec"] ) ) )
+    
 
 def angleBetweenNormVec( centroid1, centroid2):
     normVec1 = centroid1["normVec"]

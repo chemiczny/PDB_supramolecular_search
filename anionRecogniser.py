@@ -29,6 +29,7 @@ class AnionData:
         self.anionType = anionType
         self.charged = charged
         self.anionId = anionId
+        self.hBondsAnalyzed = False
 
 
 class AnionRecogniser:

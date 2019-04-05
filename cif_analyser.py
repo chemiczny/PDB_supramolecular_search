@@ -302,11 +302,15 @@ class CifAnalyser:
                 for atom in extractedAnionAtoms:
                     writeAnionCationResults(atom["Atom"], self.PDBcode, ligand, centroid, extractedCations, modelIndex, self.fileId)
                     
+                    if atom["Atom"].anionData.hBondsAnalyzed:
+                        continue
+                    
                     time5 = time()
                     hDonors = extractHbonds( atom , nsSmall, self.hBondsRadius , self.hAtomsPresent, self.fileId, structure)
                     extractHBondsTime += time() - time5
                     
                     writeHbondsResults( self.PDBcode,hDonors, atom, modelIndex, self.fileId)
+                    atom["Atom"].anionData.hBondsAnalyzed = True
                     
             extractedAtoms =  writeAnionPiResults(ligand, self.PDBcode, centroid, extractedAnionAtoms, modelIndex,
                                                   self.resolution, self.method,  self.structureType, self.fileId)

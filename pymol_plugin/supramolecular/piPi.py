@@ -15,17 +15,17 @@ class PiPiGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
         self.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
-                           "alpha" : { "header" : "Angle" }, "theta" : { "header" : "theta" }  }  )
+                           "alpha" : { "header" : "Angle" }, "theta" : { "header" : "theta" } , "omega" : { "header" : "omega" }  }  )
     
         self.setListParameters( { "Pi 1" : { "header" : "Pi acid Code" }, 
                       "Pi 2" : { "header" : "Pi res code" }  ,
                       "PDB" : { "header" : "PDB Code" }} )
     
         self.setSortingParameters({  "R" : "Distance", "Angle" : "Angle", "x" : "x" , "h" : "h",
-                         "theta" : "theta", "Pi 1" : "Pi acid Code" ,"Pi 2" : "Pi res code" }, [  "R" , "Angle" , "x" , "h" ,
-                         "theta" , "Pi 1" ,"Pi 2" ] )
+                         "theta" : "theta", "Pi 1" : "Pi acid Code" ,"Pi 2" : "Pi res code" , "omega" : "omega" }, [  "R" , "Angle" , "x" , "h" ,
+                         "theta" , "Pi 1" ,"Pi 2" , "omega" ] )
     
-        self.setTreeData([ "ID" , "PDB" , "Pi 1", "Pi 1 id", "Pi 2", "Pi 2 id" , "R", "alpha", "x", "h", "theta" ])
+        self.setTreeData([ "ID" , "PDB" , "Pi 1", "Pi 1 id", "Pi 2", "Pi 2 id" , "R", "alpha", "x", "h", "theta", "omega" ])
     
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi 1", "func" : noAAinPiAcids } ,
                                          { "label" : "No AA in Pi 2" ,  "func" : noAAinPiRes },
@@ -40,7 +40,7 @@ class PiPiGUI(SupramolecularGUI):
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Pi res code"], 
                                                         row["Pi res chain"] + str(row["Pi res id"]), 
                                                         str(row["Distance"])[:3], str(row["Angle"])[:4], str(row["x"])[:3],
-                                                        str(row["h"])[:3], str(row["theta"])[:4]  )
+                                                        str(row["h"])[:3], str(row["theta"])[:4] , str(row["omega"])[:4]  )
         
     def getSelection(self,  data):
         res1Id = data["Piacid id"].values[0]
