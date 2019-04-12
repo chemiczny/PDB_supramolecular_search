@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
-if sys.version_info[0] < 3:
+try:
     from pymol import cmd, cgo
-else:
+except:
     pass
     
 def cgo_arrow(atom1='pk1', atom2='pk2', radius=0.5, gap=0.0, hlength=-1, hradius=-1,

@@ -5,22 +5,21 @@ Created on Sun Jul 22 19:40:59 2018
 
 @author: michal
 """
-import pandas as pd
 import sys
-from os import path
+
+try:
+    from pymol import plugins
+except:
+    pass
 
 if sys.version_info[0] < 3:
     import Tkinter
-    from Tkinter import LEFT, RIGHT
-    import tkMessageBox, tkFileDialog
-    from pymol import cmd, plugins
     import ttk
 else:
     import tkinter as Tkinter
-    from tkinter import LEFT, RIGHT
     from tkinter import filedialog as tkFileDialog
-    from tkinter import messagebox as tkMessageBox
     import tkinter.ttk as ttk
+    from tkinter import PhotoImage
 
 from supramolecularComposition import SupramolecularComposition
 
@@ -35,10 +34,10 @@ def fetchdialog(simulation = False):
     
     self = Tkinter.Toplevel(root)
     self.title('Supramolecular analyser')
-    self.minsize(1500, 800)
+    self.minsize(1320, 800)
     self.resizable(1,1)
     
-    nb = ttk.Notebook(self, height = 700, width = 1400)
+    nb = ttk.Notebook(self, height = 700, width = 1320)
 
     pageAnionPi = ttk.Frame(nb)
     pagePiPi = ttk.Frame(nb)
@@ -85,7 +84,7 @@ def fetchdialog(simulation = False):
     
     ent_logDir = Tkinter.Entry(self, width =45)
     ent_logDir.configure(state = "readonly")
-    ent_logDir.grid(row = 2, column = 2, columnspan = 2)
+    ent_logDir.grid(row = 2, column = 2, columnspan = 3)
     
     def selectCif():
         appData["cifDir"] = tkFileDialog.askdirectory()
@@ -103,11 +102,11 @@ def fetchdialog(simulation = False):
         
     
     but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
-    but_cifDir.grid(row = 2, column = 4)
+    but_cifDir.grid(row = 2, column = 5)
     
     ent_cifDir = Tkinter.Entry(self, width =45)
     ent_cifDir.configure(state = "readonly")
-    ent_cifDir.grid(row = 2, column = 5, columnspan = 3)
+    ent_cifDir.grid(row = 2, column = 6, columnspan = 3)
     
     actionMenu = {}
     

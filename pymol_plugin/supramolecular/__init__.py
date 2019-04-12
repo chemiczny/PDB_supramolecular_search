@@ -13,9 +13,9 @@ if not path in sys.path:
     
 from fetchDialog import fetchdialog
 
-if sys.version_info[0] < 3:
+try:
     from pymol import plugins
-else:
+except:
     pass
     
 def __init_plugin__(self=None):

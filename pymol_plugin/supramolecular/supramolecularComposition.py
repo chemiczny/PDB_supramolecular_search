@@ -18,8 +18,12 @@ from cgo_arrow import cgo_arrow
 import sys
 import json
 
-if sys.version_info[0] < 3:
+try:
     from pymol import cmd
+except:
+    pass
+
+if sys.version_info[0] < 3:
     import tkMessageBox
     import tkFileDialog
 else:

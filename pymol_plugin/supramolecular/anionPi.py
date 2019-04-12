@@ -5,9 +5,10 @@ Created on Fri Aug  3 10:32:43 2018
 
 @author: michal
 """
-import sys
-if sys.version_info[0] < 3:
+try:
     from pymol import cmd
+except:
+    pass
 from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinPiAcids, noAAinAnions, noNUinPiAcids, noNUinAnions
 

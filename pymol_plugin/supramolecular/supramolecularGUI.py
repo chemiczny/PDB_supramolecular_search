@@ -11,15 +11,17 @@ import sys
 from os import path
 from time import time
 
+try:
+    from pymol import cmd
+except:
+    pass
+
 if sys.version_info[0] < 3:
     import Tkinter
-    from Tkinter import LEFT, RIGHT
     import tkMessageBox, tkFileDialog
-    from pymol import cmd, plugins
     import ttk
 else:
     import tkinter as Tkinter
-    from tkinter import LEFT, RIGHT
     from tkinter import filedialog as tkFileDialog
     from tkinter import messagebox as tkMessageBox
     import tkinter.ttk as ttk
@@ -268,7 +270,7 @@ class SupramolecularGUI:
             self.actualColumn += 2
             
     def gridSaveFiltered(self):
-        self.but_saveFiltered = Tkinter.Button(self.page, width = 10, command = self.saveFiltered, text = "Save filtered")
+        self.but_saveFiltered = Tkinter.Button(self.page, width = 7, command = self.saveFiltered, text = "Save filtered")
         self.but_saveFiltered.grid(row = 25, column = 16, columnspan=2)
         
     def setAdditionalCheckboxes(self, additionalCheckboxes):
@@ -548,15 +550,15 @@ class SupramolecularGUI:
         self.lab_range = Tkinter.Label(self.page, width = 5, text = "Range")
         self.lab_range.grid(row = 25, column = 3 )
         
-        self.ent_rangeStart = Tkinter.Entry(self.page, width = 10)
+        self.ent_rangeStart = Tkinter.Entry(self.page, width = 8)
         self.ent_rangeStart.grid(row = 25, column = 4, columnspan = 2)
         self.ent_rangeStart.insert("end", 0)
         
-        self.ent_rangeStop = Tkinter.Entry(self.page, width = 10)
+        self.ent_rangeStop = Tkinter.Entry(self.page, width = 8)
         self.ent_rangeStop.grid(row = 25, column = 6, columnspan = 2)
         self.ent_rangeStop.insert("end", 1000)
         
-        self.but_showInteraction = Tkinter.Button(self.page, width = 10, command = self.showInteractions, text = "Show interact")
+        self.but_showInteraction = Tkinter.Button(self.page, width = 8, command = self.showInteractions, text = "Show interact")
         self.but_showInteraction.grid(row = 25, column =14, columnspan=2)
         
         self.but_rangeShow = Tkinter.Button(self.page, width = 6, text = "Show", command = self.showRange)

@@ -8,18 +8,18 @@ Created on Mon Feb 25 16:21:16 2019
 import sys
 import os
 
+try:
+    from pymol import cmd
+except:
+    pass
+
 if sys.version_info[0] < 3:
     import Tkinter
-    from Tkinter import LEFT, RIGHT
     import tkMessageBox, tkFileDialog
-    from pymol import cmd, plugins
-    import ttk
 else:
     import tkinter as Tkinter
-    from tkinter import LEFT, RIGHT
     from tkinter import filedialog as tkFileDialog
     from tkinter import messagebox as tkMessageBox
-    import tkinter.ttk as ttk
     
 def getAllSelectionNames():
     return cmd.get_names("selections", 0)
@@ -152,7 +152,8 @@ class QMGUI:
             stateNo = cmd.get_state()
             cmd.create("host", "%host or sele", stateNo)
         except:
-            print("lo kurla")
+            stateNo = cmd.get_state()
+            cmd.create("host", "sele", stateNo)
         
     def clearHostFrozen(self):
         cmd.select( "hostFrozen", "none")
@@ -286,7 +287,8 @@ class QMGUI:
             stateNo = cmd.get_state()
             cmd.create("guest", "%guest or sele", stateNo)
         except:
-            print("lo kurla")
+            stateNo = cmd.get_state()
+            cmd.create("guest", "sele", stateNo)
         
     def guestChop(self):
         try:
@@ -380,6 +382,21 @@ class QMGUI:
         writeButton.grid(row=10, column = 0)
         
     def write(self):
+        chargeTotal = self.complexCharge.get()
+        spinTotal = self.complexSpin.get()
+        chargeGuest = self.guestCharge.get()
+        spinGuest = self.guestSpin.get()
+        chargeHost = self.hostCharge.get()
+        spinHost = self.hostSpin.get()
+        
+        if not chargeTotal or not chargeGuest or not chargeHost:
+            tkMessageBox.showwarning(title = "Error!", message = "Please fill the charge data")
+            return
+        
+        if not spinTotal or not spinGuest or not spinHost:
+            tkMessageBox.showwarning(title = "Error!", message = "Please fill the spin data")
+            return
+        
         options = { "mustexist" : False , "title" : "Job directory selection"}
         directory = tkFileDialog.askdirectory(**options)
         if not directory:
@@ -424,13 +441,6 @@ class QMGUI:
         inpF.write(routeSection)
         
         inpF.write("\nEmilka jest najpiekniejsza!\n\n")
-        
-        chargeTotal = self.complexCharge.get()
-        spinTotal = self.complexSpin.get()
-        chargeGuest = self.guestCharge.get()
-        spinGuest = self.guestSpin.get()
-        chargeHost = self.hostCharge.get()
-        spinHost = self.hostSpin.get()
         
         inpF.write(chargeTotal+","+spinTotal+" "+chargeGuest+","+spinGuest+" "+chargeHost+","+spinHost+"\n")
         model = cmd.get_model("guest and guestFrozen")
