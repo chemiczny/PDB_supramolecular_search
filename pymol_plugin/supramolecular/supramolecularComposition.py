@@ -256,12 +256,18 @@ class SupramolecularComposition:
             state = json.load(fp)
         
         for label in self.actionLabels2Objects:
-            self.actionLabels2Objects[label].loadState( state[label] )
+            if label in state:
+                self.actionLabels2Objects[label].loadState( state[label] )
+                
+        if "QMGUI" in state:
+            self.guiQM.loadState(state["QMGUI"])
     
     def saveState(self):
         state = {}
         for label in self.actionLabels2Objects:
             state[label] = self.actionLabels2Objects[label].getState()
+            
+        state["QMGUI"] = self.guiQM.getState()
             
         file2save = tkFileDialog.asksaveasfilename(defaultextension = ".json", filetypes = (("Json files","*.json"),  ("all files","*.*")) )
         if file2save:

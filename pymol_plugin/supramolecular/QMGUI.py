@@ -27,6 +27,7 @@ def getAllSelectionNames():
 class QMGUI:
     def __init__(self, page):
         self.page = page
+        self.keywordSet = {}
         
     def gridBasicLabels(self):
         actualRow = 1
@@ -165,50 +166,7 @@ class QMGUI:
         cmd.h_add("host")
         
     def hostChop(self):
-        try:
-            model = cmd.get_model("host")
-        except:
-            return
-        
-        chain2resId2atomNames = {}
-        
-        for atom in model.atom:
-            resnum = int(atom.resi)
-            pdbname = atom.name
-            chain = atom.chain
-            
-            if not chain in chain2resId2atomNames:
-                chain2resId2atomNames[chain] = { resnum : set([ pdbname ]) }
-            else:
-                if resnum in chain2resId2atomNames[chain]:
-                    chain2resId2atomNames[chain][resnum].add(pdbname)
-                else:
-                    chain2resId2atomNames[chain][resnum] = set([ pdbname ])
-                
-        for chain in chain2resId2atomNames:
-            resId2atomNames = chain2resId2atomNames[chain]
-            
-            resIds2addN = set([])
-            resIds2addC = set([])
-            
-            for resnum in resId2atomNames:
-                if resId2atomNames[resnum] != set( [ "CA", "C", "O" ]) and resId2atomNames[resnum] != set( [ "CA", "N" ]):
-                    resIds2addC.add(resnum+1)
-                    resIds2addN.add(resnum-1)
-                    
-            resIds2addN-= set(resId2atomNames.keys())
-            resIds2addC-= set(resId2atomNames.keys())
-            
-            stateNo = cmd.get_state()
-            for resnum in resIds2addC:
-                cmd.create("host", " %host or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name N) ) ", stateNo)
-                cmd.bond( "%host and name N and resi "+str(resnum), "%host and name C and resi "+str(resnum-1) )
-                
-            for resnum in resIds2addN:
-                cmd.create("host", " %host or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name C or name O) ) ", stateNo)
-                cmd.bond( "%host and name C and resi "+str(resnum), "%host and name N and resi "+str(resnum+1) )
-            
-        cmd.show("sticks", "host")
+        self.chop("host")
         
     def readHost(self):
         try:
@@ -289,10 +247,10 @@ class QMGUI:
         except:
             stateNo = cmd.get_state()
             cmd.create("guest", "sele", stateNo)
-        
-    def guestChop(self):
+            
+    def chop(self, sele):
         try:
-            model = cmd.get_model("guest")
+            model = cmd.get_model( sele )
         except:
             return
         
@@ -327,14 +285,17 @@ class QMGUI:
             
             stateNo = cmd.get_state()
             for resnum in resIds2addC:
-                cmd.create("guest", " %guest or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name N) ) ", stateNo)
-                cmd.bond( "%guest and name N and resi "+str(resnum), "%guest and name C and resi "+str(resnum-1) )
+                cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name N) ) ", stateNo)
+                cmd.bond( "%"+sele+" and name N and resi "+str(resnum), "%guest and name C and resi "+str(resnum-1), 1 )
                 
             for resnum in resIds2addN:
-                cmd.create("guest", " %guest or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name C or name O) ) ", stateNo)
-                cmd.bond( "%guest and name C and resi "+str(resnum), "%guest and name N and resi "+str(resnum+1) )
+                cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name C or name O) ) ", stateNo)
+                cmd.bond( "%"+sele+" and name C and resi "+str(resnum), "%guest and name N and resi "+str(resnum+1), 1 )
             
-        cmd.show("sticks", "guest")
+        cmd.show("sticks", sele )
+        
+    def guestChop(self):
+        self.chop("guest")
         
     def clearGuestFrozen(self):
         cmd.select( "guestFrozen", "none")
@@ -533,6 +494,222 @@ class QMGUI:
         self.slurmTextG16.grid(row = 2, column = 10 , columnspan = 5, rowspan = 5)
         self.slurmTextG16.insert("end" , "#!/bin/env bash\n#SBATCH --nodes=1\n#SBATCH --cpus-per-task=24\n#SBATCH --time=70:00:00\n##### Nazwa kolejki\n#SBATCH -p plgrid\n" )
                   
+    def gridSetKeywordsSection(self):
+        setLabel = Tkinter.Label(self.page, text = "Set")
+        setLabel.grid(row = 7, column = 10, columnspan = 2)
+        
+        self.setListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
+        self.setListbox.grid(row= 8, column = 10, columnspan = 2, rowspan = 5)
+        self.setListbox.bind("<<ListboxSelect>>", self.selectSet )
+        
+        setNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addSet)
+        setNewButton.grid(row = 20, column = 10, columnspan = 2)
+        
+        self.setNewEntry = Tkinter.Entry(self.page, width = 8)
+        self.setNewEntry.grid(row = 21, column = 10, columnspan = 2)
+        
+        setDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteSet)
+        setDeleteButton.grid(row = 22, column = 10, columnspan = 2)
+        
+        #########################################################
+        
+        keysLabel = Tkinter.Label(self.page, text = "Keys")
+        keysLabel.grid(row = 7, column = 12, columnspan = 2)
+        
+        self.keysListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
+        self.keysListbox.grid(row= 8, column = 12, columnspan = 2, rowspan = 5)
+        self.keysListbox.bind("<<ListboxSelect>>", self.selectKey)
+        
+        keysNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addKey)
+        keysNewButton.grid(row = 20, column = 12, columnspan = 2)
+        
+        self.keysNewEntry = Tkinter.Entry(self.page, width = 8)
+        self.keysNewEntry.grid(row = 21, column = 12, columnspan = 2)
+        
+        keysDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteKey)
+        keysDeleteButton.grid(row = 22, column = 12, columnspan = 2)
+        
+        #########################################################
+        
+        valuesLabel = Tkinter.Label(self.page, text = "Values")
+        valuesLabel.grid(row = 7, column = 14, columnspan = 2)
+        
+        self.valuesListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
+        self.valuesListbox.grid(row= 8, column = 14, columnspan = 2, rowspan = 5)
+        
+        valuesNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addValues)
+        valuesNewButton.grid(row = 20, column = 14, columnspan = 2)
+        
+        self.valuesNewEntry = Tkinter.Entry(self.page, width = 8)
+        self.valuesNewEntry.grid(row = 21, column = 14, columnspan = 2)
+        
+        valuesDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteValue)
+        valuesDeleteButton.grid(row = 22, column = 14, columnspan = 2)
+        
+    def addSet(self):
+        newRecord = self.setNewEntry.get()
+        
+        if not newRecord:
+            return
+        
+        self.keywordSet[newRecord] = {}
+        self.setListbox.insert(0, newRecord)
+        self.setListbox.selection_clear(0, "end")
+        self.setListbox.selection_set(0)
+        self.selectSet(0)
+        
+        self.setNewEntry.delete(0, "end")
+    
+    def addKey(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        newRecord = self.keysNewEntry.get()
+        
+        if not newRecord:
+            return
+        
+        self.keywordSet[selectedSet][newRecord] = []
+        self.keysListbox.insert(0, newRecord)
+        self.keysListbox.selection_clear(0, "end")
+        self.keysListbox.selection_set(0)
+        self.selectKey(0)
+        
+        self.keysNewEntry.delete(0, "end")
+    
+    def addValues(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        selectedKey = self.keysListbox.curselection()
+        if not selectedKey:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the key")
+            return
+        
+        selectedKey = self.keysListbox.get(selectedKey)
+        
+        newRecord = self.valuesNewEntry.get()
+        
+        if not newRecord:
+            return
+        
+        if newRecord in self.keywordSet[selectedSet][selectedKey]:
+            return
+        
+        self.keywordSet[selectedSet][selectedKey] = [ newRecord ] + self.keywordSet[selectedSet][selectedKey]
+        self.valuesListbox.insert(0, newRecord)
+        self.valuesListbox.selection_clear(0, "end")
+        self.valuesListbox.selection_set(0)
+        
+        self.valuesNewEntry.delete(0, "end")
+        
+    def selectSet(self, arg):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            print("nihuhu")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        self.keysListbox.delete(0,"end")
+        self.valuesListbox.delete(0, "end")
+        
+        for key in self.keywordSet[selectedSet]:
+            self.keysListbox.insert("end", key)
+    
+    def selectKey(self, arg):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        selectedKey = self.keysListbox.curselection()
+        if not selectedKey:
+            print("nihuhu")
+            return
+        
+        selectedKey = self.keysListbox.get(selectedKey)
+        self.valuesListbox.delete(0, "end")
+        
+        for value in self.keywordSet[selectedSet][selectedKey]:
+            self.valuesListbox.insert("end", value)
+        
+    def deleteSet(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            print("nihuhu")
+            return
+        
+        selectedSetName = self.setListbox.get(selectedSet)
+        self.setListbox.delete(selectedSet)
+        
+        self.keysListbox.delete(0,"end")
+        self.valuesListbox.delete(0, "end")
+        
+        del self.keywordSet[selectedSetName]
+    
+    def deleteKey(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        selectedKey = self.keysListbox.curselection()
+        if not selectedKey:
+            print("nihuhu")
+            return
+        
+        selectedKeyName = self.keysListbox.get(selectedKey)
+        self.keysListbox.delete(selectedKey)
+        
+        self.valuesListbox.delete(0, "end")
+        del self.keywordSet[selectedSet][selectedKeyName]
+        
+    
+    def deleteValue(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        selectedKey = self.keysListbox.curselection()
+        if not selectedKey:
+            print("nihuhu")
+            return
+        
+        selectedKey = self.keysListbox.get(selectedKey)
+        
+        selectedValue = self.valuesListbox.curselection()
+        if not selectedValue:
+            return
+        
+        selectedValueName = self.valuesListbox.get(selectedValue)
+        self.valuesListbox.delete(selectedValue)
+        
+        self.keywordSet[selectedSet][selectedKey].remove(selectedValueName)
+        
+        
+    def insertKeywordSet(self):
+        self.setListbox.delete(0, "end")
+        self.keysListbox.delete(0,"end")
+        self.valuesListbox.delete(0, "end")
+        
+        for setName in self.keywordSet:
+            self.setListbox.insert("end", setName)
     
     def grid(self):
         self.gridBasicLabels()
@@ -541,6 +718,35 @@ class QMGUI:
         self.gridComplex()
         self.gridWrite()
         self.gridSlurmSection()
+        self.gridSetKeywordsSection()
         
         self.gridGaussianRouteSection()
         self.gridGaussianAdditionalInput()
+        
+    def getState(self):
+        state = {  "inputBegin" : "", "additionalInput" : "", "slurmConfig" : "" , "keywordSet" : {} }
+        
+        state["inputBegin"] = self.routeSection.get("1.0", "end")
+        state["additionalInput"] = self.additionalSection.get("1.0", "end")
+        state["slurmConfig"] = self.slurmTextG16.get("1.0", "end")
+        state["keywordSet"] = self.keywordSet
+        
+        return state
+    
+    def loadState(self, state):
+        if "inputBegin" in state:
+            self.routeSection.delete("1.0", "end")
+            self.routeSection.insert("end", state["inputBegin"] )
+        
+        if "additionalInput" in state:
+            self.additionalSection.delete("1.0", "end")
+            self.additionalSection.insert("end", state["additionalInput"])
+        
+        if "slurmConfig" in state:
+            self.slurmTextG16.delete("1.0", "end")
+            self.slurmTextG16.insert("end", state["slurmConfig"])
+        
+        if "keywordSet" in state:
+            self.keywordSet = state["keywordSet"]
+            self.insertKeywordSet()
+        
