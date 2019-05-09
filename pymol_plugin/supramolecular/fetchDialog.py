@@ -15,11 +15,11 @@ except:
 if sys.version_info[0] < 3:
     import Tkinter
     import ttk
+    import tkFileDialog
 else:
     import tkinter as Tkinter
     from tkinter import filedialog as tkFileDialog
     import tkinter.ttk as ttk
-    from tkinter import PhotoImage
 
 from supramolecularComposition import SupramolecularComposition
 

@@ -7,6 +7,7 @@ Created on Mon Feb 25 16:21:16 2019
 """
 import sys
 import os
+from copy import deepcopy
 
 try:
     from pymol import cmd
@@ -28,6 +29,13 @@ class QMGUI:
     def __init__(self, page):
         self.page = page
         self.keywordSet = {}
+        
+        self.chargeTotal = None
+        self.spinTotal = None
+        self.chargeGuest = None
+        self.spinGuest = None
+        self.chargeHost = None
+        self.spinHost = None
         
     def gridBasicLabels(self):
         actualRow = 1
@@ -343,18 +351,18 @@ class QMGUI:
         writeButton.grid(row=10, column = 0)
         
     def write(self):
-        chargeTotal = self.complexCharge.get()
-        spinTotal = self.complexSpin.get()
-        chargeGuest = self.guestCharge.get()
-        spinGuest = self.guestSpin.get()
-        chargeHost = self.hostCharge.get()
-        spinHost = self.hostSpin.get()
+        self.chargeTotal = self.complexCharge.get()
+        self.spinTotal = self.complexSpin.get()
+        self.chargeGuest = self.guestCharge.get()
+        self.spinGuest = self.guestSpin.get()
+        self.chargeHost = self.hostCharge.get()
+        self.spinHost = self.hostSpin.get()
         
-        if not chargeTotal or not chargeGuest or not chargeHost:
+        if not self.chargeTotal or not self.chargeGuest or not self.chargeHost:
             tkMessageBox.showwarning(title = "Error!", message = "Please fill the charge data")
             return
         
-        if not spinTotal or not spinGuest or not spinHost:
+        if not self.spinTotal or not self.spinGuest or not self.spinHost:
             tkMessageBox.showwarning(title = "Error!", message = "Please fill the spin data")
             return
         
@@ -379,6 +387,46 @@ class QMGUI:
         
         additional.close()
         
+        if self.keywordSet:
+            for setName in self.keywordSet:
+                self.combineSet(directory, setName)
+                
+        else:
+            self.writeInputJob(directory, basename, {})
+            
+    def combineSet(self, directory, setName):
+        queue = [{}]
+        
+        for key in self.keywordSet[setName]:
+            newQueue = []
+            
+            for value in self.keywordSet[setName][key]:
+            
+                for element in queue:
+                    newElement = deepcopy(element)
+                    newElement[key] = value
+                    newQueue.append(newElement)
+                    
+            queue = newQueue
+            
+        for jobDict in queue:
+            basename = setName
+            for key in jobDict:
+                newPart = jobDict[key]
+                newPart = newPart.replace(" ","")
+                newPart = newPart.replace("=","")
+                newPart = newPart.replace("(","")
+                newPart = newPart.replace(")", "")
+                
+                basename += "_" + newPart
+            
+            newDirectory = os.path.join(directory, basename)
+            os.makedirs(newDirectory)
+            
+            self.writeInputJob( newDirectory, basename, jobDict)
+        
+    def writeInputJob(self, directory, basename, keywordDict):
+        
         slurmFile = os.path.join( directory, basename + ".slurm" )
         inpFile = os.path.join(directory, basename + ".inp")
         inpFileBasename = os.path.basename(inpFile)
@@ -386,6 +434,7 @@ class QMGUI:
         slurmF = open(slurmFile, 'w')
         
         slurmHead = self.slurmTextG16.get("1.0", "end")
+        slurmHead = self.updateText(slurmHead, keywordDict)
         
         slurmF.write(slurmHead)
         slurmF.write("\n")
@@ -399,76 +448,78 @@ class QMGUI:
         
         inpF.write("%Chk="+inpFileBasename.replace(".inp",".chk")+"\n")
         routeSection = self.routeSection.get("1.0", "end")
+        routeSection = self.updateText(routeSection, keywordDict)
         inpF.write(routeSection)
         
         inpF.write("\nEmilka jest najpiekniejsza!\n\n")
         
-        inpF.write(chargeTotal+","+spinTotal+" "+chargeGuest+","+spinGuest+" "+chargeHost+","+spinHost+"\n")
-        model = cmd.get_model("guest and guestFrozen")
+        inpF.write(self.chargeTotal+","+self.spinTotal+" "+self.chargeGuest+","+self.spinGuest+" "+self.chargeHost+","+self.spinHost+"\n")
         
-        for atom in model.atom:
-            resnum = atom.resi
-            resname = atom.resn
-            pdbname = atom.name
-            element = atom.symbol
-            
-            x = str(atom.coord[0])
-            y = str(atom.coord[1])
-            z = str(atom.coord[2])
-            
-            inpF.write(element+"(Fragment=1, PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") -1 "+x+" "+y+" "+z+"\n" )
-            
+        model = cmd.get_model("guest and guestFrozen")
+        self.writeModelToFile(model, inpF, 2, True)
             
         model = cmd.get_model("guest and not guestFrozen")
-        
-        for atom in model.atom:
-            resnum = atom.resi
-            resname = atom.resn
-            pdbname = atom.name
-            element = atom.symbol
-            
-            x = str(atom.coord[0])
-            y = str(atom.coord[1])
-            z = str(atom.coord[2])
-            
-            inpF.write(element+"(Fragment=1, PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") "+x+" "+y+" "+z+"\n" )
-            
+        self.writeModelToFile(model,inpF, 1)
             
         model = cmd.get_model("host and hostFrozen")
-        
-        for atom in model.atom:
-            resnum = atom.resi
-            resname = atom.resn
-            pdbname = atom.name
-            element = atom.symbol
-            
-            x = str(atom.coord[0])
-            y = str(atom.coord[1])
-            z = str(atom.coord[2])
-            
-            inpF.write(element+"(Fragment=2, PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") -1 "+x+" "+y+" "+z+"\n" )
+        self.writeModelToFile(model, inpF, 2, True)
             
         model = cmd.get_model("host and not hostFrozen")
-        
-        for atom in model.atom:
-            resnum = atom.resi
-            resname = atom.resn
-            pdbname = atom.name
-            element = atom.symbol
-            
-            x = str(atom.coord[0])
-            y = str(atom.coord[1])
-            z = str(atom.coord[2])
-            
-            inpF.write(element+"(Fragment=2, PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") "+x+" "+y+" "+z+"\n" )
+        self.writeModelToFile(model, inpF, 2)
             
         inpF.write("\n")
         
         additionaInput = self.additionalSection.get("1.0", "end")
+        additionaInput = self.updateText(additionaInput, keywordDict)
         inpF.write(additionaInput)
         inpF.write("\n\n")
         
         inpF.close()
+        
+    def writeModelToFile(self, model, file2append, fragmentNo, frozen = False):
+        for atom in model.atom:
+            resnum = atom.resi
+            resname = atom.resn
+            pdbname = atom.name
+            element = atom.symbol
+            
+            x = str(atom.coord[0])
+            y = str(atom.coord[1])
+            z = str(atom.coord[2])
+            
+            if not frozen:
+                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") "+x+" "+y+" "+z+"\n" )
+            else:
+                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") -1"+x+" "+y+" "+z+"\n" )
+                
+    def getKeywordsFromText(self, text):
+        keywords = []
+        
+        insideKeyword = False
+        
+        for letter in text:
+            if letter == "{":
+                insideKeyword = True
+                keywords.append("")
+                continue
+            elif letter == "}":
+                insideKeyword = False
+                
+            if insideKeyword:
+                keywords[-1] += letter
+                
+        return keywords
+    
+    def updateText(self, text, keyDict):
+        keywords = self.getKeywordsFromText(text)
+        
+        for key in keywords:
+            if key in keyDict:
+                text = text.replace("{"+key+"}", keyDict[key])
+            else:
+                text = text.replace("{"+key+"}", " ")
+                
+        return text
         
     def gridGaussianRouteSection(self):
         routeSectionLabel = Tkinter.Label(self.page, text = "Gaussian route section")
@@ -502,8 +553,11 @@ class QMGUI:
         self.setListbox.grid(row= 8, column = 10, columnspan = 2, rowspan = 5)
         self.setListbox.bind("<<ListboxSelect>>", self.selectSet )
         
-        setNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addSet)
-        setNewButton.grid(row = 20, column = 10, columnspan = 2)
+        setNewButton = Tkinter.Button(self.page, width = 4, text = "New:", command = self.addSet)
+        setNewButton.grid(row = 20, column = 10, columnspan = 1)
+        
+        setCopyButton = Tkinter.Button(self.page, width = 4, text = "Copy:", command = self.copySet)
+        setCopyButton.grid(row = 20, column = 11, columnspan = 1)
         
         self.setNewEntry = Tkinter.Entry(self.page, width = 8)
         self.setNewEntry.grid(row = 21, column = 10, columnspan = 2)
@@ -520,8 +574,11 @@ class QMGUI:
         self.keysListbox.grid(row= 8, column = 12, columnspan = 2, rowspan = 5)
         self.keysListbox.bind("<<ListboxSelect>>", self.selectKey)
         
-        keysNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addKey)
-        keysNewButton.grid(row = 20, column = 12, columnspan = 2)
+        keysNewButton = Tkinter.Button(self.page, width = 4, text = "New:", command = self.addKey)
+        keysNewButton.grid(row = 20, column = 12, columnspan = 1)
+        
+        keysCopyButton = Tkinter.Button(self.page, width = 4, text = "Copy:", command = self.copyKey)
+        keysCopyButton.grid(row = 20, column = 13, columnspan = 1)
         
         self.keysNewEntry = Tkinter.Entry(self.page, width = 8)
         self.keysNewEntry.grid(row = 21, column = 12, columnspan = 2)
@@ -559,6 +616,27 @@ class QMGUI:
         self.selectSet(0)
         
         self.setNewEntry.delete(0, "end")
+        
+    def copySet(self):
+        newRecord = self.setNewEntry.get()
+        
+        if not newRecord:
+            return
+        
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        self.keywordSet[newRecord] = deepcopy( self.keywordSet[selectedSet] )
+        self.setListbox.insert(0, newRecord)
+        self.setListbox.selection_clear(0, "end")
+        self.setListbox.selection_set(0)
+        self.selectSet(0)
+        
+        self.setNewEntry.delete(0, "end")
     
     def addKey(self):
         selectedSet = self.setListbox.curselection()
@@ -574,6 +652,34 @@ class QMGUI:
             return
         
         self.keywordSet[selectedSet][newRecord] = []
+        self.keysListbox.insert(0, newRecord)
+        self.keysListbox.selection_clear(0, "end")
+        self.keysListbox.selection_set(0)
+        self.selectKey(0)
+        
+        self.keysNewEntry.delete(0, "end")
+        
+    def copyKey(self):
+        selectedSet = self.setListbox.curselection()
+        if not selectedSet:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+            return
+        
+        selectedSet = self.setListbox.get(selectedSet)
+        
+        selectedKey = self.keysListbox.curselection()
+        if not selectedKey:
+            tkMessageBox.showwarning(title = "Error!", message = "Please select the key")
+            return
+        
+        selectedKey = self.keysListbox.get(selectedKey)
+        
+        newRecord = self.keysNewEntry.get()
+        
+        if not newRecord:
+            return
+        
+        self.keywordSet[selectedSet][newRecord] = deepcopy( self.keywordSet[selectedSet][selectedKey] )
         self.keysListbox.insert(0, newRecord)
         self.keysListbox.selection_clear(0, "end")
         self.keysListbox.selection_set(0)
