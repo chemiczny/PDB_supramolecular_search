@@ -294,11 +294,11 @@ class QMGUI:
             stateNo = cmd.get_state()
             for resnum in resIds2addC:
                 cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name N) ) ", stateNo)
-                cmd.bond( "%"+sele+" and name N and resi "+str(resnum), "%guest and name C and resi "+str(resnum-1), 1 )
+                cmd.bond( "%"+sele+" and name N and resi "+str(resnum), "%"+sele+" and name C and resi "+str(resnum-1), 1 )
                 
             for resnum in resIds2addN:
                 cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name C or name O) ) ", stateNo)
-                cmd.bond( "%"+sele+" and name C and resi "+str(resnum), "%guest and name N and resi "+str(resnum+1), 1 )
+                cmd.bond( "%"+sele+" and name C and resi "+str(resnum), "%"+sele+" and name N and resi "+str(resnum+1), 1 )
             
         cmd.show("sticks", sele )
         
@@ -456,7 +456,7 @@ class QMGUI:
         inpF.write(self.chargeTotal+","+self.spinTotal+" "+self.chargeGuest+","+self.spinGuest+" "+self.chargeHost+","+self.spinHost+"\n")
         
         model = cmd.get_model("guest and guestFrozen")
-        self.writeModelToFile(model, inpF, 2, True)
+        self.writeModelToFile(model, inpF, 1, True)
             
         model = cmd.get_model("guest and not guestFrozen")
         self.writeModelToFile(model,inpF, 1)
@@ -480,6 +480,7 @@ class QMGUI:
         for atom in model.atom:
             resnum = atom.resi
             resname = atom.resn
+            chain = atom.chain
             pdbname = atom.name
             element = atom.symbol
             
@@ -488,9 +489,9 @@ class QMGUI:
             z = str(atom.coord[2])
             
             if not frozen:
-                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") "+x+" "+y+" "+z+"\n" )
+                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+"_"+chain+") "+x+" "+y+" "+z+"\n" )
             else:
-                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+") -1"+x+" "+y+" "+z+"\n" )
+                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+"_"+chain+") -1"+x+" "+y+" "+z+"\n" )
                 
     def getKeywordsFromText(self, text):
         keywords = []
