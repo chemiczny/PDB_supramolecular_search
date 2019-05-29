@@ -12,6 +12,7 @@ from anionCation import AnionCationGUI
 from hBonds import HBondsGUI
 from metalLigand import MetalLigandGUI
 from QMGUI import QMGUI
+from jobStatusGUI import JobStatusGUI
 from os import path
 import pandas as pd
 from cgo_arrow import cgo_arrow
@@ -31,7 +32,7 @@ else:
     from tkinter import filedialog as tkFileDialog
     
 class SupramolecularComposition:
-    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM):
+    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM, pageJobStatus):
         self.guiAnionPi = AnionPiGUI(pageAnionPi)
         self.guiPiPi = PiPiGUI(pagePiPi)
         self.guiCationPi = CationPiGUI( pageCationPi)
@@ -39,6 +40,7 @@ class SupramolecularComposition:
         self.guiHBonds = HBondsGUI( pageHBonds )
         self.guiMetalLigand = MetalLigandGUI(pageMetalLigand)
         self.guiQM = QMGUI(pageQM)
+        self.guiJobStatus = JobStatusGUI(pageJobStatus)
             
         self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, self.guiMetalLigand]
         self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand" ]
@@ -245,6 +247,7 @@ class SupramolecularComposition:
             gui.grid()
             
         self.guiQM.grid()
+        self.guiJobStatus.grid()
         
     def loadState(self):
         jsonFile = tkFileDialog.askopenfilename(title = "Select file", filetypes = (("Json files","*.json"), ("all files","*.*")) )
@@ -261,6 +264,9 @@ class SupramolecularComposition:
                 
         if "QMGUI" in state:
             self.guiQM.loadState(state["QMGUI"])
+            
+        if "JobStatus" in state:
+            self.guiJobStatus.loadState(state["JobStatus"])
     
     def saveState(self):
         state = {}
@@ -268,6 +274,7 @@ class SupramolecularComposition:
             state[label] = self.actionLabels2Objects[label].getState()
             
         state["QMGUI"] = self.guiQM.getState()
+        state["JobStatus"] = self.guiJobStatus.getState()
             
         file2save = tkFileDialog.asksaveasfilename(defaultextension = ".json", filetypes = (("Json files","*.json"),  ("all files","*.*")) )
         if file2save:
