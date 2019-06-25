@@ -114,10 +114,11 @@ class CifAnalyser:
             "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL" ] 
             
         time2 = time()
-        self.resolution, self.method, self.structureType = self.readResolutionAndMethod()
+        self.resolution, self.method = self.readResolutionAndMethod()
         timeResolutionReading = time() - time2
         
         self.hAtomsPresent = hydrogensPresent(structure)
+        self.structureType = self.determineStructureType(structure)
         
         times = { "getCentroidTime" : 0,
             "extractAnionsAroundRingTime" : 0,
@@ -184,11 +185,47 @@ class CifAnalyser:
         
         writeAdditionalInfo("Analiza skonczona "+self.PDBcode+ " czas: "+str(timeTaken), self.fileId)
 #    return supramolecularFound
+        
+    def determineStructureType(self, structure):
+        allAA = ["ALA", "CYS","GLY","ILE","LEU","MET","ASN","PRO","GLN","SER","THR","VAL" ,"ASP","GLU", "PHE", "HIS", "TRP", "TYR" ,"LYS","ARG"]
+        DNANU = ["A","G","T","C","U","I" ]
+        RNANU = [ "DA", "DC", "DG", "DT", "DI" ]
+
+        aaCounter = 0
+        dnaCounter = 0
+        rnaCounter = 0 
+        
+        for res in structure.get_residues():
+            resName = res.get_resname().upper()
+            
+            if resName in allAA:
+                aaCounter += 1
+            elif resName in DNANU :
+                dnaCounter += 1
+            elif resName in RNANU:
+                rnaCounter += 1
+                
+        structureType = []
+        
+        if aaCounter > 0:
+            structureType.append("protein")
+            
+        if dnaCounter > 0:
+            structureType.append("DNA")
+            
+        if rnaCounter > 0:
+            structureType.append("RNA")
+            
+        if not structureType:
+            return "other"
+        
+        return "-".join(structureType)
+        
 
     def readResolutionAndMethod( self ):
         try:
             mmcif_dict_parser = primitiveCif2Dict(self.cifFile, ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" , 
-                                                                 "_exptl.method", "_entity_poly.type"] )
+                                                                 "_exptl.method"] )
             mmcif_dict = mmcif_dict_parser.result
         except:
             errorMessage = "primitiveCif2Dict cannot handle with: "+self.cifFile
@@ -203,10 +240,10 @@ class CifAnalyser:
             else:
                 method = sorted(method)
                 
-        structureType = "Unknown"
+#        structureType = "Unknown"
         
-        if "_entity_poly.type" in mmcif_dict:
-            structureType = mmcif_dict["_entity_poly.type"][0]
+#        if "_entity_poly.type" in mmcif_dict:
+#            structureType = mmcif_dict["_entity_poly.type"][0]
             
     #    res_keys = ["_refine.ls_d_res_high" , "_reflns_shell.d_res_high" ]
         res_key = "_refine.ls_d_res_high"
@@ -216,13 +253,13 @@ class CifAnalyser:
     
                     
         if not resolution:
-            return -1, method, structureType
+            return -1, method
                     
         if len(resolution) == 1  :
             if isfloat( resolution[0] ):
-                return resolution[0], method, structureType
+                return resolution[0], method
             else:
-                return -1, method, structureType
+                return -1, method
         else:
             resFloats = []
             for res in resolution:
@@ -230,10 +267,10 @@ class CifAnalyser:
                     resFloats.append(float(res))
                     
             if not resFloats:
-                return -1, method, structureType
+                return -1, method
             
             resFloats = sorted(resFloats)
-            return resFloats[0], method, structureType
+            return resFloats[0], method
 
     def analysePiacid(self, ligand, modelIndex, structure):
     #    print("analysePiacid - start ")
@@ -328,6 +365,10 @@ class CifAnalyser:
         return ligandWithAnions, times
 
     def findCationComplex(self, cation, ns, ligand):
+        if hasattr(cation, "analysedAsComplex"):
+            return { "complex" : False, "coordNo" : 0, "ligands" : [] }
+        
+        cation.analysedAsComplex = True
         potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
         anionSpaceWithCation = ns.search(cation.get_coord(), 4.5 , 'A') 
         metals =  [
