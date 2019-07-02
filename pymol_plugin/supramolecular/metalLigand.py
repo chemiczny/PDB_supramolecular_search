@@ -12,6 +12,12 @@ except:
 from supramolecularGUI import SupramolecularGUI
 #from simpleFilters import noAAinAnions, noNUinAnions
 
+def onlyAnions(actualData):
+    return actualData[ actualData["isAnion"] == True ]
+
+def onlyComplexes(actualData):
+    return actualData[ actualData["Complex"] == True ]
+
 class MetalLigandGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
@@ -21,9 +27,7 @@ class MetalLigandGUI(SupramolecularGUI):
                   "Cat. el." : { "header" : "Cation element" } , 
                   "Ligand" : { "header" : "Anion code" },
                   "Lig. el.." : { "header" : "Ligand element"},
-                  "Is anion" : { "header" : "isAnion" },
                   "Anion type" : { "header" : "anionType"} ,
-                  "isComplex" : {"header" : "Complex"},
                   "coordNo" : {"header" : "CoordNo"},
                   "PDB" : { "header" : "PDB Code" } })
 
@@ -34,8 +38,8 @@ class MetalLigandGUI(SupramolecularGUI):
         self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Ligand", "Ligand id", "Ligand el.", "Is Anion", "Anion type"  , "Anion gr. id",
                           "R", "Complex", "Coord No" ])
 
-#        self.setAdditionalCheckboxes( [ { "label" : "No AA in anions", "func" : noAAinAnions } ,
-#                                          { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
+        self.setAdditionalCheckboxes( [ { "label" : "Only anions as ligands", "func" : onlyAnions } ,
+                                          { "label" : "Only complexes", "func" : onlyComplexes } ]  )
     
         self.arrowName = "MetalLigandArrow"
         self.arrowColor = "red orange"
