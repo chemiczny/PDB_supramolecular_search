@@ -8,7 +8,7 @@ Created on Tue May 21 16:05:03 2019
 
 import sys
 import json
-
+from os.path import join
 try:
     from pymol import cmd
 except:
@@ -61,6 +61,8 @@ class JobStatusGUI:
         self.customButtons = []
         self.customButtonsData = []
         
+        self.actualStatus = {}
+        
     def gridJobMonitor(self):
         self.tree_data = ttk.Treeview(self.jobMonitor, columns = self.treeHeaders , show = "headings", heigh = 15 )
         for header in self.treeHeaders:
@@ -71,13 +73,19 @@ class JobStatusGUI:
         
         columnNo = 21
         getStatusButton = Tkinter.Button(self.jobMonitor, text = "Get status", width = 15, command = self.getStatus)
-        getStatusButton.grid(row=0, column = columnNo)
+        getStatusButton.grid(row=0, column = columnNo, columnspan = 2)
         
         cancelJobButton = Tkinter.Button(self.jobMonitor, text = "Cancel job", width = 15, command = self.scancel)
-        cancelJobButton.grid(row=1, column = columnNo)
+        cancelJobButton.grid(row=1, column = columnNo, columnspan = 2)
         
         forgetButton = Tkinter.Button(self.jobMonitor, text = "Forget", width = 15, command = self.sremovePy)
-        forgetButton.grid(row=2, column = columnNo)
+        forgetButton.grid(row=2, column = columnNo, columnspan = 2)
+        
+        self.filterEntry = Tkinter.Entry(self.jobMonitor, width = 7)
+        self.filterEntry.grid(row= 3, column = columnNo)
+        
+        filterButton = Tkinter.Button(self.jobMonitor, width = 5, text = "*", command = self.filterJobs)
+        filterButton.grid(row = 3, column = columnNo + 1)
         
         directoryViewLabel = Tkinter.Label(self.jobMonitor, text = "Directory contains:")
         directoryViewLabel.grid( row = 20, column = 0 , columnspan = 2)
@@ -206,6 +214,8 @@ class JobStatusGUI:
         result = result.replace("'", '"')
         status = json.loads( result )
         
+        self.actualStatus = status
+        
         self.tree_data.delete(*self.tree_data.get_children())
         self.directoryViewList.delete(0, "end")
         self.outputText.delete("1.0", "end")
@@ -215,6 +225,21 @@ class JobStatusGUI:
             for row in resultList:
                 tableRow = ( row["jobID"] , row["RunningDir"], row["Script file"], row["Status"], row["Time"], row["Comment"] )
                 self.tree_data.insert('', "end" , values = tableRow  )
+                
+    def filterJobs(self):
+        filterKey = self.filterEntry.get()
+        
+        self.tree_data.delete(*self.tree_data.get_children())
+        self.directoryViewList.delete(0, "end")
+        self.outputText.delete("1.0", "end")
+        
+        for mainKey in self.actualStatus:
+            resultList = self.actualStatus[mainKey]
+            for row in resultList:
+                stringRow = row["jobID"] + row["RunningDir"] + row["Script file"] + row["Comment"]
+                if filterKey in stringRow:
+                    tableRow = ( row["jobID"] , row["RunningDir"], row["Script file"], row["Status"], row["Time"], row["Comment"] )
+                    self.tree_data.insert('', "end" , values = tableRow  )
                 
     def scancel(self):
         if not self.connected:
@@ -253,15 +278,91 @@ class JobStatusGUI:
         command =  " python " + jobManagerDir + "sremove.py " + str(jobID)
         
         stdin, stdout, stderr = self.client.exec_command(command)
+        
+        item2forget = self.tree_data.selection()[0]
+        self.tree_data.delete(item2forget)
     
     def refreshDirectoryView(self):
-        pass
+        if not self.connected:
+            tkMessageBox.showwarning(title = "Cannot execute!", message = "You have to be connected with host")
+            
+        currentSel = self.tree_data.focus()
+        if currentSel == "" :
+            tkMessageBox.showwarning(title = "Cannot execute", message = "Please select row")
+            return
+        
+        item = self.tree_data.focus()
+        info = self.tree_data.item(item, 'values')
+        self.currentSelectionTree = info
+        
+        if self.connected:
+            dir2print = info[1]
+            
+            stdin, stdout, stderr = self.client.exec_command("ls -p "+dir2print)
+            filesList = list(stdout.readlines())
+            
+            self.directoryViewList.delete(0, "end")
+            for filename in filesList:
+                self.directoryViewList.insert("end", filename.strip())
+                
+            self.outputText.delete("1.0", "end")
     
     def downloadFile(self):
-        pass
+        if not self.connected:
+            tkMessageBox.showwarning(title = "Cannot execute", message = "You have to connect to host before command execution")
+            return
+        
+        currentSel = self.tree_data.focus()
+        if currentSel == "" :
+            tkMessageBox.showwarning(title = "Cannot execute", message = "Please select job")
+            return
+        
+        dir2go = self.tree_data.item(currentSel)["values"][1]
+        
+        fileSelection = self.directoryViewList.curselection()
+        
+        if not fileSelection:
+            tkMessageBox.showwarning(title = "Cannot execute", message = "Please select file to execute")
+            return
+        
+        fileSelection = self.directoryViewList.get(fileSelection)
+        
+        fullPath = join(dir2go, fileSelection)
+        
+        sftp = self.client.open_sftp()
+        
+        sftp.get(fullPath, fileSelection)
+        
+        sftp.close()
     
     def downloadAndLoadToPymol(self):
-        pass
+        if not self.connected:
+            tkMessageBox.showwarning(title = "Cannot execute", message = "You have to connect to host before command execution")
+            return
+        
+        currentSel = self.tree_data.focus()
+        if currentSel == "" :
+            tkMessageBox.showwarning(title = "Cannot execute", message = "Please select job")
+            return
+        
+        dir2go = self.tree_data.item(currentSel)["values"][1]
+        
+        fileSelection = self.directoryViewList.curselection()
+        
+        if not fileSelection:
+            tkMessageBox.showwarning(title = "Cannot execute", message = "Please select file to execute")
+            return
+        
+        fileSelection = self.directoryViewList.get(fileSelection)
+        
+        fullPath = join(dir2go, fileSelection)
+        
+        sftp = self.client.open_sftp()
+        
+        sftp.get(fullPath, fileSelection)
+        
+        sftp.close()
+        cmd.load(fileSelection)
     
     def gridLoginData(self):
         loginLabel = Tkinter.Label(self.loginData, text = "login")
