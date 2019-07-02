@@ -29,6 +29,7 @@ class MetalLigandGUI(SupramolecularGUI):
                   "Lig. el.." : { "header" : "Ligand element"},
                   "Anion type" : { "header" : "anionType"} ,
                   "coordNo" : {"header" : "CoordNo"},
+                  "summary" : { "header" : "Summary" },
                   "PDB" : { "header" : "PDB Code" } })
 
         self.setSortingParameters({  "R" : "Distance", "Cation" : "Cation code", "Cat. el." : "Cation element" , "Ligand" : "Anion code",
@@ -36,7 +37,7 @@ class MetalLigandGUI(SupramolecularGUI):
                      "Lig. el." , "Anion type"  ])
 
         self.setTreeData([ "ID" , "PDB" , "Cation", "Cation id", "Cat. el." , "Ligand", "Ligand id", "Ligand el.", "Is Anion", "Anion type"  , "Anion gr. id",
-                          "R", "Complex", "Coord No" ])
+                          "R", "Complex", "Summary", "Coord No" ])
 
         self.setAdditionalCheckboxes( [ { "label" : "Only anions as ligands", "func" : onlyAnions } ,
                                           { "label" : "Only complexes", "func" : onlyComplexes } ]  )
@@ -51,7 +52,7 @@ class MetalLigandGUI(SupramolecularGUI):
                                                     row["Anion chain"] + str(row["Anion id"]), row["Ligand element"], 
                                                     str(row["isAnion"]), 
                                                     row["anionType"] , row["Anion group id"],
-                                                    str(row["Distance"])[:3] , str(row["Complex"]) , str(row["CoordNo"])) 
+                                                    str(row["Distance"])[:3] , str(row["Complex"]) , str(row["Summary"]) , str(row["CoordNo"])) 
         
     def getSelection(self,  data):
         res1Id = data["Anion id"].values[0]

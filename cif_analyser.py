@@ -394,6 +394,9 @@ class CifAnalyser:
         resultantVector = np.array([0.0 , 0.0, 0.0])
         coordNo = 0
         ligands = []
+        
+        summary = {}
+        
         for atom in potentialLigands:
             if atom.element == "H":
                 continue
@@ -406,17 +409,32 @@ class CifAnalyser:
                 if isAnion:
                     anionId = atom.anionData.anionId
                     
+                potentalLigandName = atom.get_parent().get_resname()
+                if potentalLigandName in summary:
+                    summary[potentalLigandName] += 1
+                else:
+                    summary[potentalLigandName] = 1
+                    
                 ligands.append({ "isAnion" : isAnion, "anionType" : anionType, "atom" :atom, "AnionId" : anionId })
                 
+        strSummary = []
+        for key in sorted(list(summary.keys())):
+            if summary[key] > 1:
+                strSummary.append(key+str(summary[key]))
+            else:
+                strSummary.append(key)
+            
+        strSummary = cation.element + "_" + "_".join(strSummary)
+                
         if coordNo == 0 :
-            return  { "complex" : False, "coordNo" : 0, "ligands" : [] }
+            return  { "complex" : False, "coordNo" : 0, "ligands" : [], "summary" : strSummary }
                 
         vectorLen = np.linalg.norm(resultantVector)
          
         if vectorLen < 0.2:
-             return { "complex" : True, "coordNo" : coordNo , "ligands" : ligands}
+             return { "complex" : True, "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary}
         else:
-             return  { "complex" : False, "coordNo" : coordNo , "ligands" : ligands }
+             return  { "complex" : False, "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary }
 
 def extractMetalCations ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')

@@ -71,7 +71,7 @@ def writeMetalLigandHeader( ):
     resultsFile.write("isAnion\tanionType\tDistance\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
     resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
-    resultsFile.write("Complex\tCoordNo\t")
+    resultsFile.write("Complex\tSummary\tCoordNo\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
     
@@ -322,6 +322,7 @@ def writeMetalLigandResults(  PDBcode,  extractedAtoms, complexData , modelIndex
             resultsFile.write(str(ligandCoords[2])+"\t")
             
             resultsFile.write(str(compData["complex"])+"\t")
+            resultsFile.write(str(compData["summary"])+"\t")
             resultsFile.write(str(compData["coordNo"])+"\t")
             
             resultsFile.write(str(modelIndex)+"\n")
