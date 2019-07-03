@@ -6,6 +6,7 @@ Created on Mon Jan  1 18:00:25 2018
 """
 from cif_analyser import findSupramolecular
 from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
+from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader
 from os.path import isdir, basename, isfile
 from os import makedirs, remove
 import glob
@@ -40,6 +41,8 @@ log_files += glob.glob("logs/partialProgress*")
 log_files += glob.glob("logs/additionalInfo*.log")
 log_files += glob.glob("logs/hBonds*.log")
 log_files += glob.glob("logs/metalLigand*.log")
+log_files += glob.glob("logs/linearAnionPi*.log")
+log_files += glob.glob("logs/planarAnionPi*.log")
 
 for log_file in log_files:
     remove(log_file)
@@ -50,6 +53,8 @@ writePiPiHeader()
 writeCationPiHeader()
 writeHbondsHeader()
 writeMetalLigandHeader()
+writeAnionPiLinearHeader()
+writeAnionPiPlanarHeader()
 
 
 cif_files = glob.glob(cifFiles)                                                                                                                         
@@ -80,10 +85,10 @@ cifNoFile.close()
 
 
 argumentsList = prepareArgumentsList( cif_files)
-pool.map(findSupramolecular, argumentsList)
+#pool.map(findSupramolecular, argumentsList)
 
-#for arg in argumentsList:
-#    findSupramolecular(arg)
+for arg in argumentsList:
+    findSupramolecular(arg)
 
 def mergeLogs( logFinal, logs  ):
     final_log = open(logFinal, "a+")
@@ -127,6 +132,8 @@ mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
 mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
 mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
 mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
+mergeLogs("logs/linearAnionPi.log", "logs/linearAnionPi*.log"  )
+mergeLogs("logs/planarAnionPi.log", "logs/planarAnionPi*.log"  )
 mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
 mergeProgressFiles()
 

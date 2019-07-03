@@ -45,6 +45,8 @@ def fetchdialog(simulation = False):
     pageAnionCation  = ttk.Frame(nb)
     pageHBonds = ttk.Frame(nb)
     pageMetalLigand = ttk.Frame(nb)
+    pageLinearAnionPi = ttk.Frame(nb)
+    pagePlanarAnionPi = ttk.Frame(nb)
     pageQM = ttk.Frame(nb)
     pageJobStatus = ttk.Frame(nb)
     
@@ -54,13 +56,16 @@ def fetchdialog(simulation = False):
     nb.add(pageAnionCation, text = "AnionCation")
     nb.add(pageHBonds, text = "HBonds")
     nb.add(pageMetalLigand, text = "MetalLigand")
+    nb.add(pageLinearAnionPi, text = "LinearAnionPi")
+    nb.add(pagePlanarAnionPi, text = "PlanarAnionPi")
     nb.add(pageQM, text = "QM assistant")
     nb.add(pageJobStatus, text = "Job monitor")
     
     nb.grid(column = 0, row = 0, columnspan = 20)
     
     supramolecularComposition = SupramolecularComposition(pageAnionPi, pagePiPi,
-                                                          pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM, pageJobStatus)
+                                                          pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand,
+                                                          pageLinearAnionPi, pagePlanarAnionPi ,pageQM, pageJobStatus)
     
     
     ######################
@@ -82,11 +87,11 @@ def fetchdialog(simulation = False):
         
     
     but_readLogDir = Tkinter.Button(self, width = 20, text = "Read log Dir", command = readLogDir)
-    but_readLogDir.grid(row = 2, column = 1, columnspan = 1)
+    but_readLogDir.grid(row = 2, column = 0, columnspan = 1)
     
     ent_logDir = Tkinter.Entry(self, width =45)
     ent_logDir.configure(state = "readonly")
-    ent_logDir.grid(row = 2, column = 2, columnspan = 3)
+    ent_logDir.grid(row = 2, column = 1, columnspan = 3)
     
     def selectCif():
         appData["cifDir"] = tkFileDialog.askdirectory()
@@ -104,21 +109,21 @@ def fetchdialog(simulation = False):
         
     
     but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
-    but_cifDir.grid(row = 2, column = 5)
+    but_cifDir.grid(row = 2, column = 4)
     
     ent_cifDir = Tkinter.Entry(self, width =45)
     ent_cifDir.configure(state = "readonly")
-    ent_cifDir.grid(row = 2, column = 6, columnspan = 3)
+    ent_cifDir.grid(row = 2, column = 5, columnspan = 3)
     
     actionMenu = {}
     
-    column = 2
+    column = 1
     
     lab_usePage = Tkinter.Label(self, width = 10, text = "Use:")
-    lab_usePage.grid(row = 4, column = 1)
+    lab_usePage.grid(row = 4, column = 0)
     
     lab_doNotUsePage = Tkinter.Label(self, width = 10, text = "Exclude:" )
-    lab_doNotUsePage.grid(row = 5, column = 1 )
+    lab_doNotUsePage.grid(row = 5, column = 0 )
     
     for label in supramolecularComposition.actionLabels:
         actionMenu[label] = {}
@@ -143,10 +148,10 @@ def fetchdialog(simulation = False):
         column += 1
     
     lab_showInt = Tkinter.Label(self, width = 10, text = "Show:" )
-    lab_showInt.grid(row = 6, column = 1)
+    lab_showInt.grid(row = 6, column = 0)
     
     showMenu = {}
-    column = 2
+    column = 1
     
     for label in supramolecularComposition.actionLabels:
         showMenu[label] = {}
@@ -172,19 +177,19 @@ def fetchdialog(simulation = False):
 #        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
-    but_merge.grid(row = 5, column = 8, columnspan = 2)
+    but_merge.grid(row = 5, column = 7, columnspan = 2)
     
     def showAllInteractions():
         supramolecularComposition.showAll(showMenu)
     
     but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
-    but_showMany.grid(row = 6, column = 8, columnspan = 2)
+    but_showMany.grid(row = 6, column = 7, columnspan = 2)
     
     but_saveState = Tkinter.Button(self, width = 20, text = "Save GUI state", command = supramolecularComposition.saveState)
-    but_saveState.grid(row = 5, column = 10, columnspan = 2)
+    but_saveState.grid(row = 5, column = 9, columnspan = 2)
     
     but_loadState = Tkinter.Button(self, width = 20, text = "Load GUI state", command = supramolecularComposition.loadState)
-    but_loadState.grid(row = 6, column = 10, columnspan = 2)
+    but_loadState.grid(row = 6, column = 9, columnspan = 2)
     
     ######################
     # ALL

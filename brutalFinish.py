@@ -75,6 +75,8 @@ argumentsList.append(["logs/hBonds.log", "logs/hBonds*.log"]  )
 argumentsList.append(["logs/metalLigand.log", "logs/metalLigand*.log"]  )
 argumentsList.append(["logs/additionalInfo.log", "logs/additionalInfo*.log"]  )
 argumentsList.append(["logs/metalLigand.log", "logs/metalLigand*.log"]  )
+argumentsList.append(["logs/planarAnionPi.log", "logs/planarAnionPi*.log" ]  )
+argumentsList.append(["logs/additionalInfo.log", "logs/additionalInfo*.log" ]  )
 
 pool.map(mergeLogs, argumentsList)
 

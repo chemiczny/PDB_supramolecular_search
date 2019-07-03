@@ -214,8 +214,9 @@ def getRingsCentroids( molecule, returnGraph = False ):
     """
     atoms = list(molecule.get_atoms())
     G = molecule2graph(atoms, None, True, True , True)
-                
-    cycles = list(nx.cycle_basis(G))
+         
+    cycles = list(nx.cycle_basis(G))       
+#    cycles += list(nx.minimum_cycle_basis(G))
 #    print("Znalazlem cykli: ", len(cycles))
     centroids = []
     

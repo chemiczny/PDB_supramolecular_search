@@ -42,7 +42,8 @@ def addAtribute( graph, nodes, key ):
         
 
 def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases = {},
-              notAliases = {}, geometry = {}, fullIsomorphism = False, nameMapping = {} , nonUniqueCharge = []  ):
+              notAliases = {}, geometry = {}, fullIsomorphism = False, nameMapping = {} , nonUniqueCharge = [] ,
+              properties2measure = [] ):
     graph = nx.Graph()
     nonUniqueCharge = set(nonUniqueCharge)
     
@@ -68,6 +69,7 @@ def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases
     graph.graph["name"] = name
     graph.graph["nameMapping"] = nameMapping
     graph.graph["priority"] = priority
+    graph.graph["properties2measure"] = properties2measure
         
     fileName = str(priority)+"_"+name
     
@@ -149,7 +151,7 @@ if __name__ == "__main__":
 #    #RCOOH
     saveAnion( [ "C" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RCOO", 0, terminating = [1, 2, 3], 
-              geometry = "planar", nonUniqueCharge = [3] )
+              geometry = "planar", nonUniqueCharge = [3], properties2measure= [ { "plane" : [ 1, 2, 3 ] },{ "line" : [ 2, 3 ] } ] )
     
     #ClO, BrO, IO, 
     saveAnion([ "CL",  "O" ], [(0, 1)], 

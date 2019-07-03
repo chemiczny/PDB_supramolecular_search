@@ -11,6 +11,10 @@ from cationPi import CationPiGUI
 from anionCation import AnionCationGUI
 from hBonds import HBondsGUI
 from metalLigand import MetalLigandGUI
+
+from linearAnionPi import LinearAnionPiGUI
+from planarAnionPi import PlanarAnionPiGUI
+
 from QMGUI import QMGUI
 from jobStatusGUI import JobStatusGUI
 from os import path
@@ -32,24 +36,30 @@ else:
     from tkinter import filedialog as tkFileDialog
     
 class SupramolecularComposition:
-    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageQM, pageJobStatus):
+    def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageLinearAnionPi, pagePlanarAnionPi, pageQM, pageJobStatus):
         self.guiAnionPi = AnionPiGUI(pageAnionPi)
         self.guiPiPi = PiPiGUI(pagePiPi)
         self.guiCationPi = CationPiGUI( pageCationPi)
         self.guiAnionCation = AnionCationGUI( pageAnionCation)
         self.guiHBonds = HBondsGUI( pageHBonds )
         self.guiMetalLigand = MetalLigandGUI(pageMetalLigand)
+        self.guiLinearAnionPi = LinearAnionPiGUI(pageLinearAnionPi)
+        self.guiPlanarAnionPi = PlanarAnionPiGUI(pagePlanarAnionPi)
         self.guiQM = QMGUI(pageQM)
         self.guiJobStatus = JobStatusGUI(pageJobStatus)
             
-        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, self.guiMetalLigand]
+        self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, 
+                     self.guiMetalLigand, self.guiLinearAnionPi, self.guiPlanarAnionPi ]
+        
         self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand" ]
         self.actionLabels2Objects = { "AnionPi" : self.guiAnionPi, 
                                      "PiPi" : self.guiPiPi, 
                                      "CationPi" : self.guiCationPi,
                                      "AnionCation" : self.guiAnionCation,
                                      "HBonds" : self.guiHBonds,
-                                     "MetalLigand" : self.guiMetalLigand }
+                                     "MetalLigand" : self.guiMetalLigand,
+                                     "LinearAnionPi" : self.guiLinearAnionPi,
+                                     "PlanarAnionPi" : self.guiPlanarAnionPi}
         
         self.actualKeys = []
         

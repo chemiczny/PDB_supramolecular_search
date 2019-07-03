@@ -30,12 +30,23 @@ class AnionData:
         self.charged = charged
         self.anionId = anionId
         self.hBondsAnalyzed = False
+        
+        
+class Property:
+    def __init__(self, kind, atomsInvolved):
+        self.kind = kind
+        self.atomsInvolved = atomsInvolved
 
 
 class AnionRecogniser:
     def __init__(self):
         self.freeAnionId = 0
         self.templates = getAllTemplates()
+        
+        self.properties2calculatePack = {}
+        
+    def cleanPropertiesPack(self):
+        self.properties2calculatePack = {}
 
     def extractAnionAtoms(self, atomListOrig, ligand, ns ):
         """
@@ -170,6 +181,9 @@ class AnionRecogniser:
             return result, moleculeGraph.node[atomId]["element"]
         
         matching = anMatcher.mapping
+        reverseMapping = {}
+        for key in matching:
+            reverseMapping[ matching[key] ] = key
         
         if graphTemplate.graph["geometry"] == "planarWithSubstituents":
             flatAnalysis = isFlat(atoms, list(matching.keys()), getSubstituents( moleculeGraph, list(matching.keys()) ) )
@@ -191,6 +205,7 @@ class AnionRecogniser:
         if "X" in graphTemplate.graph["name"] and  graphTemplate.graph["nameMapping"]:
             matching = anMatcher.mapping
             for node in graphTemplate.graph["nameMapping"]:
+#                element =  moleculeGraph.node[reverseMapping[node]]["element"]
                 element = getElementFromMatch( matching, int(node), moleculeGraph)
                 anionGroup = anionGroup.replace( "X", element )
                 break
@@ -207,6 +222,20 @@ class AnionRecogniser:
                 
         atoms[atomId].anionData = AnionData(anionGroup, True, self.freeAnionId)
                         
+        if graphTemplate.graph["properties2measure"] and not self.freeAnionId in self.properties2calculatePack:
+            self.properties2calculatePack[ self.freeAnionId ] = []
+            
+            for property2calc in graphTemplate.graph["properties2measure"]:
+                kind = list(property2calc.keys())[0]
+                
+                atomsInvolvedIndexes = property2calc[kind]
+                atomsInvolved = []
+                
+                for aInd in atomsInvolvedIndexes:
+                    atomsInvolved.append( atoms[reverseMapping[aInd]] )
+                    
+                self.properties2calculatePack[ self.freeAnionId ].append( Property(kind, atomsInvolved) )
+        
         self.freeAnionId += 1
         return True, anionGroup
 
@@ -360,6 +389,7 @@ def getElementFromMatch( matching, node, graph):
     for match in matching:
         if matching[match] == node:
             return graph.node[match]["element"]
+        
 
 if __name__ == "__main__":
     pass

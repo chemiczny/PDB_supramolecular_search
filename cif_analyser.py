@@ -21,6 +21,7 @@ from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
 from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
 from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults, writeMetalLigandResults
+from supramolecularLogging import writeAnionPiLinearResults, writeAnionPiPlanarResults
 from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
 from protonate import Protonate
 from anionRecogniser import AnionRecogniser, createResId
@@ -294,6 +295,8 @@ class CifAnalyser:
         
         for centroid in centroids:
             
+            self.anionRecogniser.cleanPropertiesPack()
+            
             if ligandCode in self.aromaticAA:
                 self.aromaticAAcounter[ligandCode] += 1
             
@@ -310,6 +313,8 @@ class CifAnalyser:
             extractAnionsAroundRingTime += time()-time1
     
             if len(extractedAnionAtoms) > 0:
+                self.writeGeometricProperties(ligand, centroid, modelIndex)
+                
                 time2 = time()
                 extractedMetalCations = extractMetalCations( centroid["coords"], nsSmall, self.metalCationRadius )
                 extractedAAcations = extractAACations( centroid["coords"], nsSmall, self.AAcationRadius )
@@ -363,6 +368,17 @@ class CifAnalyser:
             "extractHBondsTime" :  extractHBondsTime }
             
         return ligandWithAnions, times
+    
+    def writeGeometricProperties(self, ligand, centroid, modelIndex):
+        
+        for geometricPropertyKey in self.anionRecogniser.properties2calculatePack:
+            geometricPropertyList = self.anionRecogniser.properties2calculatePack[geometricPropertyKey]
+            
+            for geometricProperty in geometricPropertyList:
+                if geometricProperty.kind == "plane":
+                    writeAnionPiPlanarResults(ligand, centroid, self.PDBcode, geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
+                elif geometricProperty.kind == "line":
+                    writeAnionPiLinearResults(ligand, centroid, self.PDBcode , geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
 
     def findCationComplex(self, cation, ns, ligand):
         if hasattr(cation, "analysedAsComplex"):

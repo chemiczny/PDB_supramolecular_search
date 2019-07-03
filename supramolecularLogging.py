@@ -10,6 +10,7 @@ from math import  sin, cos, radians, sqrt, acos, degrees
 import numpy as np
 from numpy_utilities import normalize
 from os.path import isfile
+from ringDetection import getNormVec, getAverageCoords
 
 def writeAdditionalInfo(message, fileId = None):
     resultsFileName = "logs/additionalInfo.log"
@@ -129,6 +130,34 @@ def writeHbondsHeader( ):
     resultsFile.write("Distance Don Acc\tModel No\n")
     resultsFile.close()
     
+def writeAnionPiPlanarHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/planarAnionPi.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
+    resultsFile.write("Angle\t")
+    resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
+    resultsFile.write("Anion group x coord\tAnion group y coord\tAnion group z coord\t")
+    resultsFile.write("Model No\n")
+    resultsFile.close()
+    
+def writeAnionPiLinearHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/linearAnionPi.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
+    resultsFile.write("Angle\t")
+    resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
+    resultsFile.write("Anion group x coord\tAnion group y coord\tAnion group z coord\t")
+    resultsFile.write("Model No\n")
+    resultsFile.close()
+    
 def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, structureType, fileId = None ):
     """
     Zapisz dane do pliku z wynikami
@@ -199,6 +228,114 @@ def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, 
     resultsFile.close()
     
     return newAtoms
+
+def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex, anionGroupId, fileId = None):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/planarAnionPi.log"
+    if fileId != None:
+        resultsFileName = "logs/planarAnionPi"+str(fileId)+".log"
+        
+    ligandCode = ligand.get_resname()
+    ligandId = str(ligand.get_id()[1])
+    ligandChain = ligand.get_parent().get_id()
+    resultsFile = open(resultsFileName, "a+")
+    
+    normVec = getNormVec( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
+    
+    inner_prod = np.inner( normVec, centroid["normVec"] )
+    if abs(inner_prod) > 1.0:
+        if abs(inner_prod) < 1.1:
+            angle = 0    
+        else:
+            angle = 666
+    else:
+        angle = degrees( acos(inner_prod) )
+        
+    if angle > 90.0 :
+        angle = 180 - angle
+    
+    atom = planeData.atomsInvolved[0]
+    anion = atom.get_parent()
+    residueName = anion.get_resname()
+    anionChain = anion.get_parent().get_id()
+    anionId = str(anion.get_id()[1])
+    centroidCoords = centroid["coords"]  
+    anionGroupCoords = getAverageCoords( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
+    
+    resultsFile.write(PDBcode+"\t")
+    resultsFile.write(ligandCode+"\t")
+    resultsFile.write(ligandChain+"\t")
+    resultsFile.write(ligandId+"\t")
+    resultsFile.write(residueName+"\t")
+    resultsFile.write(anionChain+"\t")
+    resultsFile.write(anionId+"\t")
+    resultsFile.write(str(anionGroupId)+"\t")
+    resultsFile.write(str(angle)+"\t")
+    
+    resultsFile.write(str(centroidCoords[0])+"\t")
+    resultsFile.write(str(centroidCoords[1])+"\t")
+    resultsFile.write(str(centroidCoords[2])+"\t")
+    
+    resultsFile.write(str(anionGroupCoords[0])+"\t")
+    resultsFile.write(str(anionGroupCoords[1])+"\t")
+    resultsFile.write(str(anionGroupCoords[2])+"\t")
+    
+    resultsFile.write(str(modelIndex)+"\n")
+    resultsFile.close()
+    
+def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, anionGroupId, fileId ):
+    resultsFileName = "logs/linearAnionPi.log"
+    if fileId != None:
+        resultsFileName = "logs/linearAnionPi"+str(fileId)+".log"
+        
+    ligandCode = ligand.get_resname()
+    ligandId = str(ligand.get_id()[1])
+    ligandChain = ligand.get_parent().get_id()
+    resultsFile = open(resultsFileName, "a+")
+    
+    
+    vector =  lineData.atomsInvolved[1].get_coord() - lineData.atomsInvolved[0].get_coord() 
+    vector = normalize(vector)
+    
+    inner_prod = np.inner( vector, centroid["normVec"] )
+    if abs(inner_prod) > 1.0:
+        if abs(inner_prod) < 1.1:
+            angle = 0    
+        else:
+            angle = 666
+    else:
+        angle = degrees( acos(inner_prod) )
+    
+    atom = lineData.atomsInvolved[0]
+    anion = atom.get_parent()
+    residueName = anion.get_resname()
+    anionChain = anion.get_parent().get_id()
+    anionId = str(anion.get_id()[1])
+    centroidCoords = centroid["coords"]  
+    anionGroupCoords = getAverageCoords( lineData.atomsInvolved , list(range( len(lineData.atomsInvolved) )) )
+    
+    resultsFile.write(PDBcode+"\t")
+    resultsFile.write(ligandCode+"\t")
+    resultsFile.write(ligandChain+"\t")
+    resultsFile.write(ligandId+"\t")
+    resultsFile.write(residueName+"\t")
+    resultsFile.write(anionChain+"\t")
+    resultsFile.write(anionId+"\t")
+    resultsFile.write(str(anionGroupId)+"\t")
+    resultsFile.write(str(angle)+"\t")
+    
+    resultsFile.write(str(centroidCoords[0])+"\t")
+    resultsFile.write(str(centroidCoords[1])+"\t")
+    resultsFile.write(str(centroidCoords[2])+"\t")
+    
+    resultsFile.write(str(anionGroupCoords[0])+"\t")
+    resultsFile.write(str(anionGroupCoords[1])+"\t")
+    resultsFile.write(str(anionGroupCoords[2])+"\t")
+    
+    resultsFile.write(str(modelIndex)+"\n")
+    resultsFile.close()
             
 def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , modelIndex, fileId = None ):
     """
