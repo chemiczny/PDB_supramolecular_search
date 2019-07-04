@@ -51,7 +51,7 @@ class SupramolecularComposition:
         self.guis = [ self.guiAnionPi, self.guiPiPi, self.guiCationPi, self.guiAnionCation, self.guiHBonds, 
                      self.guiMetalLigand, self.guiLinearAnionPi, self.guiPlanarAnionPi ]
         
-        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand" ]
+        self.actionLabels = [ "AnionPi", "PiPi", "CationPi", "AnionCation", "HBonds", "MetalLigand", "LinearAnionPi", "PlanarAnionPi" ]
         self.actionLabels2Objects = { "AnionPi" : self.guiAnionPi, 
                                      "PiPi" : self.guiPiPi, 
                                      "CationPi" : self.guiCationPi,

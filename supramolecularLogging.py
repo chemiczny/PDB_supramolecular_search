@@ -137,6 +137,7 @@ def writeAnionPiPlanarHeader( ):
     resultsFileName = "logs/planarAnionPi.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
     resultsFile.write("Angle\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
@@ -151,6 +152,7 @@ def writeAnionPiLinearHeader( ):
     resultsFileName = "logs/linearAnionPi.log"
     resultsFile = open(resultsFileName, "w")
     resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("CentroidId\t")
     resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
     resultsFile.write("Angle\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
@@ -268,6 +270,7 @@ def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex,
     resultsFile.write(ligandCode+"\t")
     resultsFile.write(ligandChain+"\t")
     resultsFile.write(ligandId+"\t")
+    resultsFile.write(str(centroid["cycleId"])+"\t")
     resultsFile.write(residueName+"\t")
     resultsFile.write(anionChain+"\t")
     resultsFile.write(anionId+"\t")
@@ -320,6 +323,7 @@ def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, 
     resultsFile.write(ligandCode+"\t")
     resultsFile.write(ligandChain+"\t")
     resultsFile.write(ligandId+"\t")
+    resultsFile.write(str(centroid["cycleId"])+"\t")
     resultsFile.write(residueName+"\t")
     resultsFile.write(anionChain+"\t")
     resultsFile.write(anionId+"\t")

@@ -87,11 +87,11 @@ def fetchdialog(simulation = False):
         
     
     but_readLogDir = Tkinter.Button(self, width = 20, text = "Read log Dir", command = readLogDir)
-    but_readLogDir.grid(row = 2, column = 0, columnspan = 1)
+    but_readLogDir.grid(row = 2, column = 0, columnspan = 2)
     
     ent_logDir = Tkinter.Entry(self, width =45)
     ent_logDir.configure(state = "readonly")
-    ent_logDir.grid(row = 2, column = 1, columnspan = 3)
+    ent_logDir.grid(row = 2, column = 2, columnspan = 4)
     
     def selectCif():
         appData["cifDir"] = tkFileDialog.askdirectory()
@@ -109,11 +109,11 @@ def fetchdialog(simulation = False):
         
     
     but_cifDir = Tkinter.Button(self, width = 10, command = selectCif, text = "Cif dir")
-    but_cifDir.grid(row = 2, column = 4)
+    but_cifDir.grid(row = 2, column = 6)
     
     ent_cifDir = Tkinter.Entry(self, width =45)
     ent_cifDir.configure(state = "readonly")
-    ent_cifDir.grid(row = 2, column = 5, columnspan = 3)
+    ent_cifDir.grid(row = 2, column = 7, columnspan = 3)
     
     actionMenu = {}
     
@@ -177,19 +177,19 @@ def fetchdialog(simulation = False):
 #        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
-    but_merge.grid(row = 5, column = 7, columnspan = 2)
+    but_merge.grid(row = 5, column = 9, columnspan = 2)
     
     def showAllInteractions():
         supramolecularComposition.showAll(showMenu)
     
     but_showMany = Tkinter.Button(self, width = 20, text = "Show", command = showAllInteractions)
-    but_showMany.grid(row = 6, column = 7, columnspan = 2)
+    but_showMany.grid(row = 6, column = 9, columnspan = 2)
     
     but_saveState = Tkinter.Button(self, width = 20, text = "Save GUI state", command = supramolecularComposition.saveState)
-    but_saveState.grid(row = 5, column = 9, columnspan = 2)
+    but_saveState.grid(row = 5, column = 11, columnspan = 2)
     
     but_loadState = Tkinter.Button(self, width = 20, text = "Load GUI state", command = supramolecularComposition.loadState)
-    but_loadState.grid(row = 6, column = 9, columnspan = 2)
+    but_loadState.grid(row = 6, column = 11, columnspan = 2)
     
     ######################
     # ALL

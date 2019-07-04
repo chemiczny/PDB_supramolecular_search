@@ -85,10 +85,10 @@ cifNoFile.close()
 
 
 argumentsList = prepareArgumentsList( cif_files)
-#pool.map(findSupramolecular, argumentsList)
+pool.map(findSupramolecular, argumentsList)
 
-for arg in argumentsList:
-    findSupramolecular(arg)
+#for arg in argumentsList:
+#    findSupramolecular(arg)
 
 def mergeLogs( logFinal, logs  ):
     final_log = open(logFinal, "a+")
