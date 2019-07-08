@@ -151,22 +151,23 @@ if __name__ == "__main__":
 #    #RCOOH
     saveAnion( [ "C" , "C", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RCOO", 0, terminating = [1, 2, 3], 
-              geometry = "planar", nonUniqueCharge = [3], properties2measure= [ { "plane" : [ 1, 2, 3 ] },{ "line" : [ 2, 3 ] } ] )
+              geometry = "planar", nonUniqueCharge = [3], properties2measure= [ { "plane" : [ 1, 2, 3 ] } ] )
     
     #ClO, BrO, IO, 
     saveAnion([ "CL",  "O" ], [(0, 1)], 
               1, "XO", 5, fullIsomorphism = True,
-              aliases = { 0 : [ "BR", "I" ] }, nameMapping = { 0 : "X"} )
+              aliases = { 0 : [ "BR", "I" ] }, nameMapping = { 0 : "X"}, properties2measure= [ { "line" : [ 0, 1 ] } ] )
     
     #NO2, ClO2, BRO2, 
     saveAnion([ "N",  "O" , "O" ], [(0, 1), (0,2)], 
-              1, "XO2", 10, fullIsomorphism = True, aliases = { 0 : ["CL", "BR"]}, nameMapping = { 0 : "X" }, nonUniqueCharge=[2])
+              1, "XO2", 10, fullIsomorphism = True, aliases = { 0 : ["CL", "BR"]}, nameMapping = { 0 : "X" }, 
+              nonUniqueCharge=[2], properties2measure= [ { "plane" : [ 0, 1, 2 ] } ])
     
     #NO3, CO3, PO3, SO3, AsO3, BO3, ClO3, BRO3
     saveAnion( ["N", "O", "O", "O"], [(0,1), (0,2), (0,3)],
               1, "XO3", 15, fullIsomorphism = True, 
               aliases = { 0 : [ "C", "P", "B", "S", "AS", "CL", "BR", "I" ] }, nameMapping = { 0 : "X" },
-              nonUniqueCharge= [2, 3])
+              nonUniqueCharge= [2, 3], properties2measure= [ { "plane" : [ 1, 2, 3 ] } ])
     
     #PO4, SO4, AsO4, ClO4, BRO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
@@ -182,11 +183,11 @@ if __name__ == "__main__":
     saveAnion( [ "X" , "B", "O", "O" ], [ (0,1), (1,2), (1,3) ], 
               2, "RBOO", 30, terminating = [2, 3], 
               notAliases = {0 : [ "O" ] },
-              nonUniqueCharge=[3])
+              nonUniqueCharge=[3], properties2measure= [ { "plane" : [ 1, 2, 3 ] } ])
         
     #COO
     saveAnion( [  "C", "O", "O" ], [ (0,1), (0,2) ], 
-              1, "COO", 35, terminating = [1, 2], nonUniqueCharge=[2] )
+              1, "COO", 35, terminating = [1, 2], nonUniqueCharge=[2], properties2measure= [ { "plane" : [ 0, 1, 2 ] } ] )
     
     #R-PO4, R-SO4, R-AsO4
     saveAnion( ["P", "O", "O", "O", "O"], [(0,1), (0,2), (0,3), (0, 4)],
@@ -222,7 +223,7 @@ if __name__ == "__main__":
     
     #SCN
     saveAnion([ "S",  "C" , "N" ], [(0, 1), (0,2)], 
-              [0,1,2], "SCN", 62, fullIsomorphism = True)
+              [0,1,2], "SCN", 62, fullIsomorphism = True, properties2measure= [ { "line" : [ 0, 2 ] } ])
     
 #    #RSH
 #    saveAnion( [ "X" , "S" ], [ (0,1)], 
@@ -232,11 +233,11 @@ if __name__ == "__main__":
     
     #N3
     saveAnion([ "N",  "N" , "N" ], [(0, 1), (0,2)], 
-              [0,1], "N3", 70, fullIsomorphism = True, nonUniqueCharge=[2])
+              [0,1], "N3", 70, fullIsomorphism = True, nonUniqueCharge=[2], properties2measure= [ { "line" : [ 0, 2 ] } ])
     
     #CN
     saveAnion([  "C" , "N" ], [(0, 1)], 
-              [0,1], "CN", 75, fullIsomorphism = True)
+              [0,1], "CN", 75, fullIsomorphism = True, properties2measure= [ { "line" : [ 0, 1 ] } ])
 
     
    #    #RSSR
