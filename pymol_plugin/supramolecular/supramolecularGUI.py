@@ -607,30 +607,34 @@ class SupramolecularGUI:
     def loadState(self, state):
         
         for label in state["numerical_parameters"]:
-            newValueLow = state["numerical_parameters"][label]["entry_low"]
-            newValueHigh = state["numerical_parameters"][label]["entry_high"]
-            
-            self.numericalParameters[label]["entry_low"].delete(0,"end")
-            self.numericalParameters[label]["entry_low"].insert(0, newValueLow)
-            
-            self.numericalParameters[label]["entry_high"].delete(0,"end")
-            self.numericalParameters[label]["entry_high"].insert(0, newValueHigh)
+            if label in self.numericalParameters:
+                newValueLow = state["numerical_parameters"][label]["entry_low"]
+                newValueHigh = state["numerical_parameters"][label]["entry_high"]
+                
+                self.numericalParameters[label]["entry_low"].delete(0,"end")
+                self.numericalParameters[label]["entry_low"].insert(0, newValueLow)
+                
+                self.numericalParameters[label]["entry_high"].delete(0,"end")
+                self.numericalParameters[label]["entry_high"].insert(0, newValueHigh)
             
         for label in state["checkboxes"]:
-            newValue = int(state["checkboxes"][label])
-            self.checkboxVars[label].set(newValue)
+            if label in self.checkboxVars:
+                newValue = int(state["checkboxes"][label])
+                self.checkboxVars[label].set(newValue)
             
         for label in state["listParameters"]:
-            newValues = state["listParameters"][label]
-            
-            self.listParameters[label]["listboxSelected"].delete(0,"end")
-            for val in newValues:
-                self.listParameters[label]["listboxSelected"].insert("end", val)
+            if label in self.listParameters:
+                newValues = state["listParameters"][label]
+                
+                self.listParameters[label]["listboxSelected"].delete(0,"end")
+                for val in newValues:
+                    self.listParameters[label]["listboxSelected"].insert("end", val)
                 
         for obj in self.additionalCheckboxes:
             label = obj["label"]
-            newValue = int(state["additionalCheckboxes"][label])
-            obj["chkVar"].set(newValue)
+            if label in state["additionalCheckboxes"]:
+                newValue = int(state["additionalCheckboxes"][label])
+                obj["chkVar"].set(newValue)
             
             
             
