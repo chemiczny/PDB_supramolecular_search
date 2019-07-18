@@ -436,7 +436,7 @@ class CifAnalyser:
         strSummary = []
         for key in sorted(list(summary.keys())):
             if summary[key] > 1:
-                strSummary.append(key+str(summary[key]))
+                strSummary.append(key+"-"+str(summary[key]))
             else:
                 strSummary.append(key)
             
@@ -448,9 +448,9 @@ class CifAnalyser:
         vectorLen = np.linalg.norm(resultantVector)
          
         if vectorLen < 0.2:
-             return { "complex" : True, "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary}
+             return { "complex" : True,  "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary}
         else:
-             return  { "complex" : False, "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary }
+             return { "complex" : False, "coordNo" : coordNo , "ligands" : ligands, "summary" : strSummary }
 
 def extractMetalCations ( point,  ns, distance  ):
     neighbors = ns.search(np.array(point), distance, 'A')

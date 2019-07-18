@@ -24,7 +24,7 @@ class AnionCationGUI(SupramolecularGUI):
                   "Anion" : { "header" : "Anion code" },
                   "An. at." : { "header" : "Anion symbol"},
                   "Pi acid" : { "header" : "Pi acid Code" },
-                  "Same semisphere" : { "header" : "Same semisphere"} ,
+                  "Same hem." : { "header" : "Same semisphere"} ,
                   "PDB" : { "header" : "PDB Code" } })
 
         self.setSortingParameters({  "R" : "Distance", "Cation" : "Cation code", "Cat. el." : "Cation symbol" , "Anion" : "Anion code",

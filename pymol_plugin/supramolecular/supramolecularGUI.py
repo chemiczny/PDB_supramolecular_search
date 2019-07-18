@@ -199,16 +199,16 @@ class SupramolecularGUI:
             self.listParameters[parameter]["entry"] = Tkinter.Entry(self.page, width = 5)
             self.listParameters[parameter]["entry"].grid(row =7, column = self.actualColumn)
              
-            self.listParameters[parameter]["button"] = Tkinter.Button(self.page, width = 1, text = "*", command = lambda arg = parameter : self.listFilter(arg))
+            self.listParameters[parameter]["button"] = Tkinter.Button(self.page, width = 2, text = "*", command = lambda arg = parameter : self.listFilter(arg))
             self.listParameters[parameter]["button"].grid(row = 7, column = self.actualColumn + 1)
             
             self.listParameters[parameter]["listboxSelected"] = Tkinter.Listbox(self.page, width =10, height = 6, exportselection = False)
             self.listParameters[parameter]["listboxSelected"].grid(row = 8, column = self.actualColumn, rowspan = 8, columnspan = 2)
             
-            self.listParameters[parameter]["buttonSelClear"] = Tkinter.Button(self.page, width = 1, text = "clear", command = lambda arg = parameter : self.clearListboxSelected(arg))
+            self.listParameters[parameter]["buttonSelClear"] = Tkinter.Button(self.page, width = 2, text = "clear", command = lambda arg = parameter : self.clearListboxSelected(arg))
             self.listParameters[parameter]["buttonSelClear"].grid(row = 16, column = self.actualColumn)
             
-            self.listParameters[parameter]["buttonSelDel"] = Tkinter.Button(self.page, width = 1, text = "del", command = lambda arg = parameter : self.removeFromListBoxSelected(arg))
+            self.listParameters[parameter]["buttonSelDel"] = Tkinter.Button(self.page, width = 2, text = "del", command = lambda arg = parameter : self.removeFromListBoxSelected(arg))
             self.listParameters[parameter]["buttonSelDel"].grid(row = 16, column = self.actualColumn + 1)
             
             self.actualColumn += 2
