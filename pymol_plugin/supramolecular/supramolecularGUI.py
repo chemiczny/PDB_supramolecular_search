@@ -44,12 +44,16 @@ class SupramolecularGUI:
         self.checkboxVars = {}
         self.listParameters = {}
         self.sorting_keys2header = {}
+        self.unique_keys2header = {}
+        self.unique_keysOrder = []
         self.headers = []
         self.currentMolecule = { "PdbCode" : None  }
         self.additionalCheckboxes = []
         self.dataIsMerged = False
         self.arrowName = "DefaultArrow"
         self.arrowColor = "blue red"
+        
+        self.numOfSortingMenu = 2
         
         self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
         
@@ -60,6 +64,7 @@ class SupramolecularGUI:
         self.gridAdditionalCheckboxes()
         self.gridListParameters()
         self.gridSortingParameters()
+        self.gridUniqueParameters()
         self.gridSearchWidgets()
         self.gridTree()
         self.gridSaveFiltered()
@@ -241,7 +246,7 @@ class SupramolecularGUI:
         if not self.sorting_keys2header:
             return
         
-        for i in range(2):
+        for i in range(self.numOfSortingMenu):
             self.sortingMenu.append( { }  )
             
             self.sortingMenu[i]["label"] = Tkinter.Label(self.page, text = "Sorting"+str(i))
@@ -268,6 +273,85 @@ class SupramolecularGUI:
                 actual_row += 1
                 
             self.actualColumn += 2
+            
+    def setUniqueParameters(self, newUniqueParameters, newUniqueKeysOrder):
+        self.unique_keys2header = newUniqueParameters
+        self.unique_keysOrder = newUniqueKeysOrder
+            
+    def gridUniqueParameters(self):
+        if not self.unique_keys2header:
+            return
+        
+        uniqueLabel = Tkinter.Label(self.page, text = "Unique")
+        uniqueLabel.grid(row = 0, column = self.actualColumn, columnspan = 2)
+        
+        actualRow = 1
+        
+        self.uniqueMenu = []
+        
+        for i, key in enumerate(self.unique_keysOrder):
+            self.uniqueMenu.append({})
+            
+            newLabel = Tkinter.Label(self.page, text = key)
+            newLabel.grid(row = actualRow, column = self.actualColumn)
+            
+            self.uniqueMenu[i]["headers"] = self.unique_keys2header[key]
+            self.uniqueMenu[i]["chk_value"] = Tkinter.IntVar()
+            
+            newChk = Tkinter.Checkbutton(self.page, variable = self.uniqueMenu[i]["chk_value"]  )
+            newChk.grid(row = actualRow, column = self.actualColumn + 1)
+            
+            actualRow += 1
+        
+        
+        countButton = Tkinter.Button(self.page, text = "Count", width = 8, command = self.countUnique)
+        countButton.grid(row = actualRow, column = self.actualColumn , columnspan =2)
+        
+        actualRow += 1
+        
+        self.uniqueCountEntry = Tkinter.Entry(self.page, width = 8)
+        self.uniqueCountEntry.grid(row = actualRow, column = self.actualColumn, columnspan = 2)
+        self.uniqueCountEntry.configure(state = "readonly")
+        
+        actualRow += 1
+        
+        leaveOnlyButton = Tkinter.Button(self.page, text = "Leave only", width = 8, command = self.leaveOnlyUnique)
+        leaveOnlyButton.grid(row = actualRow, column = self.actualColumn, columnspan = 2)
+        
+        
+        self.actualColumn += 2
+        
+    def getSelectedUniqueHeaders(self):
+        uniqueHeaders = []
+        
+        for uniqueData in self.uniqueMenu:
+            if uniqueData["chk_value"].get() > 0:
+                uniqueHeaders += uniqueData["headers"]
+                
+        return uniqueHeaders
+    
+    def countUnique(self):
+        uniqueHeaders = self.getSelectedUniqueHeaders()
+        
+        if not "filtered" in self.logData:
+            return
+        
+        uniqueData = self.logData["filtered"].drop_duplicates(subset = uniqueHeaders)
+        rowNumber = uniqueData.shape[0]
+        
+        self.uniqueCountEntry.configure(state = "normal")
+        self.uniqueCountEntry.delete(0,"end")
+        self.uniqueCountEntry.insert(0, str(rowNumber))
+        self.uniqueCountEntry.configure(state = "readonly")
+    
+    def leaveOnlyUnique(self):
+        uniqueHeaders = self.getSelectedUniqueHeaders()
+        
+        if not "filtered" in self.logData:
+            return
+        
+        uniqueData = self.logData["filtered"].drop_duplicates(subset = uniqueHeaders)
+        self.printFilterResults(uniqueData)
             
     def gridSaveFiltered(self):
         self.but_saveFiltered = Tkinter.Button(self.page, width = 7, command = self.saveFiltered, text = "Save filtered")
@@ -584,7 +668,7 @@ class SupramolecularGUI:
         self.tree_data.grid(row = 30, column = 0, columnspan = 40)
         
     def getState(self):
-        state = { "numerical_parameters" : {}, "checkboxes" : {} , "additionalCheckboxes" : {}, "listParameters" : {} }
+        state = { "numerical_parameters" : {}, "checkboxes" : {} , "additionalCheckboxes" : {}, "listParameters" : {}  }
         
         for label in self.numericalParameters:
             state["numerical_parameters"][label] = {}
@@ -600,7 +684,7 @@ class SupramolecularGUI:
             
         for obj in self.additionalCheckboxes:
             state["additionalCheckboxes"][obj["label"]] = obj["chkVar"].get()
-        
+            
             
         return state
     

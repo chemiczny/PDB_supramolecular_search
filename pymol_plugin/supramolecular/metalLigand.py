@@ -42,8 +42,12 @@ class MetalLigandGUI(SupramolecularGUI):
         self.setAdditionalCheckboxes( [ { "label" : "Only anions as ligands", "func" : onlyAnions } ,
                                           { "label" : "Only complexes", "func" : onlyComplexes } ]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], "Metal" : [ "Cation Code" , "Cation chain", "Cation id"  ],
+                                   "Ligand" : [ "Anion code" , "Anion chain", "Anion id" ]} , [ "PDB" , "Metal" , "Ligand" ] )
+    
         self.arrowName = "MetalLigandArrow"
         self.arrowColor = "red orange"
+        self.numOfSortingMenu = 1
         
     def getValues(self, rowId, row):
         return ( rowId, row["PDB Code"] , row["Cation code"], 

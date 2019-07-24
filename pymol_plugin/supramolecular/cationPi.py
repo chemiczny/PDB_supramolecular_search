@@ -36,6 +36,11 @@ class CationPiGUI(SupramolecularGUI):
                                            { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ,
                                            { "label" : "No AA in cations", "func" : noAAinCations }]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], "Pi acid" : [ "Pi acid Code" , "Pi acid chain", "Piacid id"  ],
+                                   "Cation" : [ "Cation code" , "Cation chain", "Cation id" ]} ,
+                                    [ "PDB" , "Pi acid" , "Cation"  ] )
+   
+    
         self.arrowName = "cationPiArrow"
         self.arrowColor = "blue orange"
     

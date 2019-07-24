@@ -36,6 +36,11 @@ class HBondsGUI(SupramolecularGUI):
                                        { "label" : "No NU in acceptors", "func" : noNUinAnions } ,
                                           { "label" : "No NU in donors", "func" : noNUinHDonors } ]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], 
+                                   "Acceptor" : [ "Anion code" , "Anion chain", "Anion id" ], "Acceptor id" : ["Anion group id"] ,
+                                   "Donor" :  [ "Donor code" , "Donor chain", "Donor id" ] } , [ "PDB" , "Acceptor" , "Acceptor id" , "Donor" ] )
+    
+    
         self.arrowName = "HBondArrow"
         self.arrowColor = "red violet"
         

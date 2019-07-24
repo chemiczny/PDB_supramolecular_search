@@ -33,6 +33,9 @@ class PiPiGUI(SupramolecularGUI):
                                          { "label" : "No NU in Pi 1", "func" : noNUinPiAcids },
                                          { "label" : "No NU in Pi 2", "func" : noNUinPiRes } ]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], "Pi 1" : [ "Pi acid Code" , "Pi acid chain", "Piacid id"  ],
+                                   "Pi 2" : [ "Pi res code" , "Pi res chain", "Pi res id" ] } , [ "PDB" , "Pi 1" , "Pi 2"] )
+    
         self.arrowName = "piPiArrow"
         self.arrowColor = "blue green"
     

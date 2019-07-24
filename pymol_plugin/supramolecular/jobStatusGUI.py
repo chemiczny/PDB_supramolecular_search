@@ -501,6 +501,11 @@ class JobStatusGUI:
         for i, data in enumerate(self.customButtonsData):
             if "text" in data:
                 self.customButtons[i].config(text = data["text"])
+                
+        lenDiff = len(self.customButtons) - len(self.customButtonsData)
+        if lenDiff > 0:
+            for i in range(lenDiff):
+                self.customButtonsData.append({})
 
     def grid(self):
         self.gridJobMonitor()

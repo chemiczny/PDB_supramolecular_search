@@ -38,6 +38,12 @@ class AnionCationGUI(SupramolecularGUI):
                                           { "label" : "No NU in anions", "func" : noNUinAnions },
                                           { "label" : "No AA in cations", "func" : noAAinCations }]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], "Cation" : [ "Cation code" , "Cation chain", "Cation id"  ],
+                                   "Anion" : [ "Anion code" , "Anion chain", "Anion id" ] } ,
+                                [ "PDB" , "Cation" , "Anion" ] )
+   
+    
+    
         self.arrowName = "AnionCationArrow"
         self.arrowColor = "red orange"
         

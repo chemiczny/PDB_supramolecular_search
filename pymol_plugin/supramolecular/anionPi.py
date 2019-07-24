@@ -37,6 +37,10 @@ class AnionPiGUI(SupramolecularGUI):
                                          { "label" : "No NU in Pi acids", "func" : noNUinPiAcids } ,
                                          { "label" : "No NU in anions", "func" : noNUinAnions } ]  )
     
+        self.setUniqueParameters( { "PDB" : ["PDB Code"], "Pi acid" : [ "Pi acid Code" , "Pi acid chain", "Piacid id"  ],
+                                   "Anion" : [ "Anion code" , "Anion chain", "Anion id" ], "Anion id" : ["Anion group id"] ,
+                                   "Ring id" : ["CentroidId"] } , [ "PDB" , "Pi acid" , "Ring id", "Anion" , "Anion id" ] )
+    
         self.arrowName = "anionPiArrow"
         self.arrowColor = "blue red"
     
