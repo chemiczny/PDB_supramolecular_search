@@ -189,8 +189,8 @@ class CifAnalyser:
         
     def determineStructureType(self, structure):
         allAA = ["ALA", "CYS","GLY","ILE","LEU","MET","ASN","PRO","GLN","SER","THR","VAL" ,"ASP","GLU", "PHE", "HIS", "TRP", "TYR" ,"LYS","ARG"]
-        DNANU = ["A","G","T","C","U","I" ]
-        RNANU = [ "DA", "DC", "DG", "DT", "DI" ]
+        DNANU = [ "DA", "DC", "DG", "DT", "DI" ]
+        RNANU = ["A","G","T","C","U","I" ]
 
         aaCounter = 0
         dnaCounter = 0
