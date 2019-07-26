@@ -46,6 +46,7 @@ class SupramolecularGUI:
         self.sorting_keys2header = {}
         self.unique_keys2header = {}
         self.unique_keysOrder = []
+        self.interactionButtons = []
         self.headers = []
         self.currentMolecule = { "PdbCode" : None  }
         self.additionalCheckboxes = []
@@ -68,6 +69,7 @@ class SupramolecularGUI:
         self.gridSearchWidgets()
         self.gridTree()
         self.gridSaveFiltered()
+        self.gridInteractionButtons()
     
     def gridLogFilePart(self):
         self.but_log = Tkinter.Button(self.page, text = "Load log file", command = self.getLogFile, width = 10)
@@ -217,6 +219,19 @@ class SupramolecularGUI:
             self.listParameters[parameter]["buttonSelDel"].grid(row = 16, column = self.actualColumn + 1)
             
             self.actualColumn += 2
+            
+    def gridInteractionButtons(self):
+        if not self.interactionButtons:
+            return
+        
+        currentCol = 18
+        for button in self.interactionButtons:
+            name = button["name"]
+            
+            newButton = Tkinter.Button(self.page, text = name, command = lambda arg = button["headers"] : self.showMoreInteractions(arg))
+            newButton.grid(row = 25, column = currentCol, columnspan = 2)
+            currentCol += 2
+        
             
     def moveSelectedFromListbox(self, event, key):
         listIndex = self.listParameters[key]["listbox"].curselection()
@@ -456,6 +471,92 @@ class SupramolecularGUI:
 
         self.showRange()
         self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
+        
+    def showMoreInteractions(self, headers):
+        if not "filtered" in self.logData:
+            return
+        currentSel = self.tree_data.focus()
+        if currentSel == "" :
+            return
+        
+        rowId = self.tree_data.item(currentSel)["values"][0] 
+        data = self.logData["filtered"].iloc[[rowId]]
+        pdbCode = data["PDB Code"].values[0]
+        
+        
+        if self.currentMolecule["PdbCode"] and self.currentMolecule["PdbCode"] != pdbCode:
+            cmd.delete(self.currentMolecule["PdbCode"])
+            
+        actual_objects = cmd.get_object_list()
+        
+        for obj in actual_objects:
+            if obj.upper() != pdbCode.upper():
+                cmd.delete(obj)
+            
+        if self.currentMolecule["PdbCode"] != pdbCode:
+            if self.logData["cifDir"] != None:
+                potentialPaths = [ path.join( self.logData["cifDir"] ,  pdbCode.lower() +".cif" ), path.join( self.logData["cifDir"] ,  pdbCode.upper() +".cif" )  ]
+                cifFound = False
+                for filePath in potentialPaths:
+                    if path.isfile(filePath):
+                        cmd.load(filePath)
+                        cifFound = True
+                        break
+                if not cifFound:
+                    cmd.fetch(pdbCode)
+            else:    
+                cmd.fetch(pdbCode)
+        
+        frame = int(data["Model No"].values[0])
+        if frame != 0:
+            cmd.frame(frame+1)
+            
+        cmd.hide("everything")
+        interactions2print = self.logData["filtered"]
+        for header in headers:
+            interactions2print = interactions2print[ interactions2print[header] == data[header].values[0] ]
+            
+
+        selection = ""
+        self.deleteArrows()
+        
+        for index, row in interactions2print.iterrows():
+            arrowBegin, arrowEnd = self.getArrowFromRow(row)
+            uniqueArrowName = self.arrowName+"A"+str(index)
+            cgo_arrow(arrowBegin, arrowEnd, 0.1, name = uniqueArrowName, color = self.arrowColor )
+            
+            if selection == "":
+                selection = "(" + self.getSelectionFromRow(row) + " ) "
+            else:
+                selection += "or (" + self.getSelectionFromRow(row) + " ) "
+                    
+        selectionName = "suprSelection"
+        cmd.select(selectionName, selection)
+        cmd.show( "sticks" , selectionName  )
+        cmd.center(selectionName)
+        cmd.zoom(selectionName)
+        
+        if self.chkvar_around.get() > 0:
+            selectionAroundName = "suprAround"
+            radius = self.ent_around.get()
+            try:
+                radius = float(radius)
+            except:
+                return
+            cmd.select( selectionAroundName,  "byres ( suprSelection around "+str(radius)+" ) " )
+            cmd.show("lines", selectionAroundName)
+            self.logData["displayingAround"] = True
+        else:
+            self.logData["displayingAround"] = False
+    
+        self.logData["displaying"] = True
+        self.currentMolecule["PdbCode"] = pdbCode
+        
+        cmd.deselect()
+        
+        self.actualDisplaying["rowData"] = data
+        self.actualDisplaying["selectionTime"] = time()
+        
     
     def showInteractions(self):
         if not "filtered" in self.logData:
@@ -496,6 +597,7 @@ class SupramolecularGUI:
         if frame != 0:
             cmd.frame(frame+1)
         
+        
         selection = self.getSelection(data)
         
         selectionName = "suprSelection"
@@ -507,6 +609,12 @@ class SupramolecularGUI:
         
         if self.chkvar_around.get() > 0:
             selectionAroundName = "suprAround"
+            radius = self.ent_around.get()
+            try:
+                radius = float(radius)
+            except:
+                return
+            cmd.select( selectionAroundName,  "byres ( suprSelection around "+str(radius)+" ) " )
             cmd.select( selectionAroundName,  "byres ( suprSelection around 5 ) " )
             cmd.show("lines", selectionAroundName)
             self.logData["displayingAround"] = True

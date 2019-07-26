@@ -140,6 +140,7 @@ def writeAnionPiPlanarHeader( ):
     resultsFile.write("CentroidId\t")
     resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion group id\t")
     resultsFile.write("Angle\t")
+    resultsFile.write("DirectionalAngle\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Anion group x coord\tAnion group y coord\tAnion group z coord\t")
     resultsFile.write("Model No\n")
@@ -266,6 +267,8 @@ def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex,
     centroidCoords = centroid["coords"]  
     anionGroupCoords = getAverageCoords( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
     
+    directionalAngle = calcDirectionalVector(planeData, centroid)
+    
     resultsFile.write(PDBcode+"\t")
     resultsFile.write(ligandCode+"\t")
     resultsFile.write(ligandChain+"\t")
@@ -276,6 +279,7 @@ def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex,
     resultsFile.write(anionId+"\t")
     resultsFile.write(str(anionGroupId)+"\t")
     resultsFile.write(str(angle)+"\t")
+    resultsFile.write(str(directionalAngle)+"\t")
     
     resultsFile.write(str(centroidCoords[0])+"\t")
     resultsFile.write(str(centroidCoords[1])+"\t")
@@ -288,7 +292,44 @@ def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex,
     resultsFile.write(str(modelIndex)+"\n")
     resultsFile.close()
     
-def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, anionGroupId, fileId ):
+def calcDirectionalVector(planeData, centroid):
+    vecCoords = []
+    for pointData in planeData.directionalVector:
+        kind = list(pointData.keys())[0]
+        if kind == "atom":
+            vecCoords.append( pointData[kind].get_coord() )
+        elif kind == "center":
+            atomsList = pointData[kind]
+            vecCoords.append( getAverageCoords( atomsList, list( range(len(atomsList)))) )
+        elif kind == "closest":
+            atomsList = pointData[kind]
+            
+            minDist = 1000
+            closestAtom = None
+            
+            for atom in atomsList:
+                dist = atomDistanceFromCentroid(atom, centroid)
+                
+                if dist < minDist:
+                    minDist = dist
+                    closestAtom = atom
+                    
+            vecCoords.append(closestAtom.get_coord())
+
+            
+    vec = normalize( vecCoords[1] - vecCoords[0] )
+    vec2 = normalize( np.array(centroid["coords"]) - vecCoords[1] )
+    
+    inner_prod = np.inner( vec , vec2)
+    if abs(inner_prod) > 1.0:
+        if abs(inner_prod) < 1.1:
+            return 0.0
+        else:
+            return 666.0
+        
+    return degrees( acos(inner_prod) )
+    
+def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, anionGroupId, fileId, symmetrizeAlpha = False ):
     resultsFileName = "logs/linearAnionPi.log"
     if fileId != None:
         resultsFileName = "logs/linearAnionPi"+str(fileId)+".log"
@@ -310,6 +351,9 @@ def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, 
             angle = 666
     else:
         angle = degrees( acos(inner_prod) )
+        
+    if symmetrizeAlpha and angle > 90.0:
+        angle = 180 - angle
     
     atom = lineData.atomsInvolved[0]
     anion = atom.get_parent()

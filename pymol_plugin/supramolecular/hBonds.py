@@ -38,8 +38,10 @@ class HBondsGUI(SupramolecularGUI):
     
         self.setUniqueParameters( { "PDB" : ["PDB Code"], 
                                    "Acceptor" : [ "Anion code" , "Anion chain", "Anion id" ], "Acceptor id" : ["Anion group id"] ,
-                                   "Donor" :  [ "Donor code" , "Donor chain", "Donor id" ] } , [ "PDB" , "Acceptor" , "Acceptor id" , "Donor" ] )
+                                   "Donor" :  [ "Donor code" , "Donor chain", "Donor id" ] , "Model" :  [ "Model No" ]  } , [ "PDB" , "Acceptor" , "Acceptor id" , "Donor", "Model" ] )
     
+        self.interactionButtons = [ { "name" : "All acc int." , "headers" : ["PDB Code", "Anion code", "Anion chain", "Anion id", "Model No"] },
+                                     { "name" : "All don int." , "headers" : [ "PDB Code", "Donor code" , "Donor chain", "Donor id", "Model No" ]  }]
     
         self.arrowName = "HBondArrow"
         self.arrowColor = "red violet"

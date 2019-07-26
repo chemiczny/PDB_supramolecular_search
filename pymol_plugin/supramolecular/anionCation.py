@@ -39,9 +39,11 @@ class AnionCationGUI(SupramolecularGUI):
                                           { "label" : "No AA in cations", "func" : noAAinCations }]  )
     
         self.setUniqueParameters( { "PDB" : ["PDB Code"], "Cation" : [ "Cation code" , "Cation chain", "Cation id"  ],
-                                   "Anion" : [ "Anion code" , "Anion chain", "Anion id" ] } ,
-                                [ "PDB" , "Cation" , "Anion" ] )
+                                   "Anion" : [ "Anion code" , "Anion chain", "Anion id" ] , "Model" : [ "Model No" ] } ,
+                                [ "PDB" , "Cation" , "Anion", "Model" ] )
    
+        self.interactionButtons = [ { "name" : "All cat. int." , "headers" : ["PDB Code", "Cation code", "Cation chain", "Cation id", "Model No"] },
+                                     { "name" : "All anion int." , "headers" : [ "PDB Code", "Anion code" , "Anion chain", "Anion id", "Model No" ]  }]
     
     
         self.arrowName = "AnionCationArrow"

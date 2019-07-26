@@ -15,15 +15,16 @@ from simpleFilters import noAAinPiAcids, noAAinAnions, noNUinPiAcids, noNUinAnio
 class PlanarAnionPiGUI(SupramolecularGUI):
     def __init__(self, page):
         SupramolecularGUI.__init__(self, page)
-        self.setNumericalParameters({ "alpha" : { "header" : "Angle" } }  )
+        self.setNumericalParameters({ "alpha" : { "header" : "Angle" }  , "dir angle" : { "header" : "DirectionalAngle" } }  )
     
         self.setListParameters( { "Pi acid" : { "header" : "Pi acid Code" }, 
                       "Anions" : { "header" : "Anion code" } , 
                       "PDB" : { "header" : "PDB Code" } }  )
     
-        self.setSortingParameters({  "Angle" : "Angle", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" }, [   "Angle" ,  "Pi acid" ,"Anion" ] )
+        self.setSortingParameters({  "Angle" : "Angle", "Pi acid" : "Pi acid Code" ,"Anion" : "Anion code" , "Dir angle" : "DirectionalAngle" },
+                                  [   "Angle" , "Dir angle" ,  "Pi acid" ,"Anion" ] )
     
-        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id" ,"Anion gr. id",  "alpha" ])
+        self.setTreeData([ "ID" , "PDB" , "Pi acid", "Pi acid id", "Anion", "Anion id" ,"Anion gr. id",  "alpha", "dir angle" ])
      
         self.setAdditionalCheckboxes( [ { "label" : "No AA in Pi acids", "func" : noAAinPiAcids } ,
                                          { "label" : "No AA in anions" ,  "func" : noAAinAnions } ,
@@ -32,7 +33,10 @@ class PlanarAnionPiGUI(SupramolecularGUI):
     
         self.setUniqueParameters( { "PDB" : ["PDB Code"], "Pi acid" : [ "Pi acid Code" , "Pi acid chain", "Piacid id"  ],
                                    "Anion" : [ "Anion code" , "Anion chain", "Anion id" ], "Anion id" : ["Anion group id"] ,
-                                   "Ring id" : ["CentroidId"] } , [ "PDB" , "Pi acid" , "Ring id", "Anion" , "Anion id" ] )
+                                   "Ring id" : ["CentroidId"] ,  "Model" : [ "Model No" ] } , [ "PDB" , "Pi acid" , "Ring id", "Anion" , "Anion id" , "Model" ]  )
+    
+        self.interactionButtons = [ { "name" : "All anion int." , "headers" : ["PDB Code", "Anion code", "Anion chain", "Anion id", "Model No"] },
+                                     { "name" : "All pi acid int." , "headers" : [ "PDB Code", "Pi acid Code" , "Pi acid chain", "Piacid id", "Model No" ]  }]
     
         self.arrowName = "planarAnionPiArrow"
         self.arrowColor = "blue red"
@@ -41,7 +45,7 @@ class PlanarAnionPiGUI(SupramolecularGUI):
         return ( rowId, row["PDB Code"] , row["Pi acid Code"], 
                                                         row["Pi acid chain"]+str(row["Piacid id"]) , row["Anion code"], 
                                                         row["Anion chain"] + str(row["Anion id"]), row["Anion group id"],
-                                                        str(row["Angle"])[:4]  )
+                                                        str(row["Angle"])[:4] , str(row["DirectionalAngle"])[:4]  )
         
     def getSelection(self,  data):
         res1Id = data["Piacid id"].values[0]

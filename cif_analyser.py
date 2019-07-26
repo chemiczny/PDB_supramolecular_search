@@ -379,6 +379,8 @@ class CifAnalyser:
                     writeAnionPiPlanarResults(ligand, centroid, self.PDBcode, geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
                 elif geometricProperty.kind == "line":
                     writeAnionPiLinearResults(ligand, centroid, self.PDBcode , geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
+                elif geometricProperty.kind == "lineSymmetric":
+                    writeAnionPiLinearResults(ligand, centroid, self.PDBcode , geometricProperty, modelIndex, geometricPropertyKey, self.fileId, True)
 
     def findCationComplex(self, cation, ns, ligand):
         if hasattr(cation, "analysedAsComplex"):

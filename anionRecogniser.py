@@ -33,9 +33,10 @@ class AnionData:
         
         
 class Property:
-    def __init__(self, kind, atomsInvolved):
+    def __init__(self, kind, atomsInvolved, directionalVector = []):
         self.kind = kind
         self.atomsInvolved = atomsInvolved
+        self.directionalVector = directionalVector
 
 
 class AnionRecogniser:
@@ -226,15 +227,26 @@ class AnionRecogniser:
             self.properties2calculatePack[ self.freeAnionId ] = []
             
             for property2calc in graphTemplate.graph["properties2measure"]:
-                kind = list(property2calc.keys())[0]
+                kind = property2calc["kind"]
                 
-                atomsInvolvedIndexes = property2calc[kind]
+                atomsInvolvedIndexes = property2calc["atoms"]
                 atomsInvolved = []
                 
                 for aInd in atomsInvolvedIndexes:
                     atomsInvolved.append( atoms[reverseMapping[aInd]] )
                     
-                self.properties2calculatePack[ self.freeAnionId ].append( Property(kind, atomsInvolved) )
+                directionalVector = []
+                if kind == "plane":
+                    for pointData in property2calc["directionalVector"]:
+                        
+                        key = list(pointData.keys())[0]
+                        if key == "atom":
+                            directionalVector.append( { "atom" : atoms[reverseMapping[ pointData[key] ]] } )
+                        else:
+                            atomsRequired = [ atoms[ reverseMapping[atomInd] ] for atomInd in pointData[key] ]
+                            directionalVector.append( { key : atomsRequired } )
+                    
+                self.properties2calculatePack[ self.freeAnionId ].append( Property(kind, atomsInvolved, directionalVector) )
         
         self.freeAnionId += 1
         return True, anionGroup

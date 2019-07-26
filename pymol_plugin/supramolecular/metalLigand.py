@@ -43,7 +43,10 @@ class MetalLigandGUI(SupramolecularGUI):
                                           { "label" : "Only complexes", "func" : onlyComplexes } ]  )
     
         self.setUniqueParameters( { "PDB" : ["PDB Code"], "Metal" : [ "Cation Code" , "Cation chain", "Cation id"  ],
-                                   "Ligand" : [ "Anion code" , "Anion chain", "Anion id" ]} , [ "PDB" , "Metal" , "Ligand" ] )
+                                   "Ligand" : [ "Anion code" , "Anion chain", "Anion id" ] , "Model" :  [ "Model No" ] } , [ "PDB" , "Metal" , "Ligand", "Model" ] )
+    
+        self.interactionButtons = [ { "name" : "All metal int." , "headers" : ["PDB Code", "Cation code", "Cation chain", "Cation id", "Model No"] }]
+ 
     
         self.arrowName = "MetalLigandArrow"
         self.arrowColor = "red orange"
