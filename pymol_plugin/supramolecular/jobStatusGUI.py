@@ -492,7 +492,7 @@ class JobStatusGUI:
             self.refreshCustomButtons()
             
         if "downloadDir" in state:
-            self.downloadEntry.configure("normal")
+            self.downloadEntry.configure(state = "normal")
             self.downloadEntry.delete(0, "end")
             self.downloadEntry.insert("end", state["downloadDir"])
             self.downloadEntry.configure(state = "readonly")
