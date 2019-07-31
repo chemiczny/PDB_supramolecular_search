@@ -13,8 +13,8 @@ from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinAnions, noNUinAnions, noNUinHDonors, noAAinHDonors
 
 class HBondsGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters({ "R" : {"header" : "Distance Don Acc"} , "RH" : { "header" : "Distance H Acc" } , "Angle" : { "header" : "Angle" }  })
 
         self.setListParameters({ "Acceptor" : { "header" : "Anion code" }, 

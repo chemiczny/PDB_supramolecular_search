@@ -115,6 +115,17 @@ def fetchdialog(simulation = False):
     ent_cifDir.configure(state = "readonly")
     ent_cifDir.grid(row = 2, column = 7, columnspan = 3)
     
+    def setParellelSelection():
+        state = var_parallelSelection.get()
+        supramolecularComposition.setParallelSelection(state)
+    
+    lab_parallelSelection = Tkinter.Label(self, text = "Parallel selection")
+    lab_parallelSelection.grid(row = 2, column = 10)
+    
+    var_parallelSelection = Tkinter.IntVar()
+    chk_parallelSelection = Tkinter.Checkbutton(self, variable = var_parallelSelection ,command = setParellelSelection)
+    chk_parallelSelection.grid(row =2, column = 11)
+    
     actionMenu = {}
     
     column = 1
@@ -166,15 +177,6 @@ def fetchdialog(simulation = False):
     def mergeResults():
         supramolecularComposition.merge(actionMenu)
             
-        
-#    def countSubstringInList( list2check, substring ):
-#        found = 0
-#        
-#        for el in list2check:
-#            if substring in list2check:
-#                found +=1
-#                
-#        return found
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)
     but_merge.grid(row = 5, column = 9, columnspan = 2)

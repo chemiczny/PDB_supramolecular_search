@@ -14,8 +14,8 @@ from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinAnions, noNUinAnions, noAAinCations
 
 class AnionCationGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters({ "R" : {"header" : "Distance"} ,
                                      "Lat dif" : { "header" : "Latitude diff" } })
 

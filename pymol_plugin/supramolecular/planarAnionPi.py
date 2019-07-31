@@ -13,8 +13,8 @@ from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinPiAcids, noAAinAnions, noNUinPiAcids, noNUinAnions
 
 class PlanarAnionPiGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters({ "alpha" : { "header" : "Angle" }  , "dir angle" : { "header" : "DirectionalAngle" } }  )
     
         self.setListParameters( { "Pi acid" : { "header" : "Pi acid Code" }, 

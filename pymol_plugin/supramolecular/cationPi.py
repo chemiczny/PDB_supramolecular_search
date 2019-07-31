@@ -13,8 +13,8 @@ from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinPiAcids, noNUinPiAcids, noAAinCations
 
 class CationPiGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
                            "alpha" : { "header" : "Angle" } , "Chain size" : {"header" : "RingChain" } } )
     

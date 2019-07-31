@@ -37,14 +37,14 @@ else:
     
 class SupramolecularComposition:
     def __init__(self, pageAnionPi, pagePiPi, pageCationPi, pageAnionCation, pageHBonds, pageMetalLigand, pageLinearAnionPi, pagePlanarAnionPi, pageQM, pageJobStatus):
-        self.guiAnionPi = AnionPiGUI(pageAnionPi)
-        self.guiPiPi = PiPiGUI(pagePiPi)
-        self.guiCationPi = CationPiGUI( pageCationPi)
-        self.guiAnionCation = AnionCationGUI( pageAnionCation)
-        self.guiHBonds = HBondsGUI( pageHBonds )
-        self.guiMetalLigand = MetalLigandGUI(pageMetalLigand)
-        self.guiLinearAnionPi = LinearAnionPiGUI(pageLinearAnionPi)
-        self.guiPlanarAnionPi = PlanarAnionPiGUI(pagePlanarAnionPi)
+        self.guiAnionPi = AnionPiGUI(pageAnionPi, self.parallelSelect, "AnionPi")
+        self.guiPiPi = PiPiGUI(pagePiPi, self.parallelSelect, "PiPi")
+        self.guiCationPi = CationPiGUI( pageCationPi, self.parallelSelect, "CationPi")
+        self.guiAnionCation = AnionCationGUI( pageAnionCation, self.parallelSelect, "AnionCation")
+        self.guiHBonds = HBondsGUI( pageHBonds , self.parallelSelect, "HBonds")
+        self.guiMetalLigand = MetalLigandGUI(pageMetalLigand, self.parallelSelect, "MetalLigand")
+        self.guiLinearAnionPi = LinearAnionPiGUI(pageLinearAnionPi, self.parallelSelect, "LinearAnionPi")
+        self.guiPlanarAnionPi = PlanarAnionPiGUI(pagePlanarAnionPi, self.parallelSelect, "PlanarAnionPi")
         self.guiQM = QMGUI(pageQM)
         self.guiJobStatus = JobStatusGUI(pageJobStatus)
             
@@ -147,6 +147,7 @@ class SupramolecularComposition:
             mergingKeys = list(set(self.actualKeys) & set(headers) )
             tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
             mergedData = pd.merge( self.actionLabels2Objects[ key ].logData["filtered"], tempDataFrame, on = mergingKeys )
+            self.actionLabels2Objects[ key ].logData["filtered"] = mergedData
             self.actionLabels2Objects[ key ].printFilterResults( mergedData )
             self.actionLabels2Objects[ key ].dataIsMerged = True
             
@@ -290,4 +291,48 @@ class SupramolecularComposition:
         if file2save:
             with open(file2save, 'w') as fp:
                 json.dump(state, fp)
+                
+    def setParallelSelection(self, state):
+        if state == 1:
+            for gui in self.guis:
+                gui.parallelSelection = True
+        else:
+            for gui in self.guis:
+                gui.parallelSelection = False
+    
+    def getHeadersForGUI(self, guiKey):
+        lastDataHeaders = [ "PDB Code", "Model No" ] 
+        
+        headersId ={ 
+                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
+                    "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
+                    "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
+                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
+                    "Metal" : ["Cation code", "Cation chain", "Cation id"],
+                    "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
+        
+        for headerKey in headersId:
+            if headerKey in guiKey:
+                lastDataHeaders += headersId[headerKey]
+                
+        return lastDataHeaders
+                
+    def parallelSelect(self, name, selectedRow):
+        selectedHeaders = self.getHeadersForGUI(name)
+        for guiName in self.actionLabels2Objects:
+            if guiName == name:
+                continue
+            
+            if not self.actionLabels2Objects[guiName].dataIsMerged:
+                continue
+            
+            headers = self.getHeadersForGUI(guiName)
+            commonHeaders = set(selectedHeaders) & set(headers)
+            
+            header2value = {}
+            
+            for head in commonHeaders:
+                header2value[head] = selectedRow[head].values[0]
+                
+            self.actionLabels2Objects[guiName].selectRowInTree(header2value)
             

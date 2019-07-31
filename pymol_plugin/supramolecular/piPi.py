@@ -13,8 +13,8 @@ from supramolecularGUI import SupramolecularGUI
 from simpleFilters import noAAinPiAcids, noAAinPiRes, noNUinPiAcids, noNUinPiRes
 
 class PiPiGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters( { "R" : {"header" : "Distance"}, "h" : {"header" : "h"}, "x" : { "header" : "x" },
                            "alpha" : { "header" : "Angle" }, "theta" : { "header" : "theta" } , "omega" : { "header" : "omega" }  }  )
     

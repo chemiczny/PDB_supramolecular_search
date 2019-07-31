@@ -19,8 +19,8 @@ def onlyComplexes(actualData):
     return actualData[ actualData["Complex"] == True ]
 
 class MetalLigandGUI(SupramolecularGUI):
-    def __init__(self, page):
-        SupramolecularGUI.__init__(self, page)
+    def __init__(self, page, parallelSelectionFunction, name):
+        SupramolecularGUI.__init__(self, page, parallelSelectionFunction, name)
         self.setNumericalParameters({ "R" : {"header" : "Distance"}  })
 
         self.setListParameters({ "Cation" : { "header" : "Cation code" }, 

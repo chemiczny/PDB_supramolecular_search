@@ -9,7 +9,7 @@ Created on Sun Jul 22 19:39:10 2018
 import pandas as pd
 import sys
 from os import path
-from time import time
+from time import time, sleep
 
 try:
     from pymol import cmd
@@ -36,7 +36,8 @@ def isStrInt( str2check):
         return False
     
 class SupramolecularGUI:
-    def __init__(self, page):
+    def __init__(self, page, parallelSelectFuncion, name):
+        self.name = name
         self.page = page
         self.logData= {"logFile": False, "data" : None, 
                "cifDir" : None, "displaying" : False, "displayingAround" : False}
@@ -53,6 +54,10 @@ class SupramolecularGUI:
         self.dataIsMerged = False
         self.arrowName = "DefaultArrow"
         self.arrowColor = "blue red"
+        
+        self.parallelSelection = False
+        self.parallelSelectFunction = parallelSelectFuncion
+        self.externalSelection = False
         
         self.numOfSortingMenu = 2
         
@@ -748,7 +753,7 @@ class SupramolecularGUI:
         
         self.ent_rangeStop = Tkinter.Entry(self.page, width = 8)
         self.ent_rangeStop.grid(row = 25, column = 6, columnspan = 2)
-        self.ent_rangeStop.insert("end", 1000)
+        self.ent_rangeStop.insert("end", 100)
         
         self.but_showInteraction = Tkinter.Button(self.page, width = 8, command = self.showInteractions, text = "Show interact")
         self.but_showInteraction.grid(row = 25, column =14, columnspan=2)
@@ -770,10 +775,76 @@ class SupramolecularGUI:
             return
         
         self.tree_data = ttk.Treeview(self.page, columns = self.headers, show = "headings", heigh = 15 )
+        self.tree_data.bind("<<TreeviewSelect>>", self.treeParallelSelection)
+#        self.tree_data.bind("<Button-1>", self.treeParallelSelection)
         for header in self.headers:
             self.tree_data.heading(header, text = header)
             self.tree_data.column(header, width = 70)
         self.tree_data.grid(row = 30, column = 0, columnspan = 40)
+        
+    def treeParallelSelection(self, event):
+        if not self.dataIsMerged:
+            return
+        
+        if not self.parallelSelection:
+            return
+        
+        if self.externalSelection:
+            self.externalSelection = False
+            return
+        
+        currentSel = event.widget.focus()
+
+        rowId = self.tree_data.item(currentSel)["values"][0] 
+        data = self.logData["filtered"].iloc[[rowId]]
+        
+        self.parallelSelectFunction(self.name, data)
+        
+    def selectRowInTree(self, valueDict):
+        actualData = self.logData["filtered"]
+        
+        selectedValues = actualData
+        
+        for head in valueDict:
+            selectedValues = selectedValues[  selectedValues[head] == valueDict[head] ]
+            
+        row2select = selectedValues.iloc[0]
+        selectedRowIndex = actualData.index.get_loc(row2select.name)
+        
+        start, stop = self.privGetRange()
+#        print(self.name)
+        if selectedRowIndex < start or selectedRowIndex > stop:
+            diff = stop - start
+            newStart = selectedRowIndex
+            newStop = newStart + diff
+            
+            dataLen = self.logData["filtered"].shape[0]
+            if newStop > dataLen:
+                newStop = dataLen
+                newStart = dataLen - diff
+                
+            self.ent_rangeStart.delete(0, "end")
+            self.ent_rangeStart.insert("end", str(newStart))
+            self.ent_rangeStop.delete(0, "end")
+            self.ent_rangeStop.insert("end", str(newStop))
+            
+            self.privShowRange(newStart, newStop)
+            
+            start = newStart
+            stop = newStop
+            
+        treeviewLen = len(self.tree_data.get_children())
+        itemId = self.tree_data.get_children()[selectedRowIndex-start]
+        self.tree_data.selection_set(itemId)
+#            self.tree_data.focus_set(itemId)
+#            self.tree_data.focus(itemId)
+        fraction = float(selectedRowIndex-start)/treeviewLen
+#        self.tree_data.yview_moveto( 0 )
+        self.tree_data.yview_moveto(fraction)
+#        self.tree_data.yview_scroll()
+            
+        self.externalSelection = True
+            
         
     def getState(self):
         state = { "numerical_parameters" : {}, "checkboxes" : {} , "additionalCheckboxes" : {}, "listParameters" : {}  }
