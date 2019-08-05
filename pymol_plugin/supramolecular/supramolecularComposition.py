@@ -63,15 +63,7 @@ class SupramolecularComposition:
         
         self.actualKeys = []
         
-    def merge(self, actionMenu):
-        headersId ={ 
-                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
-                    "Anion" : ["Anion code", "Anion chain" , "Anion id" ] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
-                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
-                    "Metal" : ["Cation code", "Cation chain", "Cation id"],
-                    "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
-        
+    def merge(self, actionMenu):        
         selectedData = []
         data2use = {}
         
@@ -99,15 +91,10 @@ class SupramolecularComposition:
         dataExcluded =[]
         self.actualKeys = []
         excludedKeys = []
-        for key in selectedData:
-            headers = [ "PDB Code", "Model No" ] 
+        
+        for key in selectedData:                
+            headers = self.getHeadersForGUI(key)
             
-            for headerKey in headersId:
-                if headerKey in key:
-                    headers += headersId[headerKey]
-                    
-            if "Anion" in key and "Cation" in key:
-                headers += headersId["Pi"]
             
             if data2use[key]:
                 if len(uniqueData) == 0:
@@ -116,6 +103,7 @@ class SupramolecularComposition:
                     uniqueData = pd.merge( uniqueData,  self.actionLabels2Objects[ key ].logData["filtered"][ headers ], on = list( set(self.actualKeys) & set(headers) ))
                     uniqueData = uniqueData.drop_duplicates()
                 self.actualKeys = list(set( self.actualKeys + headers ))
+                
             else:
                 if len(dataExcluded) == 0:
                     dataExcluded = self.actionLabels2Objects[ key ].logData["filtered"][ headers ].drop_duplicates()
@@ -124,6 +112,7 @@ class SupramolecularComposition:
                     dataExcluded = dataExcluded.drop_duplicates()
                 excludedKeys = list(set( excludedKeys + headers ))
                 
+                
         if len(dataExcluded) > 0:
             mergingKeys = list(set(self.actualKeys) & set(excludedKeys) )
             subMerged = pd.merge( uniqueData,  dataExcluded , on = mergingKeys, how='left', indicator=True )
@@ -131,14 +120,7 @@ class SupramolecularComposition:
             
         
         for key in selectedData:
-            headers = [ "PDB Code", "Model No" ] 
-            
-            for headerKey in headersId:
-                if headerKey in key:
-                    headers += headersId[headerKey]
-                    
-            if "Anion" in key and "Cation" in key:
-                headers += headersId["Pi"]
+            headers = self.getHeadersForGUI(key)
                     
             if len(uniqueData) == 0 :
                 tkMessageBox.showwarning(title = "Merging error!", message = "No data left after merge!")
@@ -183,42 +165,24 @@ class SupramolecularComposition:
             return
         
         self.deleteMergedArrows()
-        lastData = self.actionLabels2Objects[lastSelectionMenu].actualDisplaying["rowData"]
-        
-        lastDataHeaders = [ "PDB Code", "Model No" ] 
-        
-        headersId ={ 
-                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
-                    "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
-                    "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
-                    "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
-                    "Metal" : ["Cation code", "Cation chain", "Cation id"],
-                    "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
-        
-        for headerKey in headersId:
-            if headerKey in lastSelectionMenu:
-                lastDataHeaders += headersId[headerKey]
+        uniqueData = self.actionLabels2Objects[lastSelectionMenu].actualDisplaying["rowData"]
+                
+        lastDataHeaders = self.getHeadersForGUI(lastSelectionMenu)
         
         selection = ""
+        keySum = set(lastDataHeaders)
         for key in selectedData:
-            if key == lastSelectionMenu:
-                continue
+            headers = self.getHeadersForGUI(key)
             
+            mergingKeys = list(keySum & set(headers) )
+            uniqueData = pd.merge( self.actionLabels2Objects[ key ].logData["filtered"], uniqueData, on = mergingKeys )
+            keySum |= set(headers)
             
-            headers = [ "PDB Code", "Model No" ] 
-            
-            for headerKey in headersId:
-                if headerKey in key:
-                    headers += headersId[headerKey]
-                    
-            if "Anion" in key and "Cation" in key:
-                headers += headersId["Pi"]
-                    
-            mergingKeys = list(set(lastDataHeaders) & set(headers) )
-            tempDataFrame = lastData[ mergingKeys   ]
+        for key in selectedData:
+            headers = self.getHeadersForGUI(key)
+            mergingKeys = list(set(headers) & keySum)
+            tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
             mergedData = pd.merge( self.actionLabels2Objects[ key ].logData["filtered"], tempDataFrame, on = mergingKeys )
-            
-            
             for index, row in mergedData.iterrows():
                 arrowBegin, arrowEnd = self.actionLabels2Objects[ key ].getArrowFromRow(row)
                 uniqueArrowName = self.actionLabels2Objects[ key ].arrowName+"A"+str(index)
@@ -315,6 +279,9 @@ class SupramolecularComposition:
             if headerKey in guiKey:
                 lastDataHeaders += headersId[headerKey]
                 
+        if "Anion" in guiKey and "Cation" in guiKey:
+            lastDataHeaders += headersId["Pi"]
+                
         return lastDataHeaders
                 
     def parallelSelect(self, name, selectedRow):
@@ -328,7 +295,7 @@ class SupramolecularComposition:
             
             headers = self.getHeadersForGUI(guiName)
             commonHeaders = set(selectedHeaders) & set(headers)
-            
+            selectedHeaders = list(set(selectedHeaders) | set(headers))
             header2value = {}
             
             for head in commonHeaders:

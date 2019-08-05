@@ -473,7 +473,18 @@ class SupramolecularGUI:
         if anySort:
             actualData = actualData.sort_values(by = columns, ascending = ascending)
         self.logData["filtered"] = actualData
-
+        
+        start, stop = self.privGetRange()
+        
+        diff = stop - start
+        newStart = 0
+        newStop = diff
+        
+        self.ent_rangeStart.delete(0, "end")
+        self.ent_rangeStart.insert("end", str(newStart))
+        self.ent_rangeStop.delete(0, "end")
+        self.ent_rangeStop.insert("end", str(newStop))
+        
         self.showRange()
         self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
         
