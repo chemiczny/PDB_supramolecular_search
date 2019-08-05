@@ -295,7 +295,7 @@ class SupramolecularComposition:
             
             headers = self.getHeadersForGUI(guiName)
             commonHeaders = set(selectedHeaders) & set(headers)
-            selectedHeaders = list(set(selectedHeaders) | set(headers))
+#            selectedHeaders = list(set(selectedHeaders) | set(headers))
             header2value = {}
             
             for head in commonHeaders:
