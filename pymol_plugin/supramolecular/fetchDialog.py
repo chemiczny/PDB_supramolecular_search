@@ -176,6 +176,33 @@ def fetchdialog(simulation = False):
     
     def mergeResults():
         supramolecularComposition.merge(actionMenu)
+        
+    ent_recordingState = Tkinter.Entry(self, width = 20)
+    ent_recordingState.grid(row=3, column = 9, columnspan = 2)
+    ent_recordingState.insert(0, "Not recording")
+    ent_recordingState.configure(state = "readonly")
+    
+    def startRecording():
+        ent_recordingState.configure(state = "normal")
+        ent_recordingState.delete(0,"end")
+        ent_recordingState.insert(0, "Recording")
+        ent_recordingState.configure(state = "readonly")
+        
+        supramolecularComposition.startRecording()
+        
+    but_startRecording = Tkinter.Button(self, width = 20, text = "Start recording", command = startRecording )
+    but_startRecording.grid(row= 3 , column = 11, columnspan = 2)
+    
+    def stopRecording():
+        ent_recordingState.configure(state = "normal")
+        ent_recordingState.delete(0,"end")
+        ent_recordingState.insert(0, "Not recording")
+        ent_recordingState.configure(state = "readonly")
+        
+        supramolecularComposition.stopRecording()
+    
+    but_stopRecording = Tkinter.Button(self, width = 20, text = "Stop recording", command = stopRecording )
+    but_stopRecording.grid(row = 4, column = 11, columnspan = 2)
             
     
     but_merge = Tkinter.Button(self, width = 20, text = "Merge!", command = mergeResults)

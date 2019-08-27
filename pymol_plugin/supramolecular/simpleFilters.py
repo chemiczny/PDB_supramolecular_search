@@ -5,6 +5,8 @@ Created on Fri Aug  3 10:37:23 2018
 
 @author: michal
 """
+import pandas as pd
+
 cationicAA = ["LYS","ARG"]
 acidicAA = ["ASP","GLU"]
 restAA = ["ALA", "CYS","GLY","ILE","LEU","MET","ASN","PRO","GLN","SER","THR","VAL"]
@@ -44,3 +46,53 @@ def noNUinHDonors(actualData):
 
 def noAAinCations(actualData):
     return actualData[~actualData["Cation code"].isin(cationicAA)]
+
+def simpleMerge( dataFramesToMerge , dataFrameMergeHeaders, dataFramesToExclude, dataFrameExcludeHeaders ):
+    if len(dataFramesToMerge) + len(dataFramesToExclude) < 2:
+        return
+        
+    uniqueData = []
+    dataExcluded =[]
+    
+    actualKeys = []
+    excludedKeys = []
+    
+    for df, headers in zip(dataFramesToMerge, dataFrameMergeHeaders):               
+        if len(uniqueData) == 0:
+            uniqueData = df[ headers ].drop_duplicates()
+        elif len(df) > 0:
+            uniqueData = pd.merge( uniqueData,  df[ headers ], on = list( set(actualKeys) & set(headers) ))
+            uniqueData = uniqueData.drop_duplicates()
+        actualKeys = list(set( actualKeys + headers ))
+            
+            
+    for df, headers in zip(dataFramesToExclude, dataFrameExcludeHeaders):   
+            if len(dataExcluded) == 0:
+                dataExcluded = df[ headers ].drop_duplicates()
+            elif len(df) > 0:
+                dataExcluded = pd.merge( dataExcluded,  df[ headers ], on = list( set(actualKeys) & set(headers) ))
+                dataExcluded = dataExcluded.drop_duplicates()
+            excludedKeys = list(set( excludedKeys + headers ))
+            
+    if len(dataExcluded) > 0:
+        mergingKeys = list(set(actualKeys) & set(excludedKeys) )
+        subMerged = pd.merge( uniqueData,  dataExcluded , on = mergingKeys, how='left', indicator=True )
+        uniqueData = subMerged[ subMerged['_merge'] == 'left_only' ]
+        
+    allDf = dataFramesToMerge + dataFramesToExclude
+    allHeaders = dataFrameMergeHeaders + dataFrameExcludeHeaders
+    
+    newDf = []
+    for df, headers in zip(allDf, allHeaders):        
+        if len(uniqueData) == 0 :
+            break
+        
+        mergingKeys = list(set(actualKeys) & set(headers) )
+        tempDataFrame = uniqueData[ mergingKeys   ].drop_duplicates()
+        newDf.append(pd.merge( df, tempDataFrame, on = mergingKeys ))
+        
+    return newDf
+        
+        
+        
+        

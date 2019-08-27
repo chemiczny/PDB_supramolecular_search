@@ -63,6 +63,9 @@ class SupramolecularGUI:
         
         self.actualDisplaying = { "rowData" : None, "selectionTime" : -1 }
         
+        self.recording = False
+        self.file2record = ""
+        
     def grid(self):
         self.gridLogFilePart()
         self.gridNumericalParameters()
@@ -103,8 +106,17 @@ class SupramolecularGUI:
         try:
             self.logData["data"] = pd.read_csv(self.logData["logFile"], sep = "\t").fillna("NA")
             self.updateMenu()
+            
+            if self.recording:
+                generatedScript = open(self.file2record, 'a')
+                
+                generatedScript.write(self.name +' = pd.read_csv( "'+self.logData["logFile"] + '", sep = "\\t").fillna("NA") \n'  )
+                
+                generatedScript.close()
+            
         except:
             tkMessageBox.showwarning(title = "Error!", message = "Pandas cannot parse this file")
+            
     
     def updateMenu(self):
         for parameter in self.listParameters:
@@ -400,6 +412,13 @@ class SupramolecularGUI:
         file2save = tkFileDialog.asksaveasfilename(defaultextension = ".log", filetypes = (("Log files","*.log"), ("Txt files", "*.txt") ,("CSV files","*.csv"), ("Dat files", "*.dat"), ("all files","*.*")) )
         if file2save:
             self.logData["filtered"].to_csv(file2save, sep = "\t")
+            
+        if file2save and self.recording:
+            generatedScript = open(self.file2record, 'a')
+            
+            generatedScript.write(self.name+'_temp.to_csv( "'+ file2save + '", sep = "\\t")\n')
+            
+            generatedScript.close()
     
     def applyFilter(self):
         if self.logData["logFile"] == False:
@@ -408,6 +427,14 @@ class SupramolecularGUI:
             
 #        anythingSet = False
         actualData = self.logData["data"]
+        
+        if self.recording:
+            generatedScript = open(self.file2record, 'a')
+            
+            generatedScript.write("\n"+self.name + "_temp = "+self.name + "\n")
+            
+            generatedScript.close()
+        
         for key in self.checkboxVars:
             if self.checkboxVars[key].get() > 0:
 #                anythingSet = True
@@ -416,6 +443,17 @@ class SupramolecularGUI:
                     selectedValues = self.listParameters[key]["listboxSelected"].get(0, 'end')
                     if selectedValues:
                         actualData = actualData[  actualData[ self.listParameters[key]["header"] ].astype(str).isin(selectedValues) ]
+                        
+                    if selectedValues and self.recording:
+                        generatedScript = open(self.file2record, 'a')
+                        
+                        tempName = self.name + "_temp"
+                        selectedValuesStr = str(list(selectedValues))
+                        generatedScript.write( tempName + ' = ' + tempName + "[ " + tempName + 
+                                                                               '[ "' + str(self.listParameters[key]["header"] ) +
+                                                                                '"].astype(str).isin(' + selectedValuesStr + " )]\n" )
+                        
+                        generatedScript.close()
 
                 elif key in self.numericalParameters:
                     minValue = self.numericalParameters[key]["entry_low"].get()
@@ -424,6 +462,16 @@ class SupramolecularGUI:
                     try: 
                         minValue = float(minValue)
                         actualData = actualData[  actualData[ self.numericalParameters[key]["header"]  ] > minValue ]
+                        
+                        if self.recording:
+                            generatedScript = open(self.file2record, 'a')
+                            tempName = self.name + "_temp"
+                            
+                            generatedScript.write(tempName + ' = ' + tempName + "[ " +
+                                                                                  tempName + ' [ "'+ self.numericalParameters[key]["header"] +
+                                                                                  '" ] > ' + str(minValue) + " ] \n" )
+                            
+                            generatedScript.close()
                     except:
                         pass
                     
@@ -431,15 +479,40 @@ class SupramolecularGUI:
                         maxValue = float(maxValue)
                         actualData = actualData[  actualData[ self.numericalParameters[key]["header"]  ] < maxValue ]
                         
+                        if self.recording:
+                            generatedScript = open(self.file2record, 'a')
+                            tempName = self.name + "_temp"
+                            
+                            generatedScript.write(tempName + ' = ' + tempName + "[ " +
+                                                                                  tempName + ' [ "'+ self.numericalParameters[key]["header"] +
+                                                                                  '" ] < ' + str(maxValue) + " ] \n" )
+                            
+                            generatedScript.close()
+                        
                     except:
                         pass
                     
         for adChk in self.additionalCheckboxes:
             if adChk["chkVar"].get() > 0:
                 actualData = adChk["func"](actualData)
+                
+                if self.recording:
+                    generatedScript = open(self.file2record, 'a')
+                    tempName = self.name + "_temp"
+                    
+                    generatedScript.write(tempName + " = " + adChk["func"].__name__ + "(" + tempName + ")\n")
+                    
+                    generatedScript.close()
                                       
         self.dataIsMerged = False
         self.printFilterResults(actualData)
+        
+        if self.recording:
+            generatedScript = open(self.file2record, 'a')
+            
+            generatedScript.write("\n")
+            
+            generatedScript.close()
                     
     def printFilterResults(self, actualData ):
         recordsFound = str(len(actualData))
@@ -472,6 +545,16 @@ class SupramolecularGUI:
         self.ent_recordsFound.configure(state = "readonly")
         if anySort:
             actualData = actualData.sort_values(by = columns, ascending = ascending)
+            
+        if anySort and self.recording:
+            generatedScript = open(self.file2record, 'a')
+            
+            tempName = self.name + "_temp"
+            ascendingStr = [ str(val) for val in ascending]
+            ascendingStr = " [ "+ " , ".join(ascendingStr) + " ]"
+            generatedScript.write( tempName + " = " + tempName + ".sort_values( by = "+str(columns) + " , ascending = " + ascendingStr + ")\n" )
+            
+            generatedScript.close()
         self.logData["filtered"] = actualData
         
         start, stop = self.privGetRange()
@@ -910,6 +993,12 @@ class SupramolecularGUI:
                 newValue = int(state["additionalCheckboxes"][label])
                 obj["chkVar"].set(newValue)
             
-            
+    def startRecording(self, file2record):
+        self.file2record = file2record
+        self.recording = True
+    
+    def stopRecording(self):
+        self.recording = False
+    
             
             
