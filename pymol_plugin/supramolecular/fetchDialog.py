@@ -32,10 +32,34 @@ def fetchdialog(simulation = False):
         
     appData = { "cifDir" : False }
     
-    self = Tkinter.Toplevel(root)
-    self.title('Supramolecular analyser')
-    self.minsize(1320, 800)
-    self.resizable(1,1)
+    mainWindow = Tkinter.Toplevel(root)
+#    self = VerticalScrolledFrame(root)
+    mainWindow.title('Supramolecular analyser')
+    mainWindow.minsize(1335, 400)
+   
+    mainWindow.resizable(1,1)
+    
+#    self = VerticalScrolledFrame(self)
+    canvas = Tkinter.Canvas(mainWindow, width = 1320, height = 900)
+    canvas.grid(row = 0 , column = 0, columnspan =50)
+    
+    mainScrollbar = Tkinter.Scrollbar(mainWindow, orient = "vertical",command=canvas.yview)
+    mainScrollbar.grid(row = 0, column =50, rowspan = 1)
+    
+    def moveDown(event):
+        canvas.yview_scroll(1, "units")
+        
+    def moveUp(event):
+        canvas.yview_scroll(-1, "units")
+#    
+    canvas.configure(yscrollcommand=mainScrollbar.set)
+#    canvas.configure(scrollregion = canvas.bbox("all"))
+    canvas.configure(scrollregion = (0, 0, 1320, 1800))
+    canvas.bind_all("<Down>", moveDown)
+    canvas.bind_all("<Up>", moveUp)
+    
+    self = Tkinter.Frame(canvas, width = 1320, height = 900)
+    canvas.create_window((0,0),window=self,anchor='nw')
     
     nb = ttk.Notebook(self, height = 700, width = 1320)
 
@@ -225,6 +249,7 @@ def fetchdialog(simulation = False):
     ######################
     
     supramolecularComposition.grid()
+#    canvas.configure(scrollregion = canvas.bbox("all"))
     
     if simulation:
         self.mainloop()

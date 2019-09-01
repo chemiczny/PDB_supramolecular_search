@@ -9,7 +9,7 @@ Created on Sun Jul 22 19:39:10 2018
 import pandas as pd
 import sys
 from os import path
-from time import time, sleep
+from time import time
 
 try:
     from pymol import cmd
