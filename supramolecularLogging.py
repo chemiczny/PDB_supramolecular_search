@@ -9,17 +9,8 @@ Created on Sat Apr 21 13:44:59 2018
 from math import  sin, cos, radians, sqrt, acos, degrees
 import numpy as np
 from numpy_utilities import normalize
-from os.path import isfile
+from os.path import isfile, join
 from ringDetection import getNormVec, getAverageCoords
-
-def writeAdditionalInfo(message, fileId = None):
-    resultsFileName = "logs/additionalInfo.log"
-    if fileId != None:
-        resultsFileName = "logs/additionalInfo"+str(fileId)+".log"
-        
-    results = open(resultsFileName, "a+")
-    results.write(message+"\n")
-    results.close()
 
 def writeAnionPiHeader( ):
     """
@@ -160,572 +151,574 @@ def writeAnionPiLinearHeader( ):
     resultsFile.write("Anion group x coord\tAnion group y coord\tAnion group z coord\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
-    
-def writeAnionPiResults( ligand, PDBcode, centroid, extractedAtoms, modelIndex, resolution, method, structureType, fileId = None ):
-    """
-    Zapisz dane do pliku z wynikami
-    """
-    resultsFileName = "logs/anionPi.log"
-    if fileId != None:
-        resultsFileName = "logs/anionPi"+str(fileId)+".log"
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    resultsFile = open(resultsFileName, "a+")
-    newAtoms = []
-    for atomData in extractedAtoms:
-        distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
-        angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
+
+class SupramolecularLogger:
+    def __init__(self, PDBcode, fileId = None, scratchDir = None):
+        self.pdbCode = PDBcode
+        self.fileId = fileId
+        self.scratchDir = scratchDir
+        self.finalLogDir = "logs"
         
-        h = abs(cos(radians( angle ))*distance)
-        x = sin(radians( angle ))*distance
+        if fileId:
+            self.additionalInfoLog = join( self.scratchDir, "additionalInfo{}.log".format(self.fileId) )
+            self.anionPiLog = join( self.scratchDir, "anionPi{}.log".format(self.fileId) )
+            self.planarAnionPiLog = join( self.scratchDir, "planarAnionPi{}.log".format(self.fileId) )
+            self.linearAnionPiLog = join( self.scratchDir, "linearAnionPi{}.log".format(self.fileId) )
+            self.cationPiLog = join( self.scratchDir, "cationPi{}.log".format(self.fileId) )
+            self.metalLigandLog = join( self.scratchDir, "metalLigand{}.log".format(self.fileId) )
+            self.piPiLog = join( self.scratchDir, "piPi{}.log".format(self.fileId) )
+            self.anionCationLog = join( self.scratchDir, "anionCation{}.log".format(self.fileId) )
+            self.hBondsLog = join( self.scratchDir, "hBonds{}.log".format(self.fileId) )
+            
+        else:
+            self.additionalInfoLog = join( self.finalLogDir, "additionalInfo.log" )
+            self.anionPiLog = join( self.finalLogDir, "anionPi.log" )
+            self.planarAnionPiLog = join( self.finalLogDir, "planarAnionPi.log" )
+            self.linearAnionPiLog = join( self.finalLogDir, "linearAnionPi.log" )
+            self.cationPiLog = join( self.finalLogDir, "cationPi.log" )
+            self.metalLigandLog = join( self.finalLogDir, "metalLigand.log" )
+            self.piPiLog = join( self.finalLogDir, "piPi.log" )
+            self.anionCationLog = join( self.finalLogDir, "anionCation.log" )
+            self.hBondsLog = join( self.finalLogDir, "hBonds.log" )
+            
+        self.partialProgressLog = join( self.scratchDir, "partialProgress{}.log".format(self.fileId) )
+
+    def writeAdditionalInfo(self, message):
+        resultsFileName = self.additionalInfoLog
+            
+        results = open(resultsFileName, "a+")
+        results.write(message+"\n")
+        results.close()
+    
+    def writeAnionPiResults(self, ligand, centroid, extractedAtoms, modelIndex, resolution, method, structureType ):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        resultsFileName = self.anionPiLog
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
+        newAtoms = []
+        for atomData in extractedAtoms:
+            distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
+            angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
+            
+            h = abs(cos(radians( angle ))*distance)
+            x = sin(radians( angle ))*distance
+            if angle > 90.0 :
+                angle = 180 - angle
+    #        angleOK = angle <= 45 or angle >= 135
+    #        xOK = x < 1.6
+    #        hOK = h >= 1.5 and h <= 4
+    #        if angleOK and xOK and hOK:
+            newAtoms.append(atomData)
+                
+            atomCoords = atomData["Atom"].get_coord()
+            centroidCoords = centroid["coords"]        
+            
+            anion = atomData["Atom"].get_parent()
+            residueName = anion.get_resname()
+            anionChain = anion.get_parent().get_id()
+            anionId = str(anion.get_id()[1])
+            resultsFile.write(self.pdbCode+"\t")
+            resultsFile.write(ligandCode+"\t")
+            resultsFile.write(ligandChain+"\t")
+            resultsFile.write(ligandId+"\t")
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(anionChain+"\t")
+            resultsFile.write(anionId+"\t")
+            resultsFile.write(atomData["AnionType"]+"\t")
+            resultsFile.write(str(atomData["AnionId"])+"\t")
+            resultsFile.write(atomData["Atom"].element+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
+            resultsFile.write(str(angle)+"\t")
+            
+            resultsFile.write(str(x)+"\t")
+            resultsFile.write(str(h)+"\t")
+            
+            resultsFile.write(str(centroid["cycleId"])+"\t")
+            resultsFile.write(str(centroidCoords[0])+"\t")
+            resultsFile.write(str(centroidCoords[1])+"\t")
+            resultsFile.write(str(centroidCoords[2])+"\t")
+            
+            resultsFile.write(str(atomCoords[0])+"\t")
+            resultsFile.write(str(atomCoords[1])+"\t")
+            resultsFile.write(str(atomCoords[2])+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\t")
+            resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
+            resultsFile.write(str(centroid["ringSize"])+"\t")
+            resultsFile.write(str(centroid["ringElements"])+"\t")
+            resultsFile.write(str(resolution)+"\t")
+            resultsFile.write(str(method)+"\t")
+            resultsFile.write(str(structureType)+"\n")
+        
+        resultsFile.close()
+        
+        return newAtoms
+
+    def writeAnionPiPlanarResults( self, ligand, centroid, planeData, modelIndex, anionGroupId):
+        """
+        Zapisz naglowki do pliku z wynikami:
+        """
+        resultsFileName = self.planarAnionPiLog
+            
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
+        
+        normVec = getNormVec( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
+        
+        inner_prod = np.inner( normVec, centroid["normVec"] )
+        if abs(inner_prod) > 1.0:
+            if abs(inner_prod) < 1.1:
+                angle = 0    
+            else:
+                angle = 666
+        else:
+            angle = degrees( acos(inner_prod) )
+            
         if angle > 90.0 :
             angle = 180 - angle
-#        angleOK = angle <= 45 or angle >= 135
-#        xOK = x < 1.6
-#        hOK = h >= 1.5 and h <= 4
-#        if angleOK and xOK and hOK:
-        newAtoms.append(atomData)
-            
-        atomCoords = atomData["Atom"].get_coord()
-        centroidCoords = centroid["coords"]        
         
-        anion = atomData["Atom"].get_parent()
+        atom = planeData.atomsInvolved[0]
+        anion = atom.get_parent()
         residueName = anion.get_resname()
         anionChain = anion.get_parent().get_id()
         anionId = str(anion.get_id()[1])
-        resultsFile.write(PDBcode+"\t")
+        centroidCoords = centroid["coords"]  
+        anionGroupCoords = getAverageCoords( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
+        
+        directionalAngle = calcDirectionalVector(planeData, centroid)
+        
+        resultsFile.write(self.pdbCode+"\t")
         resultsFile.write(ligandCode+"\t")
         resultsFile.write(ligandChain+"\t")
         resultsFile.write(ligandId+"\t")
+        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(residueName+"\t")
         resultsFile.write(anionChain+"\t")
         resultsFile.write(anionId+"\t")
-        resultsFile.write(atomData["AnionType"]+"\t")
-        resultsFile.write(str(atomData["AnionId"])+"\t")
-        resultsFile.write(atomData["Atom"].element+"\t")
-        
-        resultsFile.write(str(distance)+"\t")
+        resultsFile.write(str(anionGroupId)+"\t")
         resultsFile.write(str(angle)+"\t")
+        resultsFile.write(str(directionalAngle)+"\t")
         
-        resultsFile.write(str(x)+"\t")
-        resultsFile.write(str(h)+"\t")
-        
-        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")
         resultsFile.write(str(centroidCoords[2])+"\t")
         
-        resultsFile.write(str(atomCoords[0])+"\t")
-        resultsFile.write(str(atomCoords[1])+"\t")
-        resultsFile.write(str(atomCoords[2])+"\t")
+        resultsFile.write(str(anionGroupCoords[0])+"\t")
+        resultsFile.write(str(anionGroupCoords[1])+"\t")
+        resultsFile.write(str(anionGroupCoords[2])+"\t")
         
-        resultsFile.write(str(modelIndex)+"\t")
-        resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
-        resultsFile.write(str(centroid["ringSize"])+"\t")
-        resultsFile.write(str(centroid["ringElements"])+"\t")
-        resultsFile.write(str(resolution)+"\t")
-        resultsFile.write(str(method)+"\t")
-        resultsFile.write(str(structureType)+"\n")
+        resultsFile.write(str(modelIndex)+"\n")
+        resultsFile.close()
     
-    resultsFile.close()
-    
-    return newAtoms
-
-def writeAnionPiPlanarResults( ligand, centroid, PDBcode, planeData, modelIndex, anionGroupId, fileId = None):
-    """
-    Zapisz naglowki do pliku z wynikami:
-    """
-    resultsFileName = "logs/planarAnionPi.log"
-    if fileId != None:
-        resultsFileName = "logs/planarAnionPi"+str(fileId)+".log"
+    def writeAnionPiLinearResults( self, ligand, centroid, lineData, modelIndex, anionGroupId, symmetrizeAlpha = False ):
+        resultsFileName = self.linearAnionPiLog
+            
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
         
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    resultsFile = open(resultsFileName, "a+")
-    
-    normVec = getNormVec( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
-    
-    inner_prod = np.inner( normVec, centroid["normVec"] )
-    if abs(inner_prod) > 1.0:
-        if abs(inner_prod) < 1.1:
-            angle = 0    
+        
+        vector =  lineData.atomsInvolved[1].get_coord() - lineData.atomsInvolved[0].get_coord() 
+        vector = normalize(vector)
+        
+        inner_prod = np.inner( vector, centroid["normVec"] )
+        if abs(inner_prod) > 1.0:
+            if abs(inner_prod) < 1.1:
+                angle = 0    
+            else:
+                angle = 666
         else:
-            angle = 666
-    else:
-        angle = degrees( acos(inner_prod) )
-        
-    if angle > 90.0 :
-        angle = 180 - angle
-    
-    atom = planeData.atomsInvolved[0]
-    anion = atom.get_parent()
-    residueName = anion.get_resname()
-    anionChain = anion.get_parent().get_id()
-    anionId = str(anion.get_id()[1])
-    centroidCoords = centroid["coords"]  
-    anionGroupCoords = getAverageCoords( planeData.atomsInvolved , list(range( len(planeData.atomsInvolved) )) )
-    
-    directionalAngle = calcDirectionalVector(planeData, centroid)
-    
-    resultsFile.write(PDBcode+"\t")
-    resultsFile.write(ligandCode+"\t")
-    resultsFile.write(ligandChain+"\t")
-    resultsFile.write(ligandId+"\t")
-    resultsFile.write(str(centroid["cycleId"])+"\t")
-    resultsFile.write(residueName+"\t")
-    resultsFile.write(anionChain+"\t")
-    resultsFile.write(anionId+"\t")
-    resultsFile.write(str(anionGroupId)+"\t")
-    resultsFile.write(str(angle)+"\t")
-    resultsFile.write(str(directionalAngle)+"\t")
-    
-    resultsFile.write(str(centroidCoords[0])+"\t")
-    resultsFile.write(str(centroidCoords[1])+"\t")
-    resultsFile.write(str(centroidCoords[2])+"\t")
-    
-    resultsFile.write(str(anionGroupCoords[0])+"\t")
-    resultsFile.write(str(anionGroupCoords[1])+"\t")
-    resultsFile.write(str(anionGroupCoords[2])+"\t")
-    
-    resultsFile.write(str(modelIndex)+"\n")
-    resultsFile.close()
-    
-def calcDirectionalVector(planeData, centroid):
-    vecCoords = []
-    for pointData in planeData.directionalVector:
-        kind = list(pointData.keys())[0]
-        if kind == "atom":
-            vecCoords.append( pointData[kind].get_coord() )
-        elif kind == "center":
-            atomsList = pointData[kind]
-            vecCoords.append( getAverageCoords( atomsList, list( range(len(atomsList)))) )
-        elif kind == "closest":
-            atomsList = pointData[kind]
+            angle = degrees( acos(inner_prod) )
             
-            minDist = 1000
-            closestAtom = None
-            
-            for atom in atomsList:
-                dist = atomDistanceFromCentroid(atom, centroid)
-                
-                if dist < minDist:
-                    minDist = dist
-                    closestAtom = atom
-                    
-            vecCoords.append(closestAtom.get_coord())
-
-            
-    vec = normalize( vecCoords[1] - vecCoords[0] )
-    vec2 = normalize( np.array(centroid["coords"]) - vecCoords[1] )
-    
-    inner_prod = np.inner( vec , vec2)
-    if abs(inner_prod) > 1.0:
-        if abs(inner_prod) < 1.1:
-            return 0.0
-        else:
-            return 666.0
-        
-    return degrees( acos(inner_prod) )
-    
-def writeAnionPiLinearResults( ligand, centroid, PDBcode, lineData, modelIndex, anionGroupId, fileId, symmetrizeAlpha = False ):
-    resultsFileName = "logs/linearAnionPi.log"
-    if fileId != None:
-        resultsFileName = "logs/linearAnionPi"+str(fileId)+".log"
-        
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    resultsFile = open(resultsFileName, "a+")
-    
-    
-    vector =  lineData.atomsInvolved[1].get_coord() - lineData.atomsInvolved[0].get_coord() 
-    vector = normalize(vector)
-    
-    inner_prod = np.inner( vector, centroid["normVec"] )
-    if abs(inner_prod) > 1.0:
-        if abs(inner_prod) < 1.1:
-            angle = 0    
-        else:
-            angle = 666
-    else:
-        angle = degrees( acos(inner_prod) )
-        
-    if symmetrizeAlpha and angle > 90.0:
-        angle = 180 - angle
-    
-    atom = lineData.atomsInvolved[0]
-    anion = atom.get_parent()
-    residueName = anion.get_resname()
-    anionChain = anion.get_parent().get_id()
-    anionId = str(anion.get_id()[1])
-    centroidCoords = centroid["coords"]  
-    anionGroupCoords = getAverageCoords( lineData.atomsInvolved , list(range( len(lineData.atomsInvolved) )) )
-    
-    resultsFile.write(PDBcode+"\t")
-    resultsFile.write(ligandCode+"\t")
-    resultsFile.write(ligandChain+"\t")
-    resultsFile.write(ligandId+"\t")
-    resultsFile.write(str(centroid["cycleId"])+"\t")
-    resultsFile.write(residueName+"\t")
-    resultsFile.write(anionChain+"\t")
-    resultsFile.write(anionId+"\t")
-    resultsFile.write(str(anionGroupId)+"\t")
-    resultsFile.write(str(angle)+"\t")
-    
-    resultsFile.write(str(centroidCoords[0])+"\t")
-    resultsFile.write(str(centroidCoords[1])+"\t")
-    resultsFile.write(str(centroidCoords[2])+"\t")
-    
-    resultsFile.write(str(anionGroupCoords[0])+"\t")
-    resultsFile.write(str(anionGroupCoords[1])+"\t")
-    resultsFile.write(str(anionGroupCoords[2])+"\t")
-    
-    resultsFile.write(str(modelIndex)+"\n")
-    resultsFile.close()
-            
-def writeCationPiResults( ligand, PDBcode, centroid, extractedAtoms, cationRingChainLens , modelIndex, fileId = None ):
-    """
-    Zapisz dane do pliku z wynikami
-    """
-    if not extractedAtoms:
-        return
-    
-    resultsFileName = "logs/cationPi.log"
-    if fileId != None:
-        resultsFileName = "logs/cationPi"+str(fileId)+".log"
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    resultsFile = open(resultsFileName, "a+")
-    
-    for atom, chainLen in zip(extractedAtoms , cationRingChainLens):
-        distance = atomDistanceFromCentroid( atom, centroid )
-        angle = atomAngleNomVecCentroid( atom, centroid )
-        
-        h = abs(cos(radians( angle ))*distance)
-        x = sin(radians( angle ))*distance
-        if angle > 90.0 :
+        if symmetrizeAlpha and angle > 90.0:
             angle = 180 - angle
-            
-        atomCoords = atom.get_coord()
-        centroidCoords = centroid["coords"]        
         
-        cation = atom.get_parent()
-        residueName = cation.get_resname()
-        cationChain = cation.get_parent().get_id()
-        cationId = str(cation.get_id()[1])
-        resultsFile.write(PDBcode+"\t")
+        atom = lineData.atomsInvolved[0]
+        anion = atom.get_parent()
+        residueName = anion.get_resname()
+        anionChain = anion.get_parent().get_id()
+        anionId = str(anion.get_id()[1])
+        centroidCoords = centroid["coords"]  
+        anionGroupCoords = getAverageCoords( lineData.atomsInvolved , list(range( len(lineData.atomsInvolved) )) )
+        
+        resultsFile.write(self.pdbCode+"\t")
         resultsFile.write(ligandCode+"\t")
         resultsFile.write(ligandChain+"\t")
         resultsFile.write(ligandId+"\t")
+        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(residueName+"\t")
-        resultsFile.write(cationChain+"\t")
-        resultsFile.write(cationId+"\t")
-        resultsFile.write(atom.element+"\t")
-        
-        resultsFile.write(str(distance)+"\t")
+        resultsFile.write(anionChain+"\t")
+        resultsFile.write(anionId+"\t")
+        resultsFile.write(str(anionGroupId)+"\t")
         resultsFile.write(str(angle)+"\t")
         
-        resultsFile.write(str(x)+"\t")
-        resultsFile.write(str(h)+"\t")
-        
-        resultsFile.write(str(chainLen[0])+"\t")
-        resultsFile.write(str(chainLen[1])+"\t")
-        
-        resultsFile.write(str(centroid["cycleId"])+"\t")
         resultsFile.write(str(centroidCoords[0])+"\t")
         resultsFile.write(str(centroidCoords[1])+"\t")
         resultsFile.write(str(centroidCoords[2])+"\t")
         
-        resultsFile.write(str(atomCoords[0])+"\t")
-        resultsFile.write(str(atomCoords[1])+"\t")
-        resultsFile.write(str(atomCoords[2])+"\t")
+        resultsFile.write(str(anionGroupCoords[0])+"\t")
+        resultsFile.write(str(anionGroupCoords[1])+"\t")
+        resultsFile.write(str(anionGroupCoords[2])+"\t")
         
         resultsFile.write(str(modelIndex)+"\n")
-    
-    resultsFile.close()
-
-def writeMetalLigandResults(  PDBcode,  extractedAtoms, complexData , modelIndex, fileId = None ):
-    """
-    Zapisz dane do pliku z wynikami
-    """
-    if not extractedAtoms:
-        return
-    
-    resultsFileName = "logs/metalLigand.log"
-    if fileId != None:
-        resultsFileName = "logs/metalLigand"+str(fileId)+".log"
-    resultsFile = open(resultsFileName, "a+")
-    
-    for atom, compData in zip(extractedAtoms , complexData):
-        if not compData["ligands"]:
-            continue
+        resultsFile.close()
+            
+    def writeCationPiResults(self, ligand, centroid, extractedAtoms, cationRingChainLens , modelIndex ):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        if not extractedAtoms:
+            return
         
-        cation = atom.get_parent()
-        cationResidueName = cation.get_resname()
-        cationChain = cation.get_parent().get_id()
-        cationId = str(cation.get_id()[1])
-        cationCoords = atom.get_coord()
+        resultsFileName = self.cationPiLog
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
         
-        for ligandData in compData["ligands"]:
-            distance = atom - ligandData["atom"]
+        for atom, chainLen in zip(extractedAtoms , cationRingChainLens):
+            distance = atomDistanceFromCentroid( atom, centroid )
+            angle = atomAngleNomVecCentroid( atom, centroid )
             
-            ligand = ligandData["atom"].get_parent()
-            ligandResidueName = ligand.get_resname()
-            ligandChain = ligand.get_parent().get_id()
-            ligandId = str(ligand.get_id()[1])
+            h = abs(cos(radians( angle ))*distance)
+            x = sin(radians( angle ))*distance
+            if angle > 90.0 :
+                angle = 180 - angle
+                
+            atomCoords = atom.get_coord()
+            centroidCoords = centroid["coords"]        
             
-            resultsFile.write(PDBcode+"\t")
-            
-            resultsFile.write(cationResidueName+"\t")
-            resultsFile.write(cationChain+"\t")
-            resultsFile.write(cationId+"\t")
-            
-            resultsFile.write(ligandResidueName+"\t")
+            cation = atom.get_parent()
+            residueName = cation.get_resname()
+            cationChain = cation.get_parent().get_id()
+            cationId = str(cation.get_id()[1])
+            resultsFile.write(self.pdbCode+"\t")
+            resultsFile.write(ligandCode+"\t")
             resultsFile.write(ligandChain+"\t")
             resultsFile.write(ligandId+"\t")
-            resultsFile.write(str(ligandData["AnionId"])+"\t")
-            
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(cationChain+"\t")
+            resultsFile.write(cationId+"\t")
             resultsFile.write(atom.element+"\t")
-            resultsFile.write(ligandData["atom"].element+"\t")
             
-            resultsFile.write(str(ligandData["isAnion"])+"\t")
-            resultsFile.write(ligandData["anionType"]+"\t")
+            resultsFile.write(str(distance)+"\t")
+            resultsFile.write(str(angle)+"\t")
+            
+            resultsFile.write(str(x)+"\t")
+            resultsFile.write(str(h)+"\t")
+            
+            resultsFile.write(str(chainLen[0])+"\t")
+            resultsFile.write(str(chainLen[1])+"\t")
+            
+            resultsFile.write(str(centroid["cycleId"])+"\t")
+            resultsFile.write(str(centroidCoords[0])+"\t")
+            resultsFile.write(str(centroidCoords[1])+"\t")
+            resultsFile.write(str(centroidCoords[2])+"\t")
+            
+            resultsFile.write(str(atomCoords[0])+"\t")
+            resultsFile.write(str(atomCoords[1])+"\t")
+            resultsFile.write(str(atomCoords[2])+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\n")
+        
+        resultsFile.close()
+
+    def writeMetalLigandResults( self,  extractedAtoms, complexData , modelIndex ):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        if not extractedAtoms:
+            return
+        
+        resultsFileName = self.metalLigandLog
+        resultsFile = open(resultsFileName, "a+")
+        
+        for atom, compData in zip(extractedAtoms , complexData):
+            if not compData["ligands"]:
+                continue
+            
+            cation = atom.get_parent()
+            cationResidueName = cation.get_resname()
+            cationChain = cation.get_parent().get_id()
+            cationId = str(cation.get_id()[1])
+            cationCoords = atom.get_coord()
+            
+            for ligandData in compData["ligands"]:
+                distance = atom - ligandData["atom"]
+                
+                ligand = ligandData["atom"].get_parent()
+                ligandResidueName = ligand.get_resname()
+                ligandChain = ligand.get_parent().get_id()
+                ligandId = str(ligand.get_id()[1])
+                
+                resultsFile.write(self.pdbCode+"\t")
+                
+                resultsFile.write(cationResidueName+"\t")
+                resultsFile.write(cationChain+"\t")
+                resultsFile.write(cationId+"\t")
+                
+                resultsFile.write(ligandResidueName+"\t")
+                resultsFile.write(ligandChain+"\t")
+                resultsFile.write(ligandId+"\t")
+                resultsFile.write(str(ligandData["AnionId"])+"\t")
+                
+                resultsFile.write(atom.element+"\t")
+                resultsFile.write(ligandData["atom"].element+"\t")
+                
+                resultsFile.write(str(ligandData["isAnion"])+"\t")
+                resultsFile.write(ligandData["anionType"]+"\t")
+                
+                resultsFile.write(str(distance)+"\t")
+                
+                ligandCoords = ligandData["atom"].get_coord()
+                
+                resultsFile.write(str(cationCoords[0])+"\t")
+                resultsFile.write(str(cationCoords[1])+"\t")
+                resultsFile.write(str(cationCoords[2])+"\t")
+                
+                resultsFile.write(str(ligandCoords[0])+"\t")
+                resultsFile.write(str(ligandCoords[1])+"\t")
+                resultsFile.write(str(ligandCoords[2])+"\t")
+                
+                resultsFile.write(str(compData["complex"])+"\t")
+                resultsFile.write(str(compData["summary"])+"\t")
+                resultsFile.write(str(compData["coordNo"])+"\t")
+                
+                resultsFile.write(str(modelIndex)+"\n")
+        
+        resultsFile.close()
+    
+    def writePiPiResults(self, ligand, centroid, extractedRes, extractedCentroids, modelIndex ):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        resultsFileName = self.piPiLog
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
+        newAtoms = []
+        for res, cent in zip(extractedRes, extractedCentroids):
+            distance = cent["distance"]
+            angle = angleBetweenNormVec(centroid, cent)
+            theta = angleNormVecPoint(centroid, cent["coords"])
+            omega = calcOmega(centroid, cent)
+            
+            h = abs(cos(radians( angle ))*distance)
+            x = sin(radians( angle ))*distance
+            
+            if angle > 90.0 :
+                angle = 180 - angle
+                
+            if theta > 90.0 :
+                theta = 180 - theta
+                
+            if omega > 90.0:
+                omega = 180 - omega
+                
+            centroid2Coords = cent["coords"]
+            centroidCoords = centroid["coords"]        
+            
+            residueName = res.get_resname()
+            resChain = res.get_parent().get_id()
+            resId = str(res.get_id()[1])
+            resultsFile.write(self.pdbCode+"\t")
+            resultsFile.write(ligandCode+"\t")
+            resultsFile.write(ligandChain+"\t")
+            resultsFile.write(ligandId+"\t")
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(resChain+"\t")
+            resultsFile.write(resId+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
+            resultsFile.write(str(angle)+"\t")
+            
+            resultsFile.write(str(x)+"\t")
+            resultsFile.write(str(h)+"\t")
+            
+            resultsFile.write(str(theta)+"\t")
+            resultsFile.write(str(omega)+"\t")
+            
+            resultsFile.write(str(centroid["cycleId"])+"\t")
+            resultsFile.write(str(centroidCoords[0])+"\t")
+            resultsFile.write(str(centroidCoords[1])+"\t")
+            resultsFile.write(str(centroidCoords[2])+"\t")
+            
+            resultsFile.write(str(centroid2Coords[0])+"\t")
+            resultsFile.write(str(centroid2Coords[1])+"\t")
+            resultsFile.write(str(centroid2Coords[2])+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\t")
+            resultsFile.write(str(cent["ringSize"])+"\n")
+        
+        resultsFile.close()
+        
+        return newAtoms
+
+    def writeAnionCationResults(self, anionAtom, ligand, centroid, extractedCations, modelIndex):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        resultsFileName = self.anionCationLog
+        anion = anionAtom.get_parent()
+        anionCode = anion.get_resname()
+        anionId = str(anion.get_id()[1])
+        anionChain = anion.get_parent().get_id()
+        anionCoord = anionAtom.get_coord()
+        
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        
+        resultsFile = open(resultsFileName, "a+")
+        newAtoms = []
+        
+        anionAngle = atomAngleNomVecCentroid( anionAtom, centroid )
+        firstSemisphereAnion = anionAngle < 90
+    
+        for cat in extractedCations:
+            distance = anionAtom - cat
+            
+            cationAngle = atomAngleNomVecCentroid(cat, centroid)
+            firstSemisphereCation = cationAngle < 90
+            sameSemisphere = firstSemisphereAnion == firstSemisphereCation
+            
+            catCoord = cat.get_coord()
+            catRes = cat.get_parent()
+            
+            residueName = catRes.get_resname()
+            resChain = catRes.get_parent().get_id()
+            resId = str(catRes.get_id()[1])
+            resultsFile.write(self.pdbCode+"\t")
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(resChain+"\t")
+            resultsFile.write(resId+"\t")
+            
+            resultsFile.write(ligandCode+"\t")
+            resultsFile.write(ligandChain+"\t")
+            resultsFile.write(ligandId+"\t")
+            resultsFile.write(str(centroid["cycleId"])+"\t")
+            
+            resultsFile.write(anionCode+"\t")
+            resultsFile.write(anionChain+"\t")
+            resultsFile.write(anionId+"\t")
+            resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
+            
+            resultsFile.write(anionAtom.element+"\t")
+            resultsFile.write(cat.element+"\t")
             
             resultsFile.write(str(distance)+"\t")
             
-            ligandCoords = ligandData["atom"].get_coord()
+            resultsFile.write(str(anionCoord[0])+"\t")
+            resultsFile.write(str(anionCoord[1])+"\t")
+            resultsFile.write(str(anionCoord[2])+"\t")
             
-            resultsFile.write(str(cationCoords[0])+"\t")
-            resultsFile.write(str(cationCoords[1])+"\t")
-            resultsFile.write(str(cationCoords[2])+"\t")
+            resultsFile.write(str(catCoord[0])+"\t")
+            resultsFile.write(str(catCoord[1])+"\t")
+            resultsFile.write(str(catCoord[2])+"\t")
             
-            resultsFile.write(str(ligandCoords[0])+"\t")
-            resultsFile.write(str(ligandCoords[1])+"\t")
-            resultsFile.write(str(ligandCoords[2])+"\t")
+            resultsFile.write(str(sameSemisphere)+"\t")
+            resultsFile.write(str(abs(anionAngle - cationAngle))+"\t")
+            resultsFile.write(str(modelIndex)+"\n")
+        
+        resultsFile.close()
+        
+        return newAtoms
+
+    def writeHbondsResults(self ,hDonors, atom, modelIndex):
+        resultsFileName = self.hBondsLog
+        
+        anionAtom = atom["Atom"]
+        anion = anionAtom.get_parent()
+        anionCode = anion.get_resname()
+        anionId = str(anion.get_id()[1])
+        anionChain = anion.get_parent().get_id()
+        anionCoord = anionAtom.get_coord()
+        
+        resultsFile = open(resultsFileName, "a+")
+    
+        for hDonData in hDonors:
+            hDon = hDonData["donor"]
+            distance = anionAtom - hDon
             
-            resultsFile.write(str(compData["complex"])+"\t")
-            resultsFile.write(str(compData["summary"])+"\t")
-            resultsFile.write(str(compData["coordNo"])+"\t")
+            hDonCoords = hDon.get_coord()
+            hDonRes = hDon.get_parent()
+            
+            residueName = hDonRes.get_resname()
+            resChain = hDonRes.get_parent().get_id()
+            resId = str(hDonRes.get_id()[1])
+            
+            resultsFile.write(self.pdbCode+"\t")
+            
+            resultsFile.write(anionCode+"\t")
+            resultsFile.write(anionChain+"\t")
+            resultsFile.write(anionId+"\t")
+            
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(resChain+"\t")
+            resultsFile.write(resId+"\t")
+            
+            resultsFile.write(atom["AnionType"]+"\t")
+            resultsFile.write(anionAtom.element+"\t")
+            resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
+            
+            resultsFile.write(str(anionCoord[0])+"\t")
+            resultsFile.write(str(anionCoord[1])+"\t")
+            resultsFile.write(str(anionCoord[2])+"\t")
+            
+            resultsFile.write(hDon.element+"\t"+hDon.element+"\t")
+            
+            resultsFile.write(str(hDonCoords[0])+"\t")
+            resultsFile.write(str(hDonCoords[1])+"\t")
+            resultsFile.write(str(hDonCoords[2])+"\t")
+            
+            hydrogenAtom = hDonData["hydrogen"]
+            hydrogenCoords = hydrogenAtom.get_coord()
+            
+            resultsFile.write(str(hydrogenCoords[0])+"\t")
+            resultsFile.write(str(hydrogenCoords[1])+"\t")
+            resultsFile.write(str(hydrogenCoords[2])+"\t")
+            
+            resultsFile.write(str(hDonData["HFromExp"])+"\t")
+            
+            vec1 = normalize(anionCoord - hydrogenCoords)
+            vec2 = normalize(hDonCoords - hydrogenCoords)
+            angle = degrees( acos( np.inner(vec1, vec2 ) ))
+            hDistance = anionAtom - hydrogenAtom
+            
+            resultsFile.write(str(angle)+"\t")
+            resultsFile.write(str(hDistance)+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
             
             resultsFile.write(str(modelIndex)+"\n")
-    
-    resultsFile.close()
-    
-def writePiPiResults( ligand, PDBcode, centroid, extractedRes, extractedCentroids, modelIndex, fileId = None ):
-    """
-    Zapisz dane do pliku z wynikami
-    """
-    resultsFileName = "logs/piPi.log"
-    if fileId != None:
-        resultsFileName = "logs/piPi"+str(fileId)+".log"
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    resultsFile = open(resultsFileName, "a+")
-    newAtoms = []
-    for res, cent in zip(extractedRes, extractedCentroids):
-        distance = cent["distance"]
-        angle = angleBetweenNormVec(centroid, cent)
-        theta = angleNormVecPoint(centroid, cent["coords"])
-        omega = calcOmega(centroid, cent)
         
-        h = abs(cos(radians( angle ))*distance)
-        x = sin(radians( angle ))*distance
-        
-        if angle > 90.0 :
-            angle = 180 - angle
+        resultsFile.close()
+    
+    def incrementPartialProgress(self ):
+        fileName = self.partialProgressLog
+        if not isfile(fileName):
+            partialProgressFile = open(fileName, 'w')
+            partialProgressFile.write("1")
+            partialProgressFile.close()
             
-        if theta > 90.0 :
-            theta = 180 - theta
+        else:
+            partialProgressFile = open(fileName, 'r')
+            actualNo = int(partialProgressFile.readline())
+            partialProgressFile.close()
             
-        if omega > 90.0:
-            omega = 180 - omega
-            
-        centroid2Coords = cent["coords"]
-        centroidCoords = centroid["coords"]        
-        
-        residueName = res.get_resname()
-        resChain = res.get_parent().get_id()
-        resId = str(res.get_id()[1])
-        resultsFile.write(PDBcode+"\t")
-        resultsFile.write(ligandCode+"\t")
-        resultsFile.write(ligandChain+"\t")
-        resultsFile.write(ligandId+"\t")
-        resultsFile.write(residueName+"\t")
-        resultsFile.write(resChain+"\t")
-        resultsFile.write(resId+"\t")
-        
-        resultsFile.write(str(distance)+"\t")
-        resultsFile.write(str(angle)+"\t")
-        
-        resultsFile.write(str(x)+"\t")
-        resultsFile.write(str(h)+"\t")
-        
-        resultsFile.write(str(theta)+"\t")
-        resultsFile.write(str(omega)+"\t")
-        
-        resultsFile.write(str(centroid["cycleId"])+"\t")
-        resultsFile.write(str(centroidCoords[0])+"\t")
-        resultsFile.write(str(centroidCoords[1])+"\t")
-        resultsFile.write(str(centroidCoords[2])+"\t")
-        
-        resultsFile.write(str(centroid2Coords[0])+"\t")
-        resultsFile.write(str(centroid2Coords[1])+"\t")
-        resultsFile.write(str(centroid2Coords[2])+"\t")
-        
-        resultsFile.write(str(modelIndex)+"\t")
-        resultsFile.write(str(cent["ringSize"])+"\n")
-    
-    resultsFile.close()
-    
-    return newAtoms
-
-def writeAnionCationResults( anionAtom, PDBcode, ligand, centroid, extractedCations, modelIndex, fileId = None ):
-    """
-    Zapisz dane do pliku z wynikami
-    """
-    resultsFileName = "logs/anionCation.log"
-    if fileId != None:
-        resultsFileName = "logs/anionCation"+str(fileId)+".log"
-    anion = anionAtom.get_parent()
-    anionCode = anion.get_resname()
-    anionId = str(anion.get_id()[1])
-    anionChain = anion.get_parent().get_id()
-    anionCoord = anionAtom.get_coord()
-    
-    ligandCode = ligand.get_resname()
-    ligandId = str(ligand.get_id()[1])
-    ligandChain = ligand.get_parent().get_id()
-    
-    resultsFile = open(resultsFileName, "a+")
-    newAtoms = []
-    
-    anionAngle = atomAngleNomVecCentroid( anionAtom, centroid )
-    firstSemisphereAnion = anionAngle < 90
-
-    for cat in extractedCations:
-        distance = anionAtom - cat
-        
-        cationAngle = atomAngleNomVecCentroid(cat, centroid)
-        firstSemisphereCation = cationAngle < 90
-        sameSemisphere = firstSemisphereAnion == firstSemisphereCation
-        
-        catCoord = cat.get_coord()
-        catRes = cat.get_parent()
-        
-        residueName = catRes.get_resname()
-        resChain = catRes.get_parent().get_id()
-        resId = str(catRes.get_id()[1])
-        resultsFile.write(PDBcode+"\t")
-        resultsFile.write(residueName+"\t")
-        resultsFile.write(resChain+"\t")
-        resultsFile.write(resId+"\t")
-        
-        resultsFile.write(ligandCode+"\t")
-        resultsFile.write(ligandChain+"\t")
-        resultsFile.write(ligandId+"\t")
-        resultsFile.write(str(centroid["cycleId"])+"\t")
-        
-        resultsFile.write(anionCode+"\t")
-        resultsFile.write(anionChain+"\t")
-        resultsFile.write(anionId+"\t")
-        resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
-        
-        resultsFile.write(anionAtom.element+"\t")
-        resultsFile.write(cat.element+"\t")
-        
-        resultsFile.write(str(distance)+"\t")
-        
-        resultsFile.write(str(anionCoord[0])+"\t")
-        resultsFile.write(str(anionCoord[1])+"\t")
-        resultsFile.write(str(anionCoord[2])+"\t")
-        
-        resultsFile.write(str(catCoord[0])+"\t")
-        resultsFile.write(str(catCoord[1])+"\t")
-        resultsFile.write(str(catCoord[2])+"\t")
-        
-        resultsFile.write(str(sameSemisphere)+"\t")
-        resultsFile.write(str(abs(anionAngle - cationAngle))+"\t")
-        resultsFile.write(str(modelIndex)+"\n")
-    
-    resultsFile.close()
-    
-    return newAtoms
-
-def writeHbondsResults( PDBcode ,hDonors, atom, modelIndex, fileId):
-    resultsFileName = "logs/hBonds.log"
-    if fileId != None:
-        resultsFileName = "logs/hBonds"+str(fileId)+".log"
-    
-    anionAtom = atom["Atom"]
-    anion = anionAtom.get_parent()
-    anionCode = anion.get_resname()
-    anionId = str(anion.get_id()[1])
-    anionChain = anion.get_parent().get_id()
-    anionCoord = anionAtom.get_coord()
-    
-    resultsFile = open(resultsFileName, "a+")
-
-    for hDonData in hDonors:
-        hDon = hDonData["donor"]
-        distance = anionAtom - hDon
-        
-        hDonCoords = hDon.get_coord()
-        hDonRes = hDon.get_parent()
-        
-        residueName = hDonRes.get_resname()
-        resChain = hDonRes.get_parent().get_id()
-        resId = str(hDonRes.get_id()[1])
-        
-        resultsFile.write(PDBcode+"\t")
-        
-        resultsFile.write(anionCode+"\t")
-        resultsFile.write(anionChain+"\t")
-        resultsFile.write(anionId+"\t")
-        
-        resultsFile.write(residueName+"\t")
-        resultsFile.write(resChain+"\t")
-        resultsFile.write(resId+"\t")
-        
-        resultsFile.write(atom["AnionType"]+"\t")
-        resultsFile.write(anionAtom.element+"\t")
-        resultsFile.write(str(anionAtom.anionData.anionId)+"\t")
-        
-        resultsFile.write(str(anionCoord[0])+"\t")
-        resultsFile.write(str(anionCoord[1])+"\t")
-        resultsFile.write(str(anionCoord[2])+"\t")
-        
-        resultsFile.write(hDon.element+"\t"+hDon.element+"\t")
-        
-        resultsFile.write(str(hDonCoords[0])+"\t")
-        resultsFile.write(str(hDonCoords[1])+"\t")
-        resultsFile.write(str(hDonCoords[2])+"\t")
-        
-        hydrogenAtom = hDonData["hydrogen"]
-        hydrogenCoords = hydrogenAtom.get_coord()
-        
-        resultsFile.write(str(hydrogenCoords[0])+"\t")
-        resultsFile.write(str(hydrogenCoords[1])+"\t")
-        resultsFile.write(str(hydrogenCoords[2])+"\t")
-        
-        resultsFile.write(str(hDonData["HFromExp"])+"\t")
-        
-        vec1 = normalize(anionCoord - hydrogenCoords)
-        vec2 = normalize(hDonCoords - hydrogenCoords)
-        angle = degrees( acos( np.inner(vec1, vec2 ) ))
-        hDistance = anionAtom - hydrogenAtom
-        
-        resultsFile.write(str(angle)+"\t")
-        resultsFile.write(str(hDistance)+"\t")
-        
-        resultsFile.write(str(distance)+"\t")
-        
-        resultsFile.write(str(modelIndex)+"\n")
-    
-    resultsFile.close()
+            actualNo += 1
+            partialProgressFile = open(fileName, 'w')
+            partialProgressFile.write(str(actualNo))
+            partialProgressFile.close()
 
 def atomDistanceFromCentroid( atom, centroid ):
     """
@@ -801,20 +794,40 @@ def angleNormVecPoint( centroid, point):
     inner_prod = np.inner( normVec, centrAtomVec )
     
     return degrees( acos(inner_prod) )
+        
+def calcDirectionalVector(planeData, centroid):
+    vecCoords = []
+    for pointData in planeData.directionalVector:
+        kind = list(pointData.keys())[0]
+        if kind == "atom":
+            vecCoords.append( pointData[kind].get_coord() )
+        elif kind == "center":
+            atomsList = pointData[kind]
+            vecCoords.append( getAverageCoords( atomsList, list( range(len(atomsList)))) )
+        elif kind == "closest":
+            atomsList = pointData[kind]
+            
+            minDist = 1000
+            closestAtom = None
+            
+            for atom in atomsList:
+                dist = atomDistanceFromCentroid(atom, centroid)
+                
+                if dist < minDist:
+                    minDist = dist
+                    closestAtom = atom
+                    
+            vecCoords.append(closestAtom.get_coord())
 
-def incrementPartialProgress( fileId ):
-    fileName = "logs/partialProgress"+str(fileId)+".log"
-    if not isfile(fileName):
-        partialProgressFile = open(fileName, 'w')
-        partialProgressFile.write("1")
-        partialProgressFile.close()
+            
+    vec = normalize( vecCoords[1] - vecCoords[0] )
+    vec2 = normalize( np.array(centroid["coords"]) - vecCoords[1] )
+    
+    inner_prod = np.inner( vec , vec2)
+    if abs(inner_prod) > 1.0:
+        if abs(inner_prod) < 1.1:
+            return 0.0
+        else:
+            return 666.0
         
-    else:
-        partialProgressFile = open(fileName, 'r')
-        actualNo = int(partialProgressFile.readline())
-        partialProgressFile.close()
-        
-        actualNo += 1
-        partialProgressFile = open(fileName, 'w')
-        partialProgressFile.write(str(actualNo))
-        partialProgressFile.close()
+    return degrees( acos(inner_prod) )

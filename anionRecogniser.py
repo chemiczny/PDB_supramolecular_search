@@ -5,7 +5,7 @@ Created on Sat Apr 21 14:04:23 2018
 
 @author: michal
 """
-from config import configure
+from configure import configure
 configure()
     
 from Bio.PDB import Selection, NeighborSearch

@@ -7,45 +7,24 @@ Created on Mon Jan  1 18:00:25 2018
 from cif_analyser import findSupramolecular
 from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
 from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader
-from os.path import isdir, basename, isfile
+from os.path import isdir, basename, join
 from os import makedirs, remove
+from configure import configure
 import glob
 import time
-import json
 from multiprocessing import Pool
 
-numberOfProcesses = 6
-cifFiles =  "cif/*.cif" 
+config = configure()
+numberOfProcesses = config["N"]
+cifFiles =  config["cif"]
+scratch = config["scratch"]
 
-configurationFileName = "config.json"
-
-if isfile(configurationFileName):
-    configFile = open(configurationFileName)
-    config = json.load(configFile)
-    configFile.close()
-    
-    if "N" in config:
-        numberOfProcesses = config["N"]
-        
-    if "cif" in config:
-        cifFiles = config["cif"]
+files2remove = glob.glob( join(scratch,"*"))
+for f in files2remove:
+    remove(f)
 
 if not isdir("logs"):
     makedirs("logs")
-        
-log_files = glob.glob("logs/anionPi*.log")
-log_files += glob.glob("logs/piPi*.log")
-log_files += glob.glob("logs/cationPi*.log")
-log_files += glob.glob("logs/anionCation*.log")
-log_files += glob.glob("logs/partialProgress*")
-log_files += glob.glob("logs/additionalInfo*.log")
-log_files += glob.glob("logs/hBonds*.log")
-log_files += glob.glob("logs/metalLigand*.log")
-log_files += glob.glob("logs/linearAnionPi*.log")
-log_files += glob.glob("logs/planarAnionPi*.log")
-
-for log_file in log_files:
-    remove(log_file)
     
 writeAnionPiHeader()
 writeAnionCationHeader()
@@ -55,7 +34,6 @@ writeHbondsHeader()
 writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
-
 
 cif_files = glob.glob(cifFiles)                                                                                                                         
 
@@ -111,7 +89,7 @@ def mergeLogs( logFinal, logs  ):
 #
 def mergeProgressFiles():
     cifProcessed = 0
-    log_files = glob.glob("logs/partialProgress*")
+    log_files = glob.glob(join(scratch, "partialProgress*"))
     for log_file in log_files:
         log = open(log_file, 'r')
         cifProcessed += int(log.readline())
@@ -126,15 +104,15 @@ def mergeProgressFiles():
     progressSummary.write("Przetworzono: " +str( cifProcessed ) + "/"+  str(cifNo)+"\n")
     progressSummary.close()
     
-mergeLogs("logs/anionPi.log", "logs/anionPi*.log"  )
-mergeLogs("logs/cationPi.log", "logs/cationPi*.log"  )
-mergeLogs("logs/piPi.log", "logs/piPi*.log"  )
-mergeLogs("logs/anionCation.log", "logs/anionCation*.log"  )
-mergeLogs("logs/hBonds.log", "logs/hBonds*.log"  )
-mergeLogs("logs/metalLigand.log", "logs/metalLigand*.log"  )
-mergeLogs("logs/linearAnionPi.log", "logs/linearAnionPi*.log"  )
-mergeLogs("logs/planarAnionPi.log", "logs/planarAnionPi*.log"  )
-mergeLogs("logs/additionalInfo.log", "logs/additionalInfo*.log"  )
+mergeLogs("logs/anionPi.log", join(scratch, "anionPi*.log")  )
+mergeLogs("logs/cationPi.log", join(scratch, "cationPi*.log")  )
+mergeLogs("logs/piPi.log", join(scratch, "piPi*.log" ) )
+mergeLogs("logs/anionCation.log", join(scratch, "anionCation*.log")  )
+mergeLogs("logs/hBonds.log", join(scratch, "hBonds*.log")  )
+mergeLogs("logs/metalLigand.log", join(scratch, "metalLigand*.log" ) )
+mergeLogs("logs/linearAnionPi.log", join(scratch, "linearAnionPi*.log" ) )
+mergeLogs("logs/planarAnionPi.log", join(scratch, "planarAnionPi*.log")  )
+mergeLogs("logs/additionalInfo.log", join(scratch, "additionalInfo*.log")  )
 mergeProgressFiles()
 
 timeStop = time.time()

@@ -11,15 +11,13 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 """
 from os.path import getsize
 
-from config import configure
-configure()
+from configure import configure
+config = configure()
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
 from primitiveCif2Dict import primitiveCif2Dict
 import numpy as np                
-from supramolecularLogging import writeAnionPiResults, incrementPartialProgress, writeAdditionalInfo
-from supramolecularLogging import writeCationPiResults, writePiPiResults, writeAnionCationResults, writeHbondsResults, writeMetalLigandResults
-from supramolecularLogging import writeAnionPiLinearResults, writeAnionPiPlanarResults
+from supramolecularLogging import SupramolecularLogger
 from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
 from protonate import Protonate
 from anionRecogniser import AnionRecogniser, createResId
@@ -39,16 +37,14 @@ def findSupramolecular( cifData):
     Wyjscie:
     Hehehe, czas pokaze...
     """
-    cifFile = cifData[0]
-    PDBcode = cifData[1]
-    logId = cifData[2]
     
-    cifAnalyser = CifAnalyser(cifFile, PDBcode, logId)
+    cifAnalyser = CifAnalyser(*cifData)
     cifAnalyser.analyseCif()
     
 
 class CifAnalyser:
     def __init__(self, cifFile, PDBcode, logId = "default"):
+        global config
         self.cifFile  = cifFile
         self.PDBcode = PDBcode
         
@@ -83,6 +79,8 @@ class CifAnalyser:
         self.aromaticAAcounter = {}
         self.aromaticAA = ["PHE", "HIS", "TRP", "TYR"]
         
+        self.supraLogger = SupramolecularLogger( PDBcode, self.fileId, config["scratch"] )
+        
     def initAromaticAAcounter(self):
         self.aromaticAAcounter = {}
         
@@ -90,7 +88,7 @@ class CifAnalyser:
             self.aromaticAAcounter[aaCode] = 0
     
     def analyseCif(self):
-        writeAdditionalInfo("Zaczynam analize: "+self.PDBcode, self.fileId)
+        self.supraLogger.writeAdditionalInfo("Zaczynam analize: "+self.PDBcode)
         parser = FastMMCIFParser(QUIET=True)
         
         timeStart = time()
@@ -101,12 +99,12 @@ class CifAnalyser:
         except:
             errorMessage = "FastMMCIFParser cannot handle with: " + self.cifFile
     #        fileId = current_process()
-            incrementPartialProgress(self.fileId)
-            writeAdditionalInfo(errorMessage, self.fileId)
+            self.supraLogger.incrementPartialProgress()
+            self.supraLogger.writeAdditionalInfo(errorMessage)
             #Zeby zobaczyc co sie dzieje
             return True        
             
-        writeAdditionalInfo("Rozmiar pliku: " + str(getsize(self.cifFile)), self.fileId)
+        self.supraLogger.writeAdditionalInfo("Rozmiar pliku: " + str(getsize(self.cifFile)))
         
     #    supramolecularFound = False 
         notPiacids = [ "HOH", "DOD", "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
@@ -163,16 +161,16 @@ class CifAnalyser:
                     for key in newTimes:
                         times[key] += newTimes[key]
                         
-            writeAdditionalInfo("model: "+str(modelIndex), self.fileId)
+            self.supraLogger.writeAdditionalInfo("model: "+str(modelIndex))
             for rc in residue2counts:
-                writeAdditionalInfo(rc + " " +str(residue2counts[rc]), self.fileId)
+                self.supraLogger.writeAdditionalInfo(rc + " " +str(residue2counts[rc]))
                 
-            writeAdditionalInfo("Recognised aromatic AA", self.fileId)
+            self.supraLogger.writeAdditionalInfo("Recognised aromatic AA")
             for aaCode in self.aromaticAAcounter:
-                writeAdditionalInfo(aaCode + " " +str(self.aromaticAAcounter[aaCode]), self.fileId)
+                self.supraLogger.writeAdditionalInfo(aaCode + " " +str(self.aromaticAAcounter[aaCode]))
                 
     #    fileId = current_process()
-        incrementPartialProgress(self.fileId)
+        self.supraLogger.incrementPartialProgress()
     #    except:
     #        fileId = current_process()
     #        writeAdditionalInfo("UNKNOWN ERROR!!!! PDB: "+PDBcode, fileId)
@@ -180,9 +178,9 @@ class CifAnalyser:
         timeTaken = timeStop - timeStart
         
         for key in times:
-            writeAdditionalInfo("time "+key+" "+str(times[key]), self.fileId)
+            self.supraLogger.writeAdditionalInfo("time "+key+" "+str(times[key]))
         
-        writeAdditionalInfo("Analiza skonczona "+self.PDBcode+ " czas: "+str(timeTaken), self.fileId)
+        self.supraLogger.writeAdditionalInfo("Analiza skonczona "+self.PDBcode+ " czas: "+str(timeTaken))
 #    return supramolecularFound
         
     def determineStructureType(self, structure):
@@ -228,7 +226,7 @@ class CifAnalyser:
             mmcif_dict = mmcif_dict_parser.result
         except:
             errorMessage = "primitiveCif2Dict cannot handle with: "+self.cifFile
-            writeAdditionalInfo(errorMessage, self.fileId)
+            self.supraLogger.writeAdditionalInfo(errorMessage)
             return -666, -666, "Unknown"
         
         method = "Unknown"
@@ -330,17 +328,17 @@ class CifAnalyser:
                 extractedCations = extractedMetalCations + extractedAAcations
                 cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False) ]
                 
-                writeCationPiResults(ligand, self.PDBcode, centroid, extractedCations, cationRingLenChainsFull, modelIndex, self.fileId )
-                writeMetalLigandResults( self.PDBcode , extractedMetalCations, cationComplexData, modelIndex, self.fileId)
+                self.supraLogger.writeCationPiResults(ligand, centroid, extractedCations, cationRingLenChainsFull, modelIndex )
+                self.supraLogger.writeMetalLigandResults( extractedMetalCations, cationComplexData, modelIndex)
                 
                 time4 = time()
                 extractedCentroids, ringMolecules = extractRingCentroids(centroid["coords"], ligand, nsSmall)
                 extractPiPiTime += time() - time4
                 
-                writePiPiResults(ligand, self.PDBcode, centroid, ringMolecules, extractedCentroids, modelIndex, self.fileId)
+                self.supraLogger.writePiPiResults(ligand, centroid, ringMolecules, extractedCentroids, modelIndex)
                 
                 for atom in extractedAnionAtoms:
-                    writeAnionCationResults(atom["Atom"], self.PDBcode, ligand, centroid, extractedCations, modelIndex, self.fileId)
+                    self.supraLogger.writeAnionCationResults(atom["Atom"], ligand, centroid, extractedCations, modelIndex)
                     
                     if atom["Atom"].anionData.hBondsAnalyzed:
                         continue
@@ -349,11 +347,11 @@ class CifAnalyser:
                     hDonors = extractHbonds( atom , nsSmall, self.hBondsRadius , self.hAtomsPresent, self.fileId, structure)
                     extractHBondsTime += time() - time5
                     
-                    writeHbondsResults( self.PDBcode,hDonors, atom, modelIndex, self.fileId)
+                    self.supraLogger.writeHbondsResults( hDonors, atom, modelIndex)
                     atom["Atom"].anionData.hBondsAnalyzed = True
                     
-            extractedAtoms =  writeAnionPiResults(ligand, self.PDBcode, centroid, extractedAnionAtoms, modelIndex,
-                                                  self.resolution, self.method,  self.structureType, self.fileId)
+            extractedAtoms =  self.supraLogger.writeAnionPiResults(ligand, centroid, extractedAnionAtoms, modelIndex,
+                                                  self.resolution, self.method,  self.structureType)
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True
@@ -374,11 +372,11 @@ class CifAnalyser:
             
             for geometricProperty in geometricPropertyList:
                 if geometricProperty.kind == "plane":
-                    writeAnionPiPlanarResults(ligand, centroid, self.PDBcode, geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
+                    self.supraLogger.writeAnionPiPlanarResults(ligand, centroid, geometricProperty, modelIndex, geometricPropertyKey)
                 elif geometricProperty.kind == "line":
-                    writeAnionPiLinearResults(ligand, centroid, self.PDBcode , geometricProperty, modelIndex, geometricPropertyKey, self.fileId)
+                    self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricPropertyKey)
                 elif geometricProperty.kind == "lineSymmetric":
-                    writeAnionPiLinearResults(ligand, centroid, self.PDBcode , geometricProperty, modelIndex, geometricPropertyKey, self.fileId, True)
+                    self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricPropertyKey, True)
 
     def findCationComplex(self, cation, ns, ligand):
         if hasattr(cation, "analysedAsComplex"):
@@ -570,7 +568,7 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
         if len( neighbors ) > 2:
             verdict = isFlatPrimitive(piAcidAtoms, neighbors + [ node ], 0.25)
             if not verdict["isFlat"]:
-                writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
+#                writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
                 flat = False
             
     return len(shortestPath)+1, flat
