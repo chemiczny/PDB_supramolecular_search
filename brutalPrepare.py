@@ -18,20 +18,6 @@ cifFiles =  config["cif"]
         
 if not isdir("logs"):
     makedirs("logs")
-        
-log_files = glob.glob("logs/anionPi*.log")
-log_files += glob.glob("logs/piPi*.log")
-log_files += glob.glob("logs/cationPi*.log")
-log_files += glob.glob("logs/anionCation*.log")
-log_files += glob.glob("logs/partialProgress*")
-log_files += glob.glob("logs/additionalInfo*.log")
-log_files += glob.glob("logs/hBonds*.log")
-log_files += glob.glob("logs/metalLigand*.log")
-log_files += glob.glob("logs/linearAnionPi*.log")
-log_files += glob.glob("logs/planarAnionPi*.log")
-
-for log_file in log_files:
-    remove(log_file)
     
 writeAnionPiHeader()
 writeAnionCationHeader()
@@ -41,7 +27,6 @@ writeHbondsHeader()
 writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
-
 
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
@@ -55,8 +40,8 @@ cifNoFile.write(str(len(cif_files)))
 cifNoFile.close()
 
 scratch = config["scratch"]
+files2remove = glob.glob( join(scratch,"*"))
 
-files2remove = glob.glob( join(scratch,"/*"))
 for f in files2remove:
     remove(f)
 
