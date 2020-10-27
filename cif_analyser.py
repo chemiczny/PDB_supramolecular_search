@@ -153,7 +153,10 @@ class CifAnalyser:
     #        print("neighbor search utworzony")
             for residue in model.get_residues():
                 residueName = residue.get_resname().upper()
-                if residueName in residue2counts:
+                firstAtom = list(residue.get_atoms())[0]
+                notAsolution = firstAtom.is_disordered() and firstAtom.get_altloc() != 'A'
+
+                if residueName in residue2counts and not notAsolution:
                     residue2counts[residueName] += 1
                     
                 if not residueName in notPiacids  :
