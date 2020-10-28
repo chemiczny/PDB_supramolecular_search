@@ -28,6 +28,8 @@ writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
 
+open("logs/additionalInfo.log", "w").close()
+
 timeStart = time.time()
 timeFile = open("logs/timeStart.log", 'w')
 timeFile.write(str(timeStart))

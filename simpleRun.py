@@ -13,6 +13,13 @@ from configure import configure
 import glob
 import time
 from multiprocessing import Pool
+import cProfile, pstats, io
+
+###profiler start
+pr = cProfile.Profile()
+pr.enable()
+
+##############
 
 config = configure()
 numberOfProcesses = config["N"]
@@ -34,6 +41,8 @@ writeHbondsHeader()
 writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
+
+open("logs/additionalInfo.log", "w").close()
 
 cif_files = glob.glob(cifFiles)                                                                                                                         
 
@@ -119,3 +128,15 @@ timeStop = time.time()
 timeFile = open("logs/timeStop.log", 'w')
 timeFile.write(str(timeStop))
 timeFile.close()
+
+#######profiler stop
+pr.disable()
+s = io.StringIO()
+sortby = 'cumulative'
+ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+ps.print_stats()
+
+logFile = open("simpleRun.profile", 'w')
+logFile.write(s.getvalue())
+logFile.close()
+##############
