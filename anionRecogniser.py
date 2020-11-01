@@ -139,8 +139,9 @@ class AnionRecogniser:
                 
     #    print("transformuje na graf")
     #    graphStart = time()
-        atoms5 = ns.search(atom.get_coord(), 5.0, 'A')
-        graph, atomInd = molecule2graph( atoms5, atom )
+        atoms5 = list(ns.search(atom.get_coord(), 5.0, 'A'))
+        
+        graph, atomInd = molecule2graph( atoms5, atom, omitMetals= True )
     #    graphConversion += time() - graphStart
     #    print("rozmiar grafu: ", len(graph.nodes()))
     #    print("Przetransformowalem")

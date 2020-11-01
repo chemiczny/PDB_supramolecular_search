@@ -404,7 +404,22 @@ class CifAnalyser:
         if len(anionSpace) == 0:
             return  { "complex" : False, "coordNo" : 0, "ligands" : [] }
         
-        nsSmall = NeighborSearch(anionSpace)
+        class fakeRes:
+            def __init__(self):
+                pass
+            def get_resname(self):
+                return "test_resname"
+            def get_id(self):
+                return "###"
+            def get_atoms(self):
+                return [fakeRes()]
+            def get_parent(self):
+                return fakeRes()
+            
+            def get_coord(self):
+                return [ 0, 0, 0]
+        
+#        nsSmall = NeighborSearch(anionSpace)
     #    if not potentialLigands:
     #        return  { "complex" : False, "coordNo" : 0 }
         
@@ -414,6 +429,8 @@ class CifAnalyser:
         
         summary = {}
         
+        self.anionRecogniser.extractAnionAtoms( potentialLigands, fakeRes(), ns )
+        
         for atom in potentialLigands:
             if atom.element == "H":
                 continue
@@ -421,7 +438,13 @@ class CifAnalyser:
                 newVector = normalize( atom.get_coord() - cation.get_coord() )
                 resultantVector += newVector
                 coordNo += 1
-                isAnion, anionType = self.anionRecogniser.searchInAnionTemplates(atom, anionSpace, nsSmall)
+                if hasattr(atom, "anionData"):
+                    isAnion = atom.anionData.charged
+                    anionType = atom.anionData.anionType
+                else:
+                    isAnion = False
+                    anionType = atom.element
+                
                 anionId = -1
                 if isAnion:
                     anionId = atom.anionData.anionId
