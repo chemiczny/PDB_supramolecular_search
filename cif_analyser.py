@@ -329,7 +329,7 @@ class CifAnalyser:
                 cationAnalysisTime += time() - time3
                         
                 extractedCations = extractedMetalCations + extractedAAcations
-                cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False) ]
+                cationRingLenChainsFull = cationRingLenChains + len(extractedAAcations)* [ (0, False, -1) ]
                 
                 self.supraLogger.writeCationPiResults(ligand, centroid, extractedCations, cationRingLenChainsFull, modelIndex )
                 self.supraLogger.writeMetalLigandResults( extractedMetalCations, cationComplexData, modelIndex)
@@ -386,7 +386,7 @@ class CifAnalyser:
             return { "complex" : False, "coordNo" : 0, "ligands" : [] }
         
         cation.analysedAsComplex = True
-        potentialLigands = ns.search(cation.get_coord(), 2.6 , 'A')
+        potentialLigands = ns.search(cation.get_coord(), 2.85 , 'A')
         anionSpaceWithCation = ns.search(cation.get_coord(), 4.5 , 'A') 
         metals =  [
             "LI", "BE", 
@@ -554,9 +554,10 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
 def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileId ):
     piAcidAtoms = list(piAcid.get_atoms())
     
-    cationNeighbours = ns.search( cation.get_coord(), 2.6, 'A' )
+    cationNeighbours = ns.search( cation.get_coord(), 2.85, 'A' )
     firstAtomInRing = centroidData["cycleAtoms"][0]
     shortestPath = []
+    distanceCatChain = -1
     somethingFound = False
 #    print("Analizuje :", piAcid.get_resname())
     for catN in cationNeighbours:
@@ -581,12 +582,13 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
             if len(newPath) < len(shortestPath) or not somethingFound:
 #                print("znalazlem krotsza sciezke")
 #                print("stara dlugosc: ", len(shortestPath))
+                distanceCatChain = cation - catN
                 shortestPath = newPath
                 
             somethingFound = True
                 
     if not somethingFound:
-        return 0, False
+        return 0, False, -1
     
     flat = True
     for node in shortestPath:
@@ -597,7 +599,7 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
 #                writeAdditionalInfo( "Nieplaski lancuch! "+cation.element, fileId)
                 flat = False
             
-    return len(shortestPath)+1, flat
+    return len(shortestPath)+1, flat, distanceCatChain
         
 
 def extractRingCentroids(point, residue, ns):

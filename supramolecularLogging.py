@@ -43,6 +43,7 @@ def writeCationPiHeader( ):
     resultsFile.write("x\th\t")
     resultsFile.write("RingChain\t")
     resultsFile.write("ChainFlat\t")
+    resultsFile.write("Cation-Chain Distance\t")
     resultsFile.write("CentroidId\t")
     resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
     resultsFile.write("Cation x coord\tCation y coord\tCation z coord\t")
@@ -417,6 +418,7 @@ class SupramolecularLogger:
             
             resultsFile.write(str(chainLen[0])+"\t")
             resultsFile.write(str(chainLen[1])+"\t")
+            resultsFile.write(str(chainLen[2])+"\t")
             
             resultsFile.write(str(centroid["cycleId"])+"\t")
             resultsFile.write(str(centroidCoords[0])+"\t")
@@ -508,8 +510,8 @@ class SupramolecularLogger:
         newAtoms = []
         for res, cent in zip(extractedRes, extractedCentroids):
             distance = cent["distance"]
-            angle = angleBetweenNormVec(centroid, cent)
-            theta = angleNormVecPoint(centroid, cent["coords"])
+            theta = angleBetweenNormVec(centroid, cent)
+            angle = angleNormVecPoint(centroid, cent["coords"])
             omega = calcOmega(centroid, cent)
             
             h = abs(cos(radians( angle ))*distance)
