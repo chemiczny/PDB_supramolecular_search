@@ -15,23 +15,22 @@ from multiprocessing import Pool
 def mergeLogs( logList  ):
     logFinal = logList[0]
     logs = logList[1]
-    final_log = open(logFinal, "a+")
+    
     log_files = glob.glob(logs)
     for log_file in log_files:
         if log_file == logFinal:
             continue
         
         new_log = open(log_file, 'r')
-        
+        final_log = open(logFinal, "a+")
         line = new_log.readline()
         while line:
             final_log.write(line)
             line = new_log.readline()
         
         new_log.close()
+        final_log.close()
         remove(log_file)
-    
-    final_log.close()
     
 def mergeProgressFiles(scratch):
     cifProcessed = 0
