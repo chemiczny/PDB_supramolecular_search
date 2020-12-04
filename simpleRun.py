@@ -6,7 +6,7 @@ Created on Mon Jan  1 18:00:25 2018
 """
 from cif_analyser import findSupramolecular
 from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
-from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader
+from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
 from os.path import isdir, basename, join
 from os import makedirs, remove
 from configure import configure
@@ -41,6 +41,7 @@ writeHbondsHeader()
 writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
+writeMethylPiHeader()
 
 open("logs/additionalInfo.log", "w").close()
 
@@ -73,7 +74,7 @@ cifNoFile.close()
 
 argumentsList = prepareArgumentsList( cif_files)
 pool.map(findSupramolecular, argumentsList)
-
+#
 #for arg in argumentsList:
 #    findSupramolecular(arg)
 
@@ -121,6 +122,7 @@ mergeLogs("logs/hBonds.log", join(scratch, "hBonds*.log")  )
 mergeLogs("logs/metalLigand.log", join(scratch, "metalLigand*.log" ) )
 mergeLogs("logs/linearAnionPi.log", join(scratch, "linearAnionPi*.log" ) )
 mergeLogs("logs/planarAnionPi.log", join(scratch, "planarAnionPi*.log")  )
+mergeLogs("logs/methylPi.log", join(scratch, "methylPi*.log")  )
 mergeLogs("logs/additionalInfo.log", join(scratch, "additionalInfo*.log")  )
 mergeProgressFiles()
 

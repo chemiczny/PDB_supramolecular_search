@@ -6,7 +6,7 @@ Created on Mon Oct  1 14:26:23 2018
 @author: michal
 """
 from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
-from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader
+from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
 from os.path import isdir, join
 from os import makedirs, remove
 import glob
@@ -27,6 +27,7 @@ writeHbondsHeader()
 writeMetalLigandHeader()
 writeAnionPiLinearHeader()
 writeAnionPiPlanarHeader()
+writeMethylPiHeader()
 
 open("logs/additionalInfo.log", "w").close()
 

@@ -152,6 +152,25 @@ def writeAnionPiLinearHeader( ):
     resultsFile.write("Anion group x coord\tAnion group y coord\tAnion group z coord\t")
     resultsFile.write("Model No\n")
     resultsFile.close()
+    
+def writeMethylPiHeader( ):
+    """
+    Zapisz naglowki do pliku z wynikami:
+    """
+    resultsFileName = "logs/methylPi.log"
+    resultsFile = open(resultsFileName, "w")
+    resultsFile.write("PDB Code\tPi acid Code\tPi acid chain\tPiacid id\t")
+    resultsFile.write("Anion code\tAnion chain\tAnion id\tAnion type\tAnion group id\t")
+    resultsFile.write("Atom symbol\tDistance\tAngle\t")
+    resultsFile.write("x\th\t")
+    resultsFile.write("CentroidId\t")
+    resultsFile.write("Centroid x coord\tCentroid y coord\tCentroid z coord\t")
+    resultsFile.write("Anion x coord\tAnion y coord\tAnion z coord\t")
+    resultsFile.write("Model No\tDisordered\t")
+    resultsFile.write("Ring size\tRing elements\t")
+    resultsFile.write("Resolution\t")
+    resultsFile.write("Method\tStructure type\n")
+    resultsFile.close()
 
 class SupramolecularLogger:
     def __init__(self, PDBcode, fileId = None, scratchDir = None):
@@ -170,6 +189,7 @@ class SupramolecularLogger:
             self.piPiLog = join( self.scratchDir, "piPi{}.log".format(self.fileId) )
             self.anionCationLog = join( self.scratchDir, "anionCation{}.log".format(self.fileId) )
             self.hBondsLog = join( self.scratchDir, "hBonds{}.log".format(self.fileId) )
+            self.methylPiLog = join( self.scratchDir, "methylPi{}.log".format(self.fileId) )
             
         else:
             self.additionalInfoLog = join( self.finalLogDir, "additionalInfo.log" )
@@ -181,6 +201,7 @@ class SupramolecularLogger:
             self.piPiLog = join( self.finalLogDir, "piPi.log" )
             self.anionCationLog = join( self.finalLogDir, "anionCation.log" )
             self.hBondsLog = join( self.finalLogDir, "hBonds.log" )
+            self.methylLog = join( self.scratchDir, "methylPi.log" )
             
         self.partialProgressLog = join( self.scratchDir, "partialProgress{}.log".format(self.fileId) )
 
@@ -704,6 +725,75 @@ class SupramolecularLogger:
             resultsFile.write(str(modelIndex)+"\n")
         
         resultsFile.close()
+        
+    def writeMethylPiResults(self, ligand, centroid, extractedAtoms, modelIndex, resolution, method, structureType ):
+        """
+        Zapisz dane do pliku z wynikami
+        """
+        resultsFileName = self.methylPiLog
+        ligandCode = ligand.get_resname()
+        ligandId = str(ligand.get_id()[1])
+        ligandChain = ligand.get_parent().get_id()
+        resultsFile = open(resultsFileName, "a+")
+        newAtoms = []
+        for atomData in extractedAtoms:
+            distance = atomDistanceFromCentroid( atomData["Atom"], centroid )
+            angle = atomAngleNomVecCentroid( atomData["Atom"], centroid )
+            
+            h = abs(cos(radians( angle ))*distance)
+            x = sin(radians( angle ))*distance
+            if angle > 90.0 :
+                angle = 180 - angle
+    #        angleOK = angle <= 45 or angle >= 135
+    #        xOK = x < 1.6
+    #        hOK = h >= 1.5 and h <= 4
+    #        if angleOK and xOK and hOK:
+            newAtoms.append(atomData)
+                
+            atomCoords = atomData["Atom"].get_coord()
+            centroidCoords = centroid["coords"]        
+            
+            anion = atomData["Atom"].get_parent()
+            residueName = anion.get_resname()
+            anionChain = anion.get_parent().get_id()
+            anionId = str(anion.get_id()[1])
+            resultsFile.write(self.pdbCode+"\t")
+            resultsFile.write(ligandCode+"\t")
+            resultsFile.write(ligandChain+"\t")
+            resultsFile.write(ligandId+"\t")
+            resultsFile.write(residueName+"\t")
+            resultsFile.write(anionChain+"\t")
+            resultsFile.write(anionId+"\t")
+            resultsFile.write(atomData["AnionType"]+"\t")
+            resultsFile.write(str(atomData["AnionId"])+"\t")
+            resultsFile.write(atomData["Atom"].element+"\t")
+            
+            resultsFile.write(str(distance)+"\t")
+            resultsFile.write(str(angle)+"\t")
+            
+            resultsFile.write(str(x)+"\t")
+            resultsFile.write(str(h)+"\t")
+            
+            resultsFile.write(str(centroid["cycleId"])+"\t")
+            resultsFile.write(str(centroidCoords[0])+"\t")
+            resultsFile.write(str(centroidCoords[1])+"\t")
+            resultsFile.write(str(centroidCoords[2])+"\t")
+            
+            resultsFile.write(str(atomCoords[0])+"\t")
+            resultsFile.write(str(atomCoords[1])+"\t")
+            resultsFile.write(str(atomCoords[2])+"\t")
+            
+            resultsFile.write(str(modelIndex)+"\t")
+            resultsFile.write(str(atomData["Atom"].get_parent().is_disordered()) + "\t")
+            resultsFile.write(str(centroid["ringSize"])+"\t")
+            resultsFile.write(str(centroid["ringElements"])+"\t")
+            resultsFile.write(str(resolution)+"\t")
+            resultsFile.write(str(method)+"\t")
+            resultsFile.write(str(structureType)+"\n")
+        
+        resultsFile.close()
+        
+        return newAtoms
     
     def incrementPartialProgress(self ):
         fileName = self.partialProgressLog

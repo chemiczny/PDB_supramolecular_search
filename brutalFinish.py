@@ -67,6 +67,7 @@ argumentsList.append(["logs/hBonds.log", join(scratch, "hBonds*.log")]  )
 argumentsList.append(["logs/metalLigand.log", join(scratch, "metalLigand*.log")]  )
 argumentsList.append(["logs/planarAnionPi.log", join(scratch, "planarAnionPi*.log" )] )
 argumentsList.append(["logs/linearAnionPi.log", join(scratch, "linearAnionPi*.log") ] )
+argumentsList.append(["logs/methylPi.log", join(scratch, "methylPi*.log") ] )
 argumentsList.append(["logs/additionalInfo.log", join(scratch, "additionalInfo*.log")] )
 
 pool.map(mergeLogs, argumentsList)

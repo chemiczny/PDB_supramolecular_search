@@ -302,15 +302,16 @@ class CifAnalyser:
             bigDistance = self.bigCuttingRadius
             distance = self.smallCuttingRadius
             
-            atoms = self.ns.search(np.array(centroid["coords"]), bigDistance, 'A')
+            atoms = list(self.ns.search(np.array(centroid["coords"]), bigDistance, 'A'))
             
             nsSmall = NeighborSearch(atoms)
-            neighbors = nsSmall.search(np.array(centroid["coords"]), distance, 'A')
+            neighbors = list(nsSmall.search(np.array(centroid["coords"]), distance, 'A'))
             
             time1 = time()
             extractedAnionAtoms = self.anionRecogniser.extractAnionAtoms( neighbors, ligand, nsSmall )
             extractAnionsAroundRingTime += time()-time1
-    
+            methyls = extractAAMethyls(neighbors)
+            
             if len(extractedAnionAtoms) > 0:
                 self.writeGeometricProperties(ligand, centroid, modelIndex)
                 
@@ -355,6 +356,9 @@ class CifAnalyser:
                     
             extractedAtoms =  self.supraLogger.writeAnionPiResults(ligand, centroid, extractedAnionAtoms, modelIndex,
                                                   self.resolution, self.method,  self.structureType)
+            
+            if methyls:
+                self.supraLogger.writeMethylPiResults( ligand, centroid, methyls, modelIndex, self.resolution, self.method,  self.structureType  )
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True
@@ -506,6 +510,19 @@ def extractAACations ( point,  ns, distance  ):
             aaCationsFound.append(atom)
     
     return  aaCationsFound
+
+def extractAAMethyls ( neighbors  ):    
+    methyls = []
+    
+    aa2methyls = { "ALA" : [ "CB" ] , "ILE" : ["CG2", "CD1"], "LEU" : ["CD1", "CD2"], "MET" : ["CE"],"THR" : ["CG2"], "VAL" : ["CG1" , "CG2"]  }
+    for atom in neighbors:
+        resname = atom.get_parent().get_resname().upper()
+        atomName = atom.get_name()
+        if resname in aa2methyls:
+            if atomName in aa2methyls[resname]:
+                methyls.append({ "Atom" : atom, "AnionType" : atomName , "AnionId" : 0})
+
+    return  methyls
 
 def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
         
