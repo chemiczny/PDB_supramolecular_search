@@ -23,6 +23,7 @@ from protonate import Protonate
 from anionRecogniser import AnionRecogniser, createResId
 from multiprocessing import current_process
 import networkx as nx
+from collections import defaultdict
 from time import time
 
 def findSupramolecular( cifData):
@@ -127,17 +128,11 @@ class CifAnalyser:
             "timeResolutionReading" : timeResolutionReading}
         
     #    try:
-        interestingResidues = ["GLU","ASP","HIS","TYR","TRP","PHE","A","G","T","C","U","I",
-             "DA","DC","DG","DT","DI",
-             "SO4","ACT","CL","FMT","HEM","PO4","ACY","NO3","MLI","DAL","CIT",
-             "FAD","FMN","NAP","NAD","PEB","PSU","ATP","ADP","OMZ","HEM","NDP","NAI","IMD"]
         
         for modelIndex, model in enumerate(structure):
             self.initAromaticAAcounter()
     #        print("model "+str(modelIndex))
-            residue2counts = {  }
-            for res in interestingResidues:
-                residue2counts[res] = 0
+            residue2counts = defaultdict(int)
                 
             atoms = Selection.unfold_entities(model, 'A')  
             not_disordered_atoms = []
@@ -156,7 +151,7 @@ class CifAnalyser:
                 firstAtom = list(residue.get_atoms())[0]
                 notAsolution = firstAtom.is_disordered() and firstAtom.get_altloc() != 'A'
 
-                if residueName in residue2counts and not notAsolution:
+                if not notAsolution:
                     residue2counts[residueName] += 1
                     
                 if not residueName in notPiacids  :
@@ -310,7 +305,7 @@ class CifAnalyser:
             time1 = time()
             extractedAnionAtoms = self.anionRecogniser.extractAnionAtoms( neighbors, ligand, nsSmall )
             extractAnionsAroundRingTime += time()-time1
-            methyls = extractAAMethyls(neighbors)
+#            methyls = extractAAMethyls(neighbors)
             
             if len(extractedAnionAtoms) > 0:
                 self.writeGeometricProperties(ligand, centroid, modelIndex)
@@ -357,8 +352,8 @@ class CifAnalyser:
             extractedAtoms =  self.supraLogger.writeAnionPiResults(ligand, centroid, extractedAnionAtoms, modelIndex,
                                                   self.resolution, self.method,  self.structureType)
             
-            if methyls:
-                self.supraLogger.writeMethylPiResults( ligand, centroid, methyls, modelIndex, self.resolution, self.method,  self.structureType  )
+#            if methyls:
+#                self.supraLogger.writeMethylPiResults( ligand, centroid, methyls, modelIndex, self.resolution, self.method,  self.structureType  )
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True

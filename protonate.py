@@ -103,6 +103,9 @@ class Protonate:
         self.atomList = []
         self.hydrogenAtomsList = []
         self.connected2H = []
+
+        self.AAcodes = set([ "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS",
+            "ILE", "LEU", "LYS", "MET", "PHE","PRO", "SER", "THR", "TRP", "TYR", "VAL"])
         
         return
 
@@ -114,12 +117,14 @@ class Protonate:
         self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom, False)
         self.moleculeGraph = self.moleculeGraph.copy()
         
+        self.anionCoords = anionAtom.get_coord()
         # protonate all atoms
         for atomId in self.moleculeGraph.nodes():
             atom = self.atomList[atomId]
             element = atom.element
+            resName = atom.get_parent().get_resname()
             
-            if element in ["O", "N" ] and atom != anionAtom:
+            if element in ["O", "N" ] and atom != anionAtom and resName in self.AAcodes:
 #                print("protonuje: ", atom.get_parent().get_resname(), atom.get_name())
                 self.protonate_atom(atomId)
                 
@@ -258,7 +263,8 @@ class Protonate:
                     norm_vec = -normalize(np.cross(A-B, B-C))
                     break
             else:
-                norm_vec = get_ortonormal(B-A)
+                norm_vec = normalize( np.cross( B-A, self.anionCoords - A ) )
+#                norm_vec = get_ortonormal(B-A)
             
             bondDirection = B-A
             for i in range(number_of_protons_to_add):
@@ -304,17 +310,19 @@ class Protonate:
             A = self.atomList[atom].get_coord()
             B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
             
-            norm_vec = get_ortonormal(B-A)
+#            norm_vec = get_ortonormal(B-A)
+            norm_vec = normalize( np.cross( B-A, self.anionCoords - A ) )
             dih_rot = math.radians(120)
             bondDirection = rotateVector(B-A, norm_vec, rot_angle)
+            bondDirection = normalize(bondDirection)* self.bond_lengths[ self.atomList[atom].element ]
             
             for i in range(number_of_protons_to_add):
-                bondDirection = rotateVector(bondDirection, B-A, dih_rot)
-                bondDirection = normalize(bondDirection)* self.bond_lengths[ self.atomList[atom].element ]
-                
                 newAtomCoords = A + bondDirection
                 self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
                 self.connected2H.append(atom)
+                
+                bondDirection = rotateVector(bondDirection, B-A, dih_rot)
+                
         # 1 bond
         
         elif len(bonded_atoms_ids) == 2:
