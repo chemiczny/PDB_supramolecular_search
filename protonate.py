@@ -114,7 +114,7 @@ class Protonate:
 
     def protonate(self, atomList, anionAtom):
         self.atomList = atomList
-        self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom, False)
+        self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom, False, omitMetals = True)
         self.moleculeGraph = self.moleculeGraph.copy()
         
         self.anionCoords = anionAtom.get_coord()

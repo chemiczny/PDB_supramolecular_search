@@ -70,11 +70,11 @@ class CifAnalyser:
         
         self.anionRecogniser = AnionRecogniser()
         
-        self.AAcationRadius = 4.5
+        self.AAcationRadius = 5.0
         self.metalCationRadius = 10
         self.hBondsRadius = 3.5
         
-        self.smallCuttingRadius = 4.5
+        self.smallCuttingRadius = 5.0
         self.bigCuttingRadius = 12
         
         self.aromaticAAcounter = {}
@@ -131,6 +131,7 @@ class CifAnalyser:
         
         for modelIndex, model in enumerate(structure):
             self.initAromaticAAcounter()
+#            self.anionRecogniser.resetFreeAnionId()
     #        print("model "+str(modelIndex))
             residue2counts = defaultdict(int)
                 
@@ -369,16 +370,13 @@ class CifAnalyser:
     
     def writeGeometricProperties(self, ligand, centroid, modelIndex):
         
-        for geometricPropertyKey in self.anionRecogniser.properties2calculatePack:
-            geometricPropertyList = self.anionRecogniser.properties2calculatePack[geometricPropertyKey]
-            
-            for geometricProperty in geometricPropertyList:
-                if geometricProperty.kind == "plane":
-                    self.supraLogger.writeAnionPiPlanarResults(ligand, centroid, geometricProperty, modelIndex, geometricPropertyKey)
-                elif geometricProperty.kind == "line":
-                    self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricPropertyKey)
-                elif geometricProperty.kind == "lineSymmetric":
-                    self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricPropertyKey, True)
+        for geometricProperty in self.anionRecogniser.properties2calculatePack:
+            if geometricProperty.kind == "plane":
+                self.supraLogger.writeAnionPiPlanarResults(ligand, centroid, geometricProperty, modelIndex, geometricProperty.anionGroupId)
+            elif geometricProperty.kind == "line":
+                self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricProperty.anionGroupId)
+            elif geometricProperty.kind == "lineSymmetric":
+                self.supraLogger.writeAnionPiLinearResults(ligand, centroid , geometricProperty, modelIndex, geometricProperty.anionGroupId, True)
 
     def findCationComplex(self, cation, ns, ligand):
         if hasattr(cation, "analysedAsComplex"):
@@ -531,7 +529,7 @@ def extractHbonds( atom , nsSmall, distance, hAtomsPresent, fileId, structure):
         neighbors = protonationWorker.atomList
         anionAtomInd = protonationWorker.anionId
     else:
-        graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False )
+        graph, anionAtomInd = molecule2graph( neighbors, atom["Atom"], False, False, omitMetals = True )
             
     donors = []
     

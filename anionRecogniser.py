@@ -17,6 +17,7 @@ from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
 from biopythonUtilities import createResId, createResIdFromAtom
+#from collections import defaultdict
 #from supramolecularLogging import writeAdditionalInfo
 #from time import time
 
@@ -29,21 +30,25 @@ class AnionData:
         
         
 class Property:
-    def __init__(self, kind, atomsInvolved, directionalVector = []):
+    def __init__(self, kind, atomsInvolved, anionGroupId, directionalVector = []):
         self.kind = kind
         self.atomsInvolved = atomsInvolved
         self.directionalVector = directionalVector
+        self.anionGroupId = anionGroupId
 
 
 class AnionRecogniser:
     def __init__(self):
-        self.freeAnionId = 0
+#        self.freeAnionId = 0
         self.templates = getAllTemplates()
         
-        self.properties2calculatePack = {}
+        self.properties2calculatePack = []
         
     def cleanPropertiesPack(self):
-        self.properties2calculatePack = {}
+        self.properties2calculatePack = []
+        
+#    def resetFreeAnionId(self):
+#        self.freeAnionId = defaultdict(int)
 
     def extractAnionAtoms(self, atomListOrig, ligand, ns ):
         """
@@ -132,7 +137,7 @@ class AnionRecogniser:
                 return False, atom.anionData.anionType
                 
         element = atom.element.upper()
-        
+#        residueId = createResIdFromAtom(atom)
         
         if not element in self.templates:
             return False, element
@@ -210,18 +215,20 @@ class AnionRecogniser:
         
         moleculeGraph.node[atomId]["charged"] = False
         
+        anionGroupId = sorted( list( [ atoms[aid].get_name() for aid in matching ]  ) )[0]
+        
         for aId in matching:
             templateAtomId = matching[aId]
             
             if templateAtomId in graphTemplate.graph["otherCharges"]:
-                atoms[aId].anionData = AnionData(anionGroup, True, self.freeAnionId)
+                atoms[aId].anionData = AnionData(anionGroup, True, anionGroupId)
             else:
-                atoms[aId].anionData = AnionData(anionGroup, False, self.freeAnionId)
+                atoms[aId].anionData = AnionData(anionGroup, False, anionGroupId)
                 
-        atoms[atomId].anionData = AnionData(anionGroup, True, self.freeAnionId)
+        atoms[atomId].anionData = AnionData(anionGroup, True, anionGroupId)
                         
-        if graphTemplate.graph["properties2measure"] and not self.freeAnionId in self.properties2calculatePack:
-            self.properties2calculatePack[ self.freeAnionId ] = []
+        if graphTemplate.graph["properties2measure"] :
+#            self.properties2calculatePack[ self.freeAnionId ] = []
             
             for property2calc in graphTemplate.graph["properties2measure"]:
                 kind = property2calc["kind"]
@@ -243,9 +250,8 @@ class AnionRecogniser:
                             atomsRequired = [ atoms[ reverseMapping[atomInd] ] for atomInd in pointData[key] ]
                             directionalVector.append( { key : atomsRequired } )
                     
-                self.properties2calculatePack[ self.freeAnionId ].append( Property(kind, atomsInvolved, directionalVector) )
+                self.properties2calculatePack.append( Property(kind, atomsInvolved, anionGroupId, directionalVector) )
         
-        self.freeAnionId += 1
         return True, anionGroup
 
 def getResidueWithConnections( atoms, ns ):
