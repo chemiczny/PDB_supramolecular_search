@@ -31,7 +31,7 @@ if not isdir(resUniqueDir):
 cases2run = { "preprocessing" : False, "a" : False, "b" : False, "c" : False,
        "d" : False, "e" : False, "f" :False,
        "g" : False, "Unique" : False, "histogram2d" : False, "barplots": False , "resolutionplot":False,
-       "cylinder2sphereJson" : True, "cylinder2wholePDBJson": True, "occurencesTable" : True, "occurencesPairs" : True }
+       "cylinder2sphereJson" : False, "cylinder2wholePDBJson": False, "occurencesTable" : False, "occurencesPairs" : True }
 
 logAnionPi = join( logDir, "anionPi.log" )
 logAnionCation = join(logDir, "anionCation.log")
@@ -862,3 +862,73 @@ if cases2run["occurencesTable"]:
 
 	table.close()
 
+if cases2run["occurencesPairs"]:
+	df = pd.read_table(logAnionPiResCylinderUnique)
+
+	df2 = df[['Anion code', 'Pi acid Code']]
+
+	pairs = df2.groupby(["Anion code", "Pi acid Code"]).size().sort_values(ascending=False)
+
+	pairsDict = pairs.to_dict()
+
+	AnionCode = df['Anion code'].drop_duplicates()
+	allAnionCode = AnionCode.tolist()
+
+	PiAcidCode = df['Pi acid Code'].drop_duplicates()
+	allPiAcidCode = PiAcidCode.tolist()
+
+	acidicaa = ["ASP","GLU"]
+	aa = ["ALA", "CYS", "PHE", "GLY", "HIS", "ILE", "LYS",
+	      "LEU", "MET", "ASN", "PRO", "GLN", "ARG", "SER", "THR", "VAL", "TRP", "TYR"]
+	nu = ["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI" ]
+
+	aCodes = acidicaa + aa + nu          
+	piAcids =["PHE","TYR","HIS","TRP"] + nu
+
+	tabela = open( join( resUniqueDir ,"tabela.csv"),'w')
+	tabela.write("piacid\t")
+
+	for a in aCodes:
+	    tabela.write(a+"\t")
+	tabela.write("Others\n")
+
+	grandTotal = pairs.sum()
+	for piacid in piAcids:
+	    tabela.write(piacid+"\t")
+	    total = 0
+	    for key in pairsDict:
+	        if key[1] == piacid:
+	            total += pairsDict[key]
+	    
+	    for anion in aCodes:
+	        key = ( anion, piacid)
+	        if  key in pairsDict:
+	            anion_piacid_counts = pairsDict[key]
+	            anion_piacid_counts_str = str(anion_piacid_counts)
+	            tabela.write(anion_piacid_counts_str+"\t")
+	            total -= anion_piacid_counts
+	            grandTotal-= anion_piacid_counts
+	        else:
+	            tabela.write("0\t")
+
+	    tabela.write(str(total)+"\n")
+	    grandTotal-= total    
+	tabela.write("Others\t")
+
+	for anion in aCodes:
+	    total = 0
+	    for key in pairsDict:
+	        if key[0] == anion:
+	            total += pairsDict[key]
+	    
+	    for piacid in piAcids:
+	        key = ( anion, piacid)
+	        if  key in pairsDict:
+	            piacid_counts = pairsDict[key]
+	            total -= piacid_counts
+	            
+	    tabela.write(str(total)+"\t")
+	    grandTotal-= total
+	    
+	tabela.write(str(grandTotal)+"\n")
+	tabela.close()
