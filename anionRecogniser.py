@@ -22,15 +22,17 @@ from biopythonUtilities import createResId, createResIdFromAtom
 #from time import time
 
 class AnionData:
-    def __init__(self, anionType, charged, anionId):
+    def __init__(self, anionType, charged, anionId, properties):
         self.anionType = anionType
         self.charged = charged
         self.anionId = anionId
         self.hBondsAnalyzed = False
+        self.properties = properties
         
         
 class Property:
-    def __init__(self, kind, atomsInvolved, anionGroupId, directionalVector = []):
+    def __init__(self, propId, kind, atomsInvolved, anionGroupId, directionalVector = []):
+        self.uniqueId = propId
         self.kind = kind
         self.atomsInvolved = atomsInvolved
         self.directionalVector = directionalVector
@@ -41,6 +43,7 @@ class AnionRecogniser:
     def __init__(self):
 #        self.freeAnionId = 0
         self.templates = getAllTemplates()
+        self.propertyId = 0
         
         self.properties2calculatePack = []
         
@@ -67,12 +70,18 @@ class AnionRecogniser:
         extractedAtoms = []
         atomList = []
         
+        presentProperitesId = set([])
+        
         for atom in atomListOrig:
             if atom.get_parent() == ligand:
                 continue
             if hasattr(atom, "anionData"):
                 if atom.anionData.charged:
                     extractedAtoms.append({ "Atom" : atom, "AnionType" : atom.anionData.anionType, "AnionId" : atom.anionData.anionId})
+                    for prop in atom.anionData.properties:
+                        if not prop.uniqueId in presentProperitesId:
+                            presentProperitesId.add(prop.uniqueId)
+                            self.properties2calculatePack.append(prop)
             else:
                 atomList.append(atom)
                 
@@ -217,18 +226,21 @@ class AnionRecogniser:
         
         anionGroupId = sorted( list( [ atoms[aid].get_name() for aid in matching ]  ) )[0]
         
-        for aId in matching:
-            templateAtomId = matching[aId]
-            
-            if templateAtomId in graphTemplate.graph["otherCharges"]:
-                atoms[aId].anionData = AnionData(anionGroup, True, anionGroupId)
-            else:
-                atoms[aId].anionData = AnionData(anionGroup, False, anionGroupId)
-                
-        atoms[atomId].anionData = AnionData(anionGroup, True, anionGroupId)
+#        for aId in matching:
+#            templateAtomId = matching[aId]
+#            
+#            if templateAtomId in graphTemplate.graph["otherCharges"]:
+#                atoms[aId].anionData = AnionData(anionGroup, True, anionGroupId)
+#            else:
+#                atoms[aId].anionData = AnionData(anionGroup, False, anionGroupId)
+#                
+#        atoms[atomId].anionData = AnionData(anionGroup, True, anionGroupId)
                         
+        properties2measure = []
         if graphTemplate.graph["properties2measure"] :
 #            self.properties2calculatePack[ self.freeAnionId ] = []
+            self.propertyId += 1
+            currentPropertyId = self.propertyId
             
             for property2calc in graphTemplate.graph["properties2measure"]:
                 kind = property2calc["kind"]
@@ -250,7 +262,19 @@ class AnionRecogniser:
                             atomsRequired = [ atoms[ reverseMapping[atomInd] ] for atomInd in pointData[key] ]
                             directionalVector.append( { key : atomsRequired } )
                     
-                self.properties2calculatePack.append( Property(kind, atomsInvolved, anionGroupId, directionalVector) )
+                newProperty = Property( currentPropertyId, kind, atomsInvolved, anionGroupId, directionalVector)
+                properties2measure.append(newProperty)
+                self.properties2calculatePack.append( newProperty )
+        
+        for aId in matching:
+            templateAtomId = matching[aId]
+            
+            if templateAtomId in graphTemplate.graph["otherCharges"]:
+                atoms[aId].anionData = AnionData(anionGroup, True, anionGroupId, properties2measure)
+            else:
+                atoms[aId].anionData = AnionData(anionGroup, False, anionGroupId, [])
+                
+        atoms[atomId].anionData = AnionData(anionGroup, True, anionGroupId, properties2measure)
         
         return True, anionGroup
 
