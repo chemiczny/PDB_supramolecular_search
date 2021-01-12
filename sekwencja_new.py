@@ -30,14 +30,16 @@ if not isdir(resUniqueDir):
 
 cases2run = { "preprocessing" : False, "a" : False, "b" : False, "c" : False,
        "d" : False, "e" : False, "f" :False,
-       "g" : False, "pureAnionPi" : False,  "Unique" : False, "UniqueSeq" : False, "a-hStats" : False,  "histogram2d" : False, "barplots": False , "resolutionplot":False,
-       "cylinder2sphereJson" : True, "cylinder2wholePDBJson": False, "occurencesTable" : True, "occurencesPairs" : False }
+       "g" : False, "pureAnionPi" : False,  "Unique" : False, "UniqueSeq" : False, "a-hStats" : False,  "histogram2d" : False,
+       "histogram2d-planar" : True, "barplots": False , "resolutionplot":False,
+       "cylinder2sphereJson" : False, "cylinder2wholePDBJson": False, "occurencesTable" : False, "occurencesPairs" : False }
 
 logAnionPi = join( logDir, "anionPi.log" )
 logAnionCation = join(logDir, "anionCation.log")
 logCationPi = join( logDir, "cationPi.log" )
 logPiPi = join( logDir, "piPi.log")
 logMethylPi = join(logDir, "methylPi.log")
+logPlanarAnionPi = join(logDir, "planarAnionPi.log")
 
 if cases2run["preprocessing"]:
   AnionPi = pd.read_csv( logAnionPi, sep = "\t").fillna("NA") 
@@ -47,7 +49,7 @@ if cases2run["preprocessing"]:
   CationPi = pd.read_csv( logCationPi, sep = "\t").fillna("NA") 
   PiPi = pd.read_csv( logPiPi, sep = "\t").fillna("NA") 
   # MetalLigand = pd.read_csv( logdir+"metalLigand.log", sep = "\t").fillna("NA") 
-  # PlanarAnionPi = pd.read_csv( logdir+"planarAnionPi.log", sep = "\t").fillna("NA") 
+  # PlanarAnionPi = pd.read_csv( logPlanarAnionPi, sep = "\t").fillna("NA") 
   methylPi = pd.read_csv( logMethylPi, sep = "\t").fillna("NA") 
 
 resolution = pd.read_csv("resolu.idx", sep = "\s+")
@@ -594,6 +596,49 @@ if cases2run["UniqueSeq"]:
 
 ##################################################################################################
 
+if cases2run["a-hStats"]:
+  def getFreqAnionPi(df):
+    dfanion = df.drop_duplicates(subset = ['PDB Code', 'Anion code','Anion id'])
+    dfpiacid = df.drop_duplicates(subset = ['PDB Code', 'Pi acid Code', 'Piacid id'])
+    dfpiacidAnion = df.drop_duplicates(subset = ['PDB Code', 'Pi acid Code', 'Piacid id'])
+
+    anionFreq = dfanion.groupby("Anion code").size().sort_values(ascending=False)
+    PiAcidFreq = dfpiacid.groupby("Pi acid Code").size().sort_values(ascending=False)
+    piAcidAnionFreq = dfpiacidAnion.groupby([ "Pi acid Code", "Anion code" ]).size().sort_values(ascending=False)
+
+    anionDict = anionFreq.to_dict()
+    PiAcidDict = PiAcidFreq.to_dict()
+    piAcidAnionDict = piAcidAnionFreq.to_dict()
+
+    return anionDict, PiAcidDict, piAcidAnionDict
+
+  files2process = [ logAnionPiA, logAnionPiB, logAnionPiC, logAnionPiD, logAnionPiE, logAnionPiF, logAnionPiG, logAnionPiPure ]
+
+  for f in files2process:
+    fUnique = f[:-4] + "_UniqueSeq.log"
+
+    anDict, piAcidDict, pairsDict = getFreqAnionPi( pd.read_table( fUnique ) )
+
+    anionStats = open( fUnique[:-4]+"_anions.csv", 'w' )
+    anionStats.write("Residue\tOccurences\n")
+    for res in anDict:
+      anionStats.write(res+"\t"+str(anDict[res]) + "\n")
+    anionStats.close()
+
+    piStats = open( fUnique[:-4]+"_piAcids.csv", 'w' )
+    piStats.write("Residue\tOccurences\n")
+    for res in piAcidDict:
+      piStats.write(res+"\t"+str(piAcidDict[res]) + "\n")
+    piStats.close()
+
+    pairStats = open( fUnique[:-4]+"_pairs.csv", 'w' )
+    pairStats.write("Residue:Residue\tOccurences\n")
+    for res in pairsDict:
+      pairStats.write(res[0]+":"+res[1]+"\t"+str(pairsDict[res]) + "\n")
+    pairStats.close()
+
+##################################################################################################
+
 if cases2run["histogram2d"]:
   def anionPiHist2D(df, pngName, bin, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
     x = df["x"].tolist()
@@ -711,6 +756,46 @@ if cases2run["histogram2d"]:
   	if allPiAcids[piAcid] > 100:
   		anionPiHist2D(df[df["Pi acid Code"]==piAcid], join( histPiAcidsDir ,piAcid+ ".png"), (100,100), piAcid)
 
+##################################################################################################
+
+if cases2run["histogram2d-planar"]:
+  def anionPiPlanarHist2D(df, pngName, bin, text="", minX = 0, maxX = 90, minY = 0, maxY = 180):
+    x = df["PlanarAngle"].tolist()
+    h = df["DirectionalAngle"].tolist()
+    plt.figure()
+    plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minY, maxY]])
+    plt.colorbar()
+    plt.xlabel('$\it{\\alpha}$ / $^{\circ}$ ')
+    plt.ylabel('$\it{\\beta}$ / $^{\circ}$ ')
+    if text != "":
+      plt.text(70, 160, text, fontsize = 16, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(pngName, dpi=600, transparent=True)
+    plt.close()
+
+
+  mainPlanarHistDir = join(postprocessingDir, "hist2d_planarAnions")
+  for pngFile in glob( join(mainPlanarHistDir, "*/*png") ):
+    remove(pngFile)
+
+  for plotsDir in [ mainPlanarHistDir ]:
+    if not isdir(plotsDir):
+      makedirs(plotsDir)
+
+
+  dfPlanarAnionPi = pd.read_csv( logPlanarAnionPi, sep = "\t").fillna("NA").rename(columns = { "Angle" : "PlanarAngle" }).drop( ['Centroid x coord','Centroid y coord','Centroid z coord'], axis = 1 )
+  dfCylinderAnionPi = pd.read_table( logAnionPiResCylinderUnique )
+
+  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
+
+  dfPlanarCylinderAnionPi = pd.merge( dfPlanarAnionPi,  dfCylinderAnionPi, on =  headers )
+  dfPlanarCylinderAnionPi.to_csv( join( mainPlanarHistDir, "planarAnionPiCylinderResUniqueSeq.csv" ) ,sep='\t')
+
+  anionFreq = dfPlanarCylinderAnionPi.groupby("Anion code").size()
+  allAnions = anionFreq.to_dict()
+
+  for anion in allAnions:
+    if allAnions[anion] > 40:
+      anionPiPlanarHist2D(dfPlanarCylinderAnionPi[dfPlanarCylinderAnionPi["Anion code"]==anion], join( mainPlanarHistDir ,anion+ ".png"), (100,100), anion)
 
 ##################################################################################################
 

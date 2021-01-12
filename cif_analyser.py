@@ -306,9 +306,9 @@ class CifAnalyser:
             time1 = time()
             extractedAnionAtoms = self.anionRecogniser.extractAnionAtoms( neighbors, ligand, nsSmall )
             extractAnionsAroundRingTime += time()-time1
-#            methyls = extractAAMethyls(neighbors)
+            methyls = extractAAMethyls(neighbors)
             
-            if len(extractedAnionAtoms) > 0:
+            if len(extractedAnionAtoms) > 0 or True:
                 self.writeGeometricProperties(ligand, centroid, modelIndex)
                 
                 time2 = time()
@@ -353,8 +353,8 @@ class CifAnalyser:
             extractedAtoms =  self.supraLogger.writeAnionPiResults(ligand, centroid, extractedAnionAtoms, modelIndex,
                                                   self.resolution, self.method,  self.structureType)
             
-#            if methyls:
-#                self.supraLogger.writeMethylPiResults( ligand, centroid, methyls, modelIndex, self.resolution, self.method,  self.structureType  )
+            if methyls:
+                self.supraLogger.writeMethylPiResults( ligand, centroid, methyls, modelIndex, self.resolution, self.method,  self.structureType  )
     
             if len(extractedAtoms) > 0:
                 ligandWithAnions = True
@@ -613,8 +613,8 @@ def findChainLenCationRing( cation, piAcid, centroidData, ns, ligandGraph, fileI
         
 
 def extractRingCentroids(point, residue, ns):
-    distAtom = 4.7
-    distCent = 4.5
+    distAtom = 5.3
+    distCent = 5.0
     neighbors = ns.search(np.array(point), distAtom, 'A')
     residues = Selection.unfold_entities(neighbors, 'R') 
     point = np.array(point)
