@@ -244,6 +244,18 @@ def fetchdialog(simulation = False):
     but_loadState = Tkinter.Button(self, width = 20, text = "Load GUI state", command = supramolecularComposition.loadState)
     but_loadState.grid(row = 6, column = 11, columnspan = 2)
     
+    #INDYVIDUALS
+    lab_anionGroupAsIndyviduals = Tkinter.Label(self, width = 30, text = "Anion's groups as indyviduals:" )
+    lab_anionGroupAsIndyviduals.grid(row = 7, column = 1, columnspan = 3)
+    
+    chk_anionGroupsAsIndyviduals = Tkinter.Checkbutton(self, variable = supramolecularComposition.anionsAsIndyviduals)
+    chk_anionGroupsAsIndyviduals.grid(row = 7, column = 4)
+    
+    lab_ringsAsIndyviduals = Tkinter.Label(self, width = 30, text = "Residues's rings as indyviduals:" )
+    lab_ringsAsIndyviduals.grid(row = 7, column = 5, columnspan = 2)
+    
+    chk_ringsAsIndyviduals = Tkinter.Checkbutton(self, variable = supramolecularComposition.residuesRingsAsIndyviduals )
+    chk_ringsAsIndyviduals.grid(row = 7, column = 7)
     ######################
     # ALL
     ######################

@@ -29,9 +29,11 @@ except:
     pass
 
 if sys.version_info[0] < 3:
+    import Tkinter
     import tkMessageBox
     import tkFileDialog
 else:
+    import tkinter as Tkinter
     from tkinter import messagebox as tkMessageBox
     from tkinter import filedialog as tkFileDialog
     
@@ -65,6 +67,9 @@ class SupramolecularComposition:
        
         self.recording = False
         self.file2record = ""
+        
+        self.anionsAsIndyviduals = Tkinter.IntVar()
+        self.residuesRingsAsIndyviduals = Tkinter.IntVar()
         
     def merge(self, actionMenu):        
         selectedData = []
@@ -297,12 +302,20 @@ class SupramolecularComposition:
         lastDataHeaders = [ "PDB Code", "Model No" ] 
         
         headersId ={ 
-                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"] , 
+                    "Pi" : [ "Pi acid Code" , "Pi acid chain" , "Piacid id"] , 
                     "Anion" : ["Anion code", "Anion chain" , "Anion id"] , 
                     "Cation" : ["Cation code", "Cation chain", "Cation id"] ,
                     "HBonds" : ["Anion code", "Anion chain" , "Anion id"],
                     "Metal" : ["Cation code", "Cation chain", "Cation id"],
                     "Ligand" : ["Anion code", "Anion chain" , "Anion id"] }
+        
+        if self.anionsAsIndyviduals.get() > 0:
+            headersId["Anion"] = ["Anion code", "Anion chain" , "Anion id" , "Anion group id"] 
+            headersId["Ligand"] = ["Anion code", "Anion chain" , "Anion id" , "Anion group id"] 
+            headersId["HBonds"] = ["Anion code", "Anion chain" , "Anion id" , "Anion group id"] 
+        
+        if self.residuesRingsAsIndyviduals.get() > 0:
+            headersId["Pi"] = [ "Pi acid Code" , "Pi acid chain" , "Piacid id", "CentroidId"]
         
         for headerKey in headersId:
             if headerKey in guiKey:
