@@ -15,7 +15,7 @@ from glob import glob
 import json
 from collections import defaultdict
 from itertools import combinations
-
+from math import pi
 mpl.rcParams['mathtext.default'] = 'regular'
 
 logDir = "logs/"
@@ -30,7 +30,7 @@ if not isdir(resUniqueDir):
 #        "occurencesTable" : True, "occurencesPairs" : True,
 #        "chainNeoghbors" : True }
 
-cases2run = { "preprocessing" : False, "a-g" : True, "UniqueSeq" : False,  "histogram2d" : False,
+cases2run = { "preprocessing" : False, "a-g" : False, "UniqueSeq" : False,  "histogram2d" : True,
        "histogram2d-planar" : False, "histograms-linear" : False , "barplots": False , "resolutionplot":False,
        "occurencesTable" : False, "occurencesPairs" : False,
        "chainNeoghbors" : False }
@@ -546,6 +546,7 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
       distances = pdUnique["h" ].tolist()
 
       plt.figure()
+      plt.rcParams.update({'font.size': 12})
       n, bins, patches = plt.hist(distances, 15, density=False, facecolor='cornflowerblue')
       # plt.colorbar()
       plt.xlabel('$\it{h}$ / $\\AA$')
@@ -559,9 +560,10 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
       x = pdUnique["x" ].tolist()
 
       plt.figure()
+      plt.rcParams.update({'font.size': 12})
       n, bins, patches = plt.hist(x, 15, density=False, facecolor='cornflowerblue')
       # plt.colorbar()
-      plt.xlabel('$\it{h}$ / $\\AA$')
+      plt.xlabel('$\it{x}$ / $\\AA$')
       plt.ylabel('Number of occurences')
       # if text != "":
       #   plt.text(70, 0.7*max(n), text, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
@@ -660,6 +662,30 @@ if cases2run["histogram2d"]:
     plt.savefig(pngName, dpi=600, transparent=True)
     plt.close()
 
+  def anionPiHist2DNormalizedVolume(df, pngName, bin, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
+    x = df["x"].tolist()
+    h = df["h"].tolist()
+    
+
+    H, xedges, yedges = np.histogram2d(x, y, bins=bin, range= [[minX, maxX], [minH, maxH]])
+    
+    xNo, yNo = H.shape
+    ringH = yedges[1] - yedges[0]
+
+    for xInd in range(xNo):
+      ringVolume = pi*ringH*( xedges[xInd+1]**2-xedges[xInd]**2 )
+      H[xInd,:] = H[xInd,:]/ringVolume
+
+    plt.figure()
+    plt.rcParams.update({'font.size': 12})
+    X, Y = np.meshgrid(xedges, yedges)
+    plt.pcolormesh(X, Y, H, cmap=plt.cm.turbo)
+    if text != "":
+      plt.text(3.5, 4.0, text, fontsize = 16, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+
+    plt.savefig(pngName, dpi=600, transparent=True)
+    plt.close()
+
   def overwievHistograms( logPath, plotDir , bin, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
     df = pd.read_table(logPath)
 
@@ -674,6 +700,20 @@ if cases2run["histogram2d"]:
     anionPiHist2D(df[df["Pi acid Code"].isin(["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyNU.png"), bin, "", minX , maxX , minH , maxH)
     anionPiHist2D(df[df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyAA.png"), bin, "", minX , maxX , minH , maxH)
 
+  def overwievHistogramsNormalizedVolume( logPath, plotDir , bin, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
+    df = pd.read_table(logPath)
+
+    anionPiHist2DNormalizedVolume(df, join(plotDir ,basename(logPath)[:-4] + ".png"), bin, "", minX , maxX , minH , maxH )
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="HIS"], join(plotDir ,basename(logPath)[:-4] + "_noHIS.png"), bin, "", minX , maxX , minH , maxH )
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="PHE"], join(plotDir ,basename(logPath)[:-4] + "_noPHE.png"), bin, "", minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="TYR"], join(plotDir ,basename(logPath)[:-4] + "_noTYR.png"), bin, "", minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="TRP"], join(plotDir ,basename(logPath)[:-4] + "_noTRP.png"), bin, "", minX , maxX , minH , maxH)  
+    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR"]) ], join(plotDir ,basename(logPath)[:-4] + "_noHaa.png"), bin, "",  minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA.png"), bin, "", minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE", "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA_noNU.png"), bin, "", minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"].isin(["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyNU.png"), bin, "", minX , maxX , minH , maxH)
+    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyAA.png"), bin, "", minX , maxX , minH , maxH)
+
 
   mainHistDir = join(postprocessingDir, "hist2d")
   for pngFile in glob( join(mainHistDir, "*/*png") ):
@@ -684,16 +724,17 @@ if cases2run["histogram2d"]:
   histPiAcidCationDir = join( mainHistDir, "piAcidsCations" )
   histCationDir = join( mainHistDir, "cations" )
   histOverwievDir = join(mainHistDir, "overwiev")
-  # histUniqueSeq = join(mainHistDir, "uniqueSeq")
+  histNormolizedVolumeDir= join(mainHistDir, "normalizedVolume")
 
-  for plotsDir in [ histOverwievDir, histAnionsDir, histPiAcidsDir, histPiAcidCationDir, mainHistDir , histCationDir]:
+  for plotsDir in [ histOverwievDir, histAnionsDir, histPiAcidsDir, histPiAcidCationDir, mainHistDir , histCationDir, histNormolizedVolumeDir]:
   	if not isdir(plotsDir):
 	    makedirs(plotsDir)
 
-  bin = (500,500)
-
+  bin = (250,250)
+  overwievHistogramsNormalizedVolume( logAnionPiResUnique, histNormolizedVolumeDir, bin )
   overwievHistograms( logAnionPiUnique, histOverwievDir, bin )
   overwievHistograms( logAnionPiResUnique, histOverwievDir, bin )
+  
   # overwievHistograms( logAnionPi45Unique,  histOverwievDir, bin, 0, 4.5, 0, 4.5  )
   # overwievHistograms( logAnionPiRes45Unique,  histOverwievDir, bin, 0, 4.5, 0, 4.5   )
 
@@ -801,35 +842,22 @@ if cases2run["histogram2d-planar"]:
 
 
   dfPlanarAnionPi = pd.read_csv( logPlanarAnionPi, sep = "\t").fillna("NA").rename(columns = { "Angle" : "PlanarAngle" }).drop( ['Centroid x coord','Centroid y coord','Centroid z coord'], axis = 1 )
-  dfCylinderAnionPi = pd.read_table( logAnionPiResCylinderUnique )
 
-  dfAnionPiMystery = pd.read_table( logAnionPiResUnique )
-  dfAnionPiMystery = dfAnionPiMystery[ dfAnionPiMystery["x"] > 2.0 ]
-  dfAnionPiMystery = dfAnionPiMystery[ dfAnionPiMystery["h"] > 2.5 ]
-  dfAnionPiMystery = dfAnionPiMystery[ dfAnionPiMystery["x"] < 3.5 ]
-  dfAnionPiMystery = dfAnionPiMystery[ dfAnionPiMystery["h"] < 3.5 ]
+  for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane"]):
+	  df2merge = pd.read_table( logAP )
 
-  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
+	  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
 
-  dfPlanarCylinderAnionPi = pd.merge( dfPlanarAnionPi,  dfCylinderAnionPi, on =  headers )
-  dfPlanarCylinderAnionPi.to_csv( join( mainPlanarHistDir, "planarAnionPiCylinderResUniqueSeq.csv" ) ,sep='\t')
+	  dfMerged = pd.merge( dfPlanarAnionPi,  df2merge, on =  headers )
+	  dfMerged.to_csv( join( mainPlanarHistDir, "planarAnionPi"+pngBasename+"_ResUniqueSeq.csv" ) ,sep='\t')
 
-  dfPlanarMysteryAnionPi = pd.merge( dfPlanarAnionPi, dfAnionPiMystery, on = headers )
-  dfPlanarMysteryAnionPi.to_csv( join( mainPlanarHistDir, "planarAnionPiNorCylinderNorPlane.csv" ), sep="\t" )
+	  anionFreq = dfMerged.groupby("Anion code").size()
+	  allAnions = anionFreq.to_dict()
 
-  anionFreq = dfPlanarCylinderAnionPi.groupby("Anion code").size()
-  allAnions = anionFreq.to_dict()
+	  for anion in allAnions:
+	    if allAnions[anion] > 40:
+	      anionPiPlanarHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainPlanarHistDir ,anion+pngBasename+ ".png"), 18, anion)
 
-  for anion in allAnions:
-    if allAnions[anion] > 40:
-      anionPiPlanarHist2D(dfPlanarCylinderAnionPi[dfPlanarCylinderAnionPi["Anion code"]==anion], join( mainPlanarHistDir ,anion+ ".png"), 18, anion)
-
-  anionFreq = dfPlanarMysteryAnionPi.groupby("Anion code").size()
-  allAnions = anionFreq.to_dict()
-
-  for anion in allAnions:
-    if allAnions[anion] > 40:
-      anionPiPlanarHist2D(dfPlanarMysteryAnionPi[dfPlanarMysteryAnionPi["Anion code"]==anion], join( mainPlanarHistDir ,anion+ "norCylinderNorPlane.png"), 18, anion)
 
 if cases2run["histograms-linear"]:
   def anionPiLinearHist2D(df, pngName, bin, text="", minX = 0, maxX = 90, minY = 0, maxY = 180):
@@ -867,19 +895,21 @@ if cases2run["histograms-linear"]:
 
 
   dfLinearAnionPi = pd.read_csv( logLinearAnionPi, sep = "\t").fillna("NA").rename(columns = { "Angle" : "LinearAngle" }).drop( ['Centroid x coord','Centroid y coord','Centroid z coord'], axis = 1 )
-  dfCylinderAnionPi = pd.read_table( logAnionPiResCylinderUnique )
 
-  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
+  for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane"]):
+	  df2merge = pd.read_table( logAP )
 
-  dfLinearCylinderAnionPi = pd.merge( dfLinearAnionPi,  dfCylinderAnionPi, on =  headers )
-  dfLinearCylinderAnionPi.to_csv( join( mainLinearHistDir, "linearAnionPiCylinderResUniqueSeq.csv" ) ,sep='\t')
+	  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
 
-  anionFreq = dfLinearCylinderAnionPi.groupby("Anion code").size()
-  allAnions = anionFreq.to_dict()
+	  dfMerged = pd.merge( dfLinearAnionPi,  df2merge, on =  headers )
+	  dfMerged.to_csv( join( mainLinearHistDir, "linearAnionPi"+pngBasename+"_ResUniqueSeq.csv" ) ,sep='\t')
 
-  for anion in allAnions:
-    if allAnions[anion] > 40:
-      anionPiLinearHist2D(dfLinearCylinderAnionPi[dfLinearCylinderAnionPi["Anion code"]==anion], join( mainLinearHistDir ,anion+ ".png"), 18, anion)
+	  anionFreq = dfMerged.groupby("Anion code").size()
+	  allAnions = anionFreq.to_dict()
+
+	  for anion in allAnions:
+	    if allAnions[anion] > 40:
+	      anionPiLinearHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainLinearHistDir ,anion+pngBasename+ ".png"), 18, anion)
 
 ##################################################################################################
 
