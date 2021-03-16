@@ -17,6 +17,7 @@ from collections import defaultdict
 from itertools import combinations
 from math import pi
 mpl.rcParams['mathtext.default'] = 'regular'
+plt.rcParams.update({'font.size': 16})
 
 logDir = "logs/"
 postprocessingDir = "postprocessing/"
@@ -30,7 +31,7 @@ if not isdir(resUniqueDir):
 #        "occurencesTable" : True, "occurencesPairs" : True,
 #        "chainNeoghbors" : True }
 
-cases2run = { "preprocessing" : False, "a-g" : False, "UniqueSeq" : False,  "histogram2d" : True,
+cases2run = { "preprocessing" : True, "a-g" : False, "UniqueSeq" : False,  "histogram2d" : False,
        "histogram2d-planar" : False, "histograms-linear" : False , "barplots": False , "resolutionplot":False,
        "occurencesTable" : False, "occurencesPairs" : False,
        "chainNeoghbors" : False }
@@ -77,7 +78,9 @@ logPlanarAnionPi = join(logDir, "planarAnionPi.log")
 logLinearAnionPi = join( logDir,  "linearAnionPi.log")
 
 if cases2run["preprocessing"] or cases2run["a-g"]:
-  AnionPi = pd.read_csv( logAnionPi, sep = "\t").fillna("NA") 
+  AnionPi = pd.read_csv( logAnionPi, sep = "\t").fillna("NA").sort_values(by=['Distance'],ascending=True)
+  AnionPi = AnionPi.drop_duplicates( subset = [ 'Anion chain', 'Pi acid chain',  'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id']  )
+
   # LinearAnionPi = pd.read_csv( logdir+"linearAnionPi.log", sep = "\t").fillna("NA") 
   AnionCation = pd.read_csv( logAnionCation, sep = "\t").fillna("NA")
   HBonds = pd.read_csv( logDir+"hBonds.log", sep = "\t").fillna("NA") 
@@ -647,73 +650,56 @@ if cases2run["UniqueSeq"]:
 ##################################################################################################
 
 if cases2run["histogram2d"]:
-  def anionPiHist2D(df, pngName, bin, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
+  def anionPiHist2D(df, pngName, pngNameNorm, bin, binNorm, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
     x = df["x"].tolist()
     h = df["h"].tolist()
     plt.figure()
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 16})
 
     plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minH, maxH]])
     plt.colorbar()
     plt.xlabel('$\it{x}$ / $\\AA$')
     plt.ylabel('$\it{h}$ / $\\AA$')
     if text != "":
-    	plt.text(3.5, 4.0, text, fontsize = 16, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
-    plt.savefig(pngName, dpi=600, transparent=True)
+    	plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(pngName, dpi=600, transparent=True, bbox_inches = "tight")
     plt.close()
 
-  def anionPiHist2DNormalizedVolume(df, pngName, bin, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
-    x = df["x"].tolist()
-    h = df["h"].tolist()
-    
-
-    H, xedges, yedges = np.histogram2d(x, y, bins=bin, range= [[minX, maxX], [minH, maxH]])
+    H, xedges, yedges = np.histogram2d(x, h, bins=binNorm, range= [[minX, maxX], [minH, maxH]])
     
     xNo, yNo = H.shape
     ringH = yedges[1] - yedges[0]
 
     for xInd in range(xNo):
-      ringVolume = pi*ringH*( xedges[xInd+1]**2-xedges[xInd]**2 )
+      ringVolume = 2*pi*ringH*( xedges[xInd+1]**2-xedges[xInd]**2 )
       H[xInd,:] = H[xInd,:]/ringVolume
 
     plt.figure()
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 16})
     X, Y = np.meshgrid(xedges, yedges)
-    plt.pcolormesh(X, Y, H, cmap=plt.cm.turbo)
+    plt.pcolormesh(X, Y, H.transpose(), cmap=plt.cm.turbo)
+    plt.xlabel('$\it{x}$ / $\\AA$')
+    plt.ylabel('$\it{h}$ / $\\AA$')
+    plt.colorbar()
     if text != "":
-      plt.text(3.5, 4.0, text, fontsize = 16, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+      plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
 
-    plt.savefig(pngName, dpi=600, transparent=True)
+    plt.savefig(pngNameNorm, dpi=600, transparent=True, bbox_inches = "tight")
     plt.close()
 
-  def overwievHistograms( logPath, plotDir , bin, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
+  def overwievHistograms( logPath, plotDir , plotDirNorm, bin, binNorm, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
     df = pd.read_table(logPath)
 
-    anionPiHist2D(df, join(plotDir ,basename(logPath)[:-4] + ".png"), bin, "", minX , maxX , minH , maxH )
-    anionPiHist2D(df[df["Pi acid Code"]!="HIS"], join(plotDir ,basename(logPath)[:-4] + "_noHIS.png"), bin, "", minX , maxX , minH , maxH )
-    anionPiHist2D(df[df["Pi acid Code"]!="PHE"], join(plotDir ,basename(logPath)[:-4] + "_noPHE.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2D(df[df["Pi acid Code"]!="TYR"], join(plotDir ,basename(logPath)[:-4] + "_noTYR.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2D(df[df["Pi acid Code"]!="TRP"], join(plotDir ,basename(logPath)[:-4] + "_noTRP.png"), bin, "", minX , maxX , minH , maxH)  
-    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR"]) ], join(plotDir ,basename(logPath)[:-4] + "_noHaa.png"), bin, "",  minX , maxX , minH , maxH)
-    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE", "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA_noNU.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2D(df[df["Pi acid Code"].isin(["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyNU.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2D(df[df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyAA.png"), bin, "", minX , maxX , minH , maxH)
-
-  def overwievHistogramsNormalizedVolume( logPath, plotDir , bin, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
-    df = pd.read_table(logPath)
-
-    anionPiHist2DNormalizedVolume(df, join(plotDir ,basename(logPath)[:-4] + ".png"), bin, "", minX , maxX , minH , maxH )
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="HIS"], join(plotDir ,basename(logPath)[:-4] + "_noHIS.png"), bin, "", minX , maxX , minH , maxH )
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="PHE"], join(plotDir ,basename(logPath)[:-4] + "_noPHE.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="TYR"], join(plotDir ,basename(logPath)[:-4] + "_noTYR.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"]!="TRP"], join(plotDir ,basename(logPath)[:-4] + "_noTRP.png"), bin, "", minX , maxX , minH , maxH)  
-    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR"]) ], join(plotDir ,basename(logPath)[:-4] + "_noHaa.png"), bin, "",  minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE", "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA_noNU.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"].isin(["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyNU.png"), bin, "", minX , maxX , minH , maxH)
-    anionPiHist2DNormalizedVolume(df[df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyAA.png"), bin, "", minX , maxX , minH , maxH)
-
+    anionPiHist2D(df, join(plotDir ,basename(logPath)[:-4] + ".png"), join(plotDirNorm ,basename(logPath)[:-4] + ".png"), bin, binNorm, "", minX , maxX , minH , maxH )
+    anionPiHist2D(df[df["Pi acid Code"]!="HIS"], join(plotDir ,basename(logPath)[:-4] + "_noHIS.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noHIS.png"), bin, binNorm, "", minX , maxX , minH , maxH )
+    anionPiHist2D(df[df["Pi acid Code"]!="PHE"], join(plotDir ,basename(logPath)[:-4] + "_noPHE.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noPHE.png"), bin, binNorm, "", minX , maxX , minH , maxH)
+    anionPiHist2D(df[df["Pi acid Code"]!="TYR"], join(plotDir ,basename(logPath)[:-4] + "_noTYR.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noTYR.png"), bin, binNorm, "", minX , maxX , minH , maxH)
+    anionPiHist2D(df[df["Pi acid Code"]!="TRP"], join(plotDir ,basename(logPath)[:-4] + "_noTRP.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noTRP.png"), bin, binNorm, "", minX , maxX , minH , maxH)  
+    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR"]) ], join(plotDir ,basename(logPath)[:-4] + "_noHaa.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noHaa.png"), bin, binNorm, "",  minX , maxX , minH , maxH)
+    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noAA.png"), bin, binNorm, "", minX , maxX , minH , maxH)
+    anionPiHist2D(df[~df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE", "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_noAA_noNU.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_noAA_noNU.png"), bin, binNorm, "", minX , maxX , minH , maxH)
+    anionPiHist2D(df[df["Pi acid Code"].isin(["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyNU.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_onlyNU.png"), bin, binNorm, "", minX , maxX , minH , maxH)
+    anionPiHist2D(df[df["Pi acid Code"].isin(["HIS","TRP","TYR","PHE"]) ], join(plotDir ,basename(logPath)[:-4] + "_onlyAA.png"), join(plotDirNorm ,basename(logPath)[:-4] + "_onlyAA.png"), bin, binNorm, "", minX , maxX , minH , maxH)
 
   mainHistDir = join(postprocessingDir, "hist2d")
   for pngFile in glob( join(mainHistDir, "*/*png") ):
@@ -724,16 +710,29 @@ if cases2run["histogram2d"]:
   histPiAcidCationDir = join( mainHistDir, "piAcidsCations" )
   histCationDir = join( mainHistDir, "cations" )
   histOverwievDir = join(mainHistDir, "overwiev")
-  histNormolizedVolumeDir= join(mainHistDir, "normalizedVolume")
 
-  for plotsDir in [ histOverwievDir, histAnionsDir, histPiAcidsDir, histPiAcidCationDir, mainHistDir , histCationDir, histNormolizedVolumeDir]:
+  histNormalizedVolumeDir= join(mainHistDir, "normalizedVolume")
+
+  for pngFile in glob( join(histNormalizedVolumeDir, "*/*png") ):
+    remove(pngFile)
+
+  histAnionsDirNormalizedVolumeDir = join(histNormalizedVolumeDir, "anions")
+  histPiAcidsDirNormalizedVolumeDir = join(histNormalizedVolumeDir, "piAcids")
+  histPiAcidCationDirNormalizedVolumeDir = join( histNormalizedVolumeDir, "piAcidsCations" )
+  histCationDirNormalizedVolumeDir = join( histNormalizedVolumeDir, "cations" )
+  histOverwievDirNormalizedVolumeDir = join(histNormalizedVolumeDir, "overwiev")
+
+  for plotsDir in [ histOverwievDir, histAnionsDir, histPiAcidsDir, histPiAcidCationDir, mainHistDir , 
+    histCationDir, histAnionsDirNormalizedVolumeDir, histPiAcidsDirNormalizedVolumeDir, histCationDirNormalizedVolumeDir, histPiAcidCationDirNormalizedVolumeDir, histOverwievDirNormalizedVolumeDir ]:
   	if not isdir(plotsDir):
 	    makedirs(plotsDir)
 
-  bin = (250,250)
-  overwievHistogramsNormalizedVolume( logAnionPiResUnique, histNormolizedVolumeDir, bin )
-  overwievHistograms( logAnionPiUnique, histOverwievDir, bin )
-  overwievHistograms( logAnionPiResUnique, histOverwievDir, bin )
+  bin = (500,500)
+  binNorm = (100, 100)
+
+
+  overwievHistograms( logAnionPiUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm )
+  overwievHistograms( logAnionPiResUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm )
   
   # overwievHistograms( logAnionPi45Unique,  histOverwievDir, bin, 0, 4.5, 0, 4.5  )
   # overwievHistograms( logAnionPiRes45Unique,  histOverwievDir, bin, 0, 4.5, 0, 4.5   )
@@ -754,9 +753,9 @@ if cases2run["histogram2d"]:
   dfCatPiUniqueDist.to_csv(logdfCatPiUniqueDist,sep='\t')
   del dfCatPiUniqueDist
 
-  overwievHistograms( logCationPiUniqueMetals, histOverwievDir, bin )
-  overwievHistograms( logCatPiUniqueArgLys, histOverwievDir, bin )
-  overwievHistograms( logdfCatPiUniqueDist, histOverwievDir, bin )
+  overwievHistograms( logCationPiUniqueMetals, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm )
+  overwievHistograms( logCatPiUniqueArgLys, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logdfCatPiUniqueDist, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
 
   dfCatPiUnique = pd.read_table(logCationPiResUnique)
   dfCatPiUniqueMetals = dfCatPiUnique[  ~dfCatPiUnique['Cation code'].isin([ "ARG", "LYS" ]) ]
@@ -778,21 +777,21 @@ if cases2run["histogram2d"]:
 
   for cat in cationFreq:
     if cationFreq[cat] > 100:
-      anionPiHist2D(dfCatPiUniqueDist[dfCatPiUniqueDist["Cation code"]==cat], join( histCationDir ,cat+ ".png"), (100,100), cat, 0.0, 5.0, 0.0, 5.0)
+      anionPiHist2D(dfCatPiUniqueDist[dfCatPiUniqueDist["Cation code"]==cat], join( histCationDir ,cat+ ".png"), join( histCationDirNormalizedVolumeDir ,cat+ ".png"),(100,100), (20, 20) , cat, 0.0, 5.0, 0.0, 5.0)
 
   for pa in piAcidCationFreq:
     if piAcidCationFreq[pa] > 100:
-      anionPiHist2D(dfCatPiUniqueDist[dfCatPiUniqueDist["Pi acid Code"]==pa], join( histPiAcidCationDir ,pa+ ".png"), (100,100), pa, 0.0, 5.0, 0.0, 5.0)
+      anionPiHist2D(dfCatPiUniqueDist[dfCatPiUniqueDist["Pi acid Code"]==pa], join( histPiAcidCationDir ,pa+ ".png"), join( histPiAcidCationDirNormalizedVolumeDir ,pa+ ".png"), (100,100),(20, 20) , pa, 0.0, 5.0, 0.0, 5.0)
 
-  overwievHistograms( logCationPiUniqueMetals, histOverwievDir, bin )
-  overwievHistograms( logCatPiUniqueArgLys, histOverwievDir, bin )
-  overwievHistograms( logdfCatPiUniqueDist, histOverwievDir, bin )
+  overwievHistograms( logCationPiUniqueMetals, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logCatPiUniqueArgLys, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logdfCatPiUniqueDist, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
 
-  overwievHistograms( logPiPiUnique, histOverwievDir, bin )
-  overwievHistograms( logPiPiResUnique, histOverwievDir, bin )
+  overwievHistograms( logPiPiUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logPiPiResUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
 
-  overwievHistograms( logMethylPiUnique, histOverwievDir, bin )
-  overwievHistograms( logMethylPiResUnique, histOverwievDir, bin )
+  overwievHistograms( logMethylPiUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logMethylPiResUnique, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
 
   # df = pd.read_table(logAnionPiRes45Unique)
   df = pd.read_table(logAnionPiResUnique)
@@ -806,11 +805,11 @@ if cases2run["histogram2d"]:
 
   for anion in allAnions:
   	if allAnions[anion] > 100:
-	    anionPiHist2D(df[df["Anion code"]==anion], join( histAnionsDir ,anion+ ".png"), (100,100), anion, 0.0, 5.0, 0.0, 5.0)
+	    anionPiHist2D(df[df["Anion code"]==anion], join( histAnionsDir ,anion+ ".png"), join( histAnionsDirNormalizedVolumeDir ,anion+ ".png"), (100,100),(20, 20) , anion, 0.0, 5.0, 0.0, 5.0)
 
   for piAcid in allPiAcids:
   	if allPiAcids[piAcid] > 100:
-  		anionPiHist2D(df[df["Pi acid Code"]==piAcid], join( histPiAcidsDir ,piAcid+ ".png"), (100,100), piAcid, 0.0, 5.0, 0.0, 5.0)
+  		anionPiHist2D(df[df["Pi acid Code"]==piAcid], join( histPiAcidsDir ,piAcid+ ".png"), join( histPiAcidsDirNormalizedVolumeDir ,piAcid+ ".png"), (100,100),(20, 20) , piAcid, 0.0, 5.0, 0.0, 5.0)
 
 ##################################################################################################
 
@@ -819,16 +818,16 @@ if cases2run["histogram2d-planar"]:
     x = df["PlanarAngle"].tolist()
     h = df["DirectionalAngle"].tolist()
     plt.figure()
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 16})
     # plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minY, maxY]])
-    n, bins, patches = plt.hist(x, bin, density=False, facecolor='cornflowerblue')
+    n, bins, patches = plt.hist(x, bin, density=False, range = ( 0, 90), facecolor='moccasin', edgecolor="orange")
     # plt.colorbar()
     plt.xlabel('$\it{\\alpha}$ / $^{\circ}$ ')
     plt.xlim([0,90])
     plt.ylabel('Number of occurences')
     if text != "":
-      plt.text(70, 0.7*max(n), text, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-    plt.savefig(pngName, dpi=600, transparent=True)
+      plt.text(70, 0.7*max(n), text, fontsize = 20, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(pngName, dpi=600, transparent=True, bbox_inches = "tight")
     plt.close()
 
 
@@ -840,8 +839,16 @@ if cases2run["histogram2d-planar"]:
     if not isdir(plotsDir):
       makedirs(plotsDir)
 
+  anionCation2exclude = pd.read_csv( logAnionCation, sep = "\t").fillna("NA")
+  anionCation2exclude = anionCation2exclude[ anionCation2exclude["Distance"] < 3.0 ]
 
   dfPlanarAnionPi = pd.read_csv( logPlanarAnionPi, sep = "\t").fillna("NA").rename(columns = { "Angle" : "PlanarAngle" }).drop( ['Centroid x coord','Centroid y coord','Centroid z coord'], axis = 1 )
+
+  mergingHeaders = ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id']
+
+  subMerged = pd.merge( dfPlanarAnionPi,  anionCation2exclude[mergingHeaders] , on = mergingHeaders, how='left', indicator=True )
+  df = subMerged[ subMerged['_merge'] == 'left_only' ]
+  dfPlanarAnionPi = df.drop( ['_merge'], axis = 1 )
 
   for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane"]):
 	  df2merge = pd.read_table( logAP )
@@ -856,7 +863,7 @@ if cases2run["histogram2d-planar"]:
 
 	  for anion in allAnions:
 	    if allAnions[anion] > 40:
-	      anionPiPlanarHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainPlanarHistDir ,anion+pngBasename+ ".png"), 18, anion)
+	      anionPiPlanarHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainPlanarHistDir ,anion+pngBasename+ ".png"), 9, anion)
 
 
 if cases2run["histograms-linear"]:
@@ -872,16 +879,16 @@ if cases2run["histograms-linear"]:
 
     # h = df["DirectionalAngle"].tolist()
     plt.figure()
-    plt.rcParams.update({'font.size': 12})
+    plt.rcParams.update({'font.size': 16})
     # plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minY, maxY]])
-    n, bins, patches = plt.hist(x, bin, density=False, facecolor='cornflowerblue')
+    n, bins, patches = plt.hist(x, bin, density=False, range = ( 0, 90), facecolor='moccasin', edgecolor="orange")
     # plt.colorbar()
     plt.xlabel('$\it{\\alpha}$ / $^{\circ}$ ')
     plt.xlim([0,90])
     plt.ylabel('Number of occurences')
     if text != "":
-      plt.text(70, 0.7*max(n), text, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-    plt.savefig(pngName, dpi=600, transparent=True)
+      plt.text(70, 0.7*max(n), text, fontsize = 20, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(pngName, dpi=600, transparent=True, bbox_inches = "tight")
     plt.close()
 
 
@@ -893,8 +900,16 @@ if cases2run["histograms-linear"]:
     if not isdir(plotsDir):
       makedirs(plotsDir)
 
+  anionCation2exclude = pd.read_csv( logAnionCation, sep = "\t").fillna("NA")
+  anionCation2exclude = anionCation2exclude[ anionCation2exclude["Distance"] < 3.0 ]
 
   dfLinearAnionPi = pd.read_csv( logLinearAnionPi, sep = "\t").fillna("NA").rename(columns = { "Angle" : "LinearAngle" }).drop( ['Centroid x coord','Centroid y coord','Centroid z coord'], axis = 1 )
+
+  mergingHeaders = ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id']
+
+  subMerged = pd.merge( dfLinearAnionPi,  anionCation2exclude[mergingHeaders] , on = mergingHeaders, how='left', indicator=True )
+  df = subMerged[ subMerged['_merge'] == 'left_only' ]
+  dfLinearAnionPi = df.drop( ['_merge'], axis = 1 )
 
   for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane"]):
 	  df2merge = pd.read_table( logAP )
@@ -909,7 +924,7 @@ if cases2run["histograms-linear"]:
 
 	  for anion in allAnions:
 	    if allAnions[anion] > 40:
-	      anionPiLinearHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainLinearHistDir ,anion+pngBasename+ ".png"), 18, anion)
+	      anionPiLinearHist2D(dfMerged[dfMerged["Anion code"]==anion], join( mainLinearHistDir ,anion+pngBasename+ ".png"), 9, anion)
 
 ##################################################################################################
 
@@ -940,63 +955,69 @@ if cases2run["barplots"]:
   nbar=10
 
   for log, pngBasename, directory, ionHeader in zip(logs, ["cylinder", "ringPlane" , "norCylinderNorPlane" , "cylinder", "ringPlane"  ], [ plotbarDir, plotbarDir, plotbarDir, plotbarDirCationPi, plotbarDirCationPi ] , [ "Anion code", "Anion code", "Anion code", "Cation code", "Cation code" ] ):
-  	  df = pd.read_table(log)
-  	  df2 = df.drop_duplicates(subset = ['PDB Code'])
+    df = pd.read_table(log)
+    df2 = df.drop_duplicates(subset = ['PDB Code'])
 
-  	  anionFreq = df.groupby(ionHeader).size().sort_values(ascending=False)
-  	  PiAcidFreq = df.groupby("Pi acid Code").size().sort_values(ascending=False)
+    anionFreq = df.groupby(ionHeader).size().sort_values(ascending=False)
+    PiAcidFreq = df.groupby("Pi acid Code").size().sort_values(ascending=False)
 
-  	  if ionHeader == "Anion code":
-  	  	typeFreq = df2.groupby("Structure type").size().sort_values(ascending=False)
+    if ionHeader == "Anion code":
+      typeFreq = df2.groupby("Structure type").size().sort_values(ascending=False)
+      typeFreqInter = df.groupby("Structure type").size().sort_values(ascending=False)
 
-  	  anionDict = anionFreq.head(nbar).to_dict()
-  	  PiAcidDict = PiAcidFreq.head(nbar).to_dict()
-  	  typesDict = typeFreq.head(nbar).to_dict() 
+    anionDict = anionFreq.head(nbar).to_dict()
+    PiAcidDict = PiAcidFreq.head(nbar).to_dict()
+    typesDict = typeFreq.head(nbar).to_dict() 
 
-  	  anionPiPlotBar( anionDict, join(directory , pngBasename+"_topIons.png"))
-  	  anionPiPlotBar( PiAcidDict, join(directory , pngBasename+"_topPiAcids.png"))
-  	  print(log)
+    anionPiPlotBar( anionDict, join(directory , pngBasename+"_topIons.png"))
+    anionPiPlotBar( PiAcidDict, join(directory , pngBasename+"_topPiAcids.png"))
+    print(log)
 
-  	  anionDict = anionFreq.to_dict()
-  	  PiAcidDict = PiAcidFreq.to_dict()
+    anionDict = anionFreq.to_dict()
+    PiAcidDict = PiAcidFreq.to_dict()
 
-  	  if ionHeader == "Anion code":
-  	  	typesDict = typeFreq.to_dict() 
+    if ionHeader == "Anion code":
+      typesDict = typeFreq.to_dict() 
+      typesInterDict = typeFreqInter.to_dict()
 
-  	  for key in aCodes:
-  	  	if key in anionDict:
-  	  	  del anionDict[key]
+    for key in aCodes:
+      if key in anionDict:
+        del anionDict[key]
 
-  	  for key in piAcids:
-  	  	if key in PiAcidDict:
-  	  	  del PiAcidDict[key]
+    for key in piAcids:
+      if key in PiAcidDict:
+        del PiAcidDict[key]
 
-  	  anionDict = {k: v for k, v in sorted(anionDict.items(), key=lambda item: item[1], reverse = True)[:nbar]}
-  	  PiAcidDict = {k: v for k, v in sorted(PiAcidDict.items(), key=lambda item: item[1], reverse = True)[:nbar]}
-  	  print("top ions")
-  	  print(anionDict)
-  	  print("top pi acids")
-  	  print(PiAcidDict)
-  	  anionPiPlotBar( anionDict, join(directory , pngBasename+"_topIons_AA_NU_excluded.png") )
-  	  anionPiPlotBar( PiAcidDict, join(directory , pngBasename+"_topPiAcids_AA_NU_excluded.png") )
+    anionDict = {k: v for k, v in sorted(anionDict.items(), key=lambda item: item[1], reverse = True)[:nbar]}
+    PiAcidDict = {k: v for k, v in sorted(PiAcidDict.items(), key=lambda item: item[1], reverse = True)[:nbar]}
+    print("top ions")
+    print(anionDict)
+    print("top pi acids")
+    print(PiAcidDict)
+    anionPiPlotBar( anionDict, join(directory , pngBasename+"_topIons_AA_NU_excluded.png") )
+    anionPiPlotBar( PiAcidDict, join(directory , pngBasename+"_topPiAcids_AA_NU_excluded.png") )
 
-  	  df3 = df[[ionHeader, 'Pi acid Code']]
-  	  pairs = df3.groupby([ionHeader, "Pi acid Code"]).size().sort_values(ascending=False)
-  	  pairsDict = pairs.head(10).to_dict()
-  	  print(log)
-  	  print(pairsDict)
-  	  if ionHeader == "Anion code":
-  	  	print(typesDict)
+    df3 = df[[ionHeader, 'Pi acid Code']]
+    pairs = df3.groupby([ionHeader, "Pi acid Code"]).size().sort_values(ascending=False)
+    pairsDict = pairs.head(10).to_dict()
+    print(log)
+    print(pairsDict)
 
-  	  labels = []
-  	  key2convert = list(pairsDict.keys())
+    if ionHeader == "Anion code":
+      print("PDB counts")
+      print(typesDict)
+      print("interaction counts")
+      print(typesInterDict)
 
-  	  for key in key2convert:
-  	  	labels.append(str(key))
+    labels = []
+    key2convert = list(pairsDict.keys())
 
-  	  plt.figure(figsize=(16, 8))
-  	  plt.bar(labels, list(pairsDict.values()), color = "gold" )
-  	  plt.savefig( join(directory , pngBasename+"_top_pairs_ion_piAcid.png"), dpi=600, transparent=True)
+    for key in key2convert:
+      labels.append(str(key))
+
+    plt.figure(figsize=(16, 8))
+    plt.bar(labels, list(pairsDict.values()), color = "gold" )
+    plt.savefig( join(directory , pngBasename+"_top_pairs_ion_piAcid.png"), dpi=600, transparent=True)
 
 ##################################################################################################
 
@@ -1257,75 +1278,118 @@ if cases2run["chainNeoghbors"]:
   for pngFile in glob( join(cnbarDir, "*png") ):
     remove(pngFile)
 
-  AnionPi_temp = pd.read_table( logAnionPiResUnique )
-  AnionPi_temp = AnionPi_temp[ AnionPi_temp[ "Pi acid Code"].astype(str).isin(['PHE', 'HIS', 'TRP', 'TYR'] )]
-  AnionPi_temp = AnionPi_temp[ AnionPi_temp[ "Anion code"].astype(str).isin(['ASP', 'GLU'] )]
-  AnionPi_temp = AnionPi_temp[ AnionPi_temp["Pi acid chain" ] == AnionPi_temp["Anion chain"]  ]
+  def getResidueIdDiffDataFrame( logName ):
+    AnionPi_temp = pd.read_table( logName )
+    AnionPi_temp = AnionPi_temp[ AnionPi_temp[ "Pi acid Code"].astype(str).isin(['PHE', 'HIS', 'TRP', 'TYR', "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"] )]
+    AnionPi_temp = AnionPi_temp[ AnionPi_temp[ "Anion code"].astype(str).isin(['ASP', 'GLU', "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"] )]
+    AnionPi_temp = AnionPi_temp[ AnionPi_temp["Pi acid chain" ] == AnionPi_temp["Anion chain"]  ]
 
-  AnionPi_temp["chainDist"] = AnionPi_temp[ 'Piacid id'] - AnionPi_temp[ 'Anion id'  ]
-  # AnionPi_temp["chainDist"] = AnionPi_temp["chainDist"].abs()
+    AnionPi_temp["chainDist"] = AnionPi_temp[ 'Piacid id'] - AnionPi_temp[ 'Anion id'  ]
+    # AnionPi_temp["chainDist"] = AnionPi_temp["chainDist"].abs()
 
-  AnionPi_temp = AnionPi_temp[ (AnionPi_temp["chainDist"] < 100 ) & (AnionPi_temp["chainDist"] > -100 ) ]
+    AnionPi_temp = AnionPi_temp[ (AnionPi_temp["chainDist"] < 100 ) & (AnionPi_temp["chainDist"] > -100 ) ]
+    return AnionPi_temp
 
+  dfCylinder = getResidueIdDiffDataFrame( logAnionPiResCylinderUnique )
+  dfPlane =getResidueIdDiffDataFrame( logAnionPiResRingPlaneUnique)
+  dfNor = getResidueIdDiffDataFrame( logAnionPiResDiagUnique )
   # print("Wielkosc zerowego slupka")
   # print( len(AnionPi_temp[ AnionPi_temp[ "chainDist" ] == 0 ].index) )
   # AnionPi_temp[ AnionPi_temp[ "chainDist" ] == 0 ].to_csv( join(cnbarDir, "zeroDiffChain.csv"), sep = "\t")
 
+  for dfAp, csvBasename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.csv" , "_norCylinderNorPlane.csv" , "_ringPlane.csv" ] ):
+    dfCloseAnions = dfAp[  dfAp[ "Pi acid Code"].astype(str).isin(['PHE', 'HIS', 'TRP', 'TYR'] ) ]
+    dfCloseAnions = dfCloseAnions[  dfCloseAnions[ "Anion code"].astype(str).isin(['ASP', 'GLU'] ) ]
+    dfCloseAnions = dfCloseAnions[  (dfCloseAnions["chainDist"] < 6 ) & (dfCloseAnions["chainDist"] > -6 ) & (dfCloseAnions["chainDist"] != 0 ) ]
+
+    dfCloseAnions.to_csv( join(cnbarDir, "closeAnions"+csvBasename), sep = "\t" )
+
+    dfCloseNu = dfAp[  dfAp[ "Pi acid Code"].astype(str).isin([ "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"] ) ]
+    dfCloseNu = dfCloseNu[  dfCloseNu[ "Anion code"].astype(str).isin([ "A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI"] ) ]
+    dfCloseNu = dfCloseNu[  (dfCloseNu["chainDist"] < 6 ) & (dfCloseNu["chainDist"] > -6 ) & (dfCloseNu["chainDist"] != 0 ) ]
+
+    dfCloseNu.to_csv( join(cnbarDir, "closeNUs"+csvBasename), sep = "\t" )
+
   for anion in ['ASP', 'GLU']:
     for piAcid in ['PHE', 'HIS', 'TRP', 'TYR'] :
-      # temp = AnionPi_temp[ (AnionPi_temp["Anion code"] == anion ) & ( AnionPi_temp[ "Pi acid Code"] == piAcid ) ]
-      # freq = temp.groupby("chainDist").size().sort_values(ascending=False)
-      # data = freq.to_dict()
 
-      # plt.figure()
-      # plt.bar(list(data.keys()), list(data.values()), color = "gold" )
-      # plt.savefig(join(cnbarDir, anion + "_full.png"), dpi=600, format='png', transparent=True)
-      # plt.close()
+      for tempAP, pngBanename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.png" , "_norCylinderNorPlane.png" , "_ringPlane.png" ] ):
+        temp = tempAP[ (tempAP["Anion code"] == anion ) & ( tempAP[ "Pi acid Code"] == piAcid ) ]
 
-      temp = AnionPi_temp[ (AnionPi_temp["Anion code"] == anion ) & ( AnionPi_temp[ "Pi acid Code"] == piAcid ) ]
-      temp = temp[ temp [ "x" ] < 1.8 ] 
-      temp = temp[ temp [ "h" ] > 1.5 ] 
-      temp = temp[ temp [ "h" ] < 4.5 ]  
+        freq = temp.groupby("chainDist").size().sort_values(ascending=False)
+        data = freq.to_dict()
 
-      freq = temp.groupby("chainDist").size().sort_values(ascending=False)
-      data = freq.to_dict()
-
-      plt.figure()
-      plt.bar(list(data.keys()), list(data.values()), color = "gold" )
-      plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.savefig(join(cnbarDir, anion + "_"+ piAcid+"_cylinder.png"), dpi=600, format='png', transparent=True)
-      plt.close()
+        plt.figure()
+        plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+        plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+        plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+        plt.savefig(join(cnbarDir, anion + "_"+ piAcid+pngBanename), dpi=600, format='png', transparent=True)
+        plt.close()
 
 
-      temp = AnionPi_temp[ (AnionPi_temp["Anion code"] == anion ) & ( AnionPi_temp[ "Pi acid Code"] == piAcid ) ]
-      temp = temp[ temp [ "x" ] > 3 ] 
-      temp = temp[ temp [ "h" ] < 1 ] 
-      temp = temp[ temp [ "x" ] < 4.9 ] 
-      
-      freq = temp.groupby("chainDist").size().sort_values(ascending=False)
-      data = freq.to_dict()
+  allNu = ["A","G","T","C","U","I","DA", "DC", "DG", "DT", "DI" ]
+  allNuDNA = ["DA", "DC", "DG", "DT", "DI" ]
+  allNuRNA = ["A","G","T","C","U","I"]
 
-      plt.figure()
-      plt.bar(list(data.keys()), list(data.values()), color = "gold" )
-      plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.savefig(join(cnbarDir, anion +"_"+ piAcid+ "_ringPlane.png"), dpi=600, format='png', transparent=True)
-      plt.close()
+  for tempAP, pngBanename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.png" , "_norCylinderNorPlane.png" , "_ringPlane.png" ] ):
+    temp = tempAP[ (tempAP["Anion code"].astype(str).isin(allNu) ) & ( tempAP[ "Pi acid Code"].astype(str).isin(allNu)) & ( tempAP[ "chainDist"] > -25 ) & ( tempAP[ "chainDist"] < 25 ) ]
 
-      temp = AnionPi_temp[ (AnionPi_temp["Anion code"] == anion ) & ( AnionPi_temp[ "Pi acid Code"] == piAcid ) ]
-      temp = temp[ temp["x"] > 1.8 ]
-      temp = temp[ temp["h"] > 2.4 ]
-      temp = temp[ temp["x"] < 3.25 ]
-      temp = temp[ temp["h"] < 3.8 ]
-      
-      freq = temp.groupby("chainDist").size().sort_values(ascending=False)
-      data = freq.to_dict()
+    freq = temp.groupby("chainDist").size().sort_values(ascending=False)
+    data = freq.to_dict()
 
-      plt.figure()
-      plt.bar(list(data.keys()), list(data.values()), color = "gold" )
-      plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-      plt.savefig(join(cnbarDir, anion +"_"+ piAcid+ "_norCylinderNorPlane.png"), dpi=600, format='png', transparent=True)
-      plt.close()
+    plt.figure()
+    plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+    plt.xlabel("$ \\Delta_{rID - aID}$")
+    plt.ylabel("Pairs")
+    # plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    # plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(join(cnbarDir, "onlyNU"+pngBanename), dpi=600, format='png', transparent=True, bbox_inches = "tight")
+    plt.close()
+
+  for tempAP, pngBanename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.png" , "_norCylinderNorPlane.png" , "_ringPlane.png" ] ):
+    temp = tempAP[ (tempAP["Anion code"].astype(str).isin(allNuDNA) ) & ( tempAP[ "Pi acid Code"].astype(str).isin(allNuDNA)) & ( tempAP[ "chainDist"] > -25 ) & ( tempAP[ "chainDist"] < 25 ) ]
+
+    freq = temp.groupby("chainDist").size().sort_values(ascending=False)
+    data = freq.to_dict()
+
+    plt.figure()
+    plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+    plt.xlim([-25, 25])
+    plt.xlabel("$ \\Delta_{rID - aID}$")
+    plt.ylabel("Pairs")
+    # plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    # plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(join(cnbarDir, "onlyDNA"+pngBanename), dpi=600, format='png', transparent=True, bbox_inches = "tight")
+    plt.close()
+
+  for tempAP, pngBanename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.png" , "_norCylinderNorPlane.png" , "_ringPlane.png" ] ):
+    temp = tempAP[ (tempAP["Anion code"].astype(str).isin(allNuRNA) ) & ( tempAP[ "Pi acid Code"].astype(str).isin(allNuRNA)) & ( tempAP[ "chainDist"] > -25 ) & ( tempAP[ "chainDist"] < 25 ) ]
+
+    freq = temp.groupby("chainDist").size().sort_values(ascending=False)
+    data = freq.to_dict()
+
+    plt.figure()
+    plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+    plt.xlim([-25, 25])
+    plt.xlabel("$ \\Delta_{rID - aID}$")
+    plt.ylabel("Pairs")
+    # plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    # plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(join(cnbarDir, "onlyRNA"+pngBanename), dpi=600, format='png', transparent=True, bbox_inches = "tight")
+    plt.close()
+
+  for tempAP, pngBanename in zip( [ dfCylinder, dfNor, dfPlane ] , ["_cylinder.png" , "_norCylinderNorPlane.png" , "_ringPlane.png" ] ):
+    temp = tempAP[ (tempAP["Anion code"].astype(str).isin(['ASP', 'GLU']) ) & ( tempAP[ "Pi acid Code"].astype(str).isin(['PHE', 'HIS', 'TRP', 'TYR'])) & ( tempAP[ "chainDist"] > -25 ) & ( tempAP[ "chainDist"] < 25 )  ]
+
+    freq = temp.groupby("chainDist").size().sort_values(ascending=False)
+    data = freq.to_dict()
+
+    plt.figure()
+    plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+    plt.xlabel("$ \\Delta_{rID - aID}$")
+    plt.ylabel("Pairs")
+    # plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    # plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
+    plt.savefig(join(cnbarDir, "onlyAA"+pngBanename), dpi=600, format='png', transparent=True, bbox_inches = "tight")
+    plt.close()
 
