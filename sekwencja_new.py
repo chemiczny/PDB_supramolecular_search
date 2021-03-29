@@ -31,7 +31,7 @@ if not isdir(resUniqueDir):
 #        "occurencesTable" : True, "occurencesPairs" : True,
 #        "chainNeoghbors" : True }
 
-cases2run = { "preprocessing" : True, "a-g" : False, "UniqueSeq" : False,  "histogram2d" : False,
+cases2run = { "preprocessing" : False, "a-g" : True, "UniqueSeq" : False,  "histogram2d" : False,
        "histogram2d-planar" : False, "histograms-linear" : False , "barplots": False , "resolutionplot":False,
        "occurencesTable" : False, "occurencesPairs" : False,
        "chainNeoghbors" : False }
@@ -79,7 +79,7 @@ logLinearAnionPi = join( logDir,  "linearAnionPi.log")
 
 if cases2run["preprocessing"] or cases2run["a-g"]:
   AnionPi = pd.read_csv( logAnionPi, sep = "\t").fillna("NA").sort_values(by=['Distance'],ascending=True)
-  AnionPi = AnionPi.drop_duplicates( subset = [ 'Anion chain', 'Pi acid chain',  'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id']  )
+  AnionPi = AnionPi.drop_duplicates( subset = [ 'PDB Code', 'Model No', 'Anion chain', 'Pi acid chain',  'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id']  )
 
   # LinearAnionPi = pd.read_csv( logdir+"linearAnionPi.log", sep = "\t").fillna("NA") 
   AnionCation = pd.read_csv( logAnionCation, sep = "\t").fillna("NA")
@@ -93,7 +93,7 @@ if cases2run["preprocessing"]:
 
 resolution = pd.read_csv("resolu.idx", sep = "\s+")
 resOK = resolution[(resolution["RESOLUTION"]<=2.5) & (resolution["RESOLUTION"]>0)]["IDCODE"]
-
+print("PDB ok: ", len(resOK))
 ##################################################################################################
 logAnionPiRes = join(resUniqueDir, "anionPi_res.log")
 logMethylPiRes =  join(resUniqueDir, "methylPi_res.log")
@@ -135,6 +135,16 @@ if cases2run["preprocessing"]:
   AnionPi_temp = AnionPi_temp[ AnionPi_temp [ "h" ] < 4.5 ]  
   AnionPi_temp = AnionPi_temp[ AnionPi_temp ['PDB Code'].isin(resOK)]
   AnionPi_temp.to_csv( logAnionPiResCylinder, sep = "\t")
+
+##################################################################################################
+logAnionPiResBullshit = join(resUniqueDir, "anionPi_res_bullshit.log")
+
+if cases2run["preprocessing"]:
+  AnionPi_temp = AnionPi
+  AnionPi_temp = AnionPi_temp[ AnionPi_temp [ "Distance" ] < 5.0 ] 
+  AnionPi_temp = AnionPi_temp[ AnionPi_temp [ "Angle" ] < 30 ] 
+  AnionPi_temp = AnionPi_temp[ AnionPi_temp ['PDB Code'].isin(resOK)]
+  AnionPi_temp.to_csv( logAnionPiResBullshit, sep = "\t")
 
 ##################################################################################################
 logAnionPiResDiag = join(resUniqueDir, "anionPi_res_norCylinderNorPlane.log")
@@ -231,7 +241,8 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
 
     AnionCation_temp = AnionCation
     AnionCation_temp = AnionCation_temp[ AnionCation_temp [ "Distance" ] < distAnionCation ] 
-    AnionCation_temp = AnionCation_temp[ AnionCation_temp[ "Same semisphere"].astype(str).isin(['True'] )]
+    if dirname != "ringPlane":
+      AnionCation_temp = AnionCation_temp[ AnionCation_temp[ "Same semisphere"].astype(str).isin(['True'] )]
     AnionCation_temp = AnionCation_temp[ ~AnionCation_temp[ "Cation code"].astype(str).isin(['ARG', 'LYS'] )]
 
     ####sprawdzić czy są kationy po przeciwnej stronie pierscienia i jak duzo#####
@@ -272,7 +283,10 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
     [ AnionPi_temp , CationPi_temp ] = simpleMerge(dataFrames2Merge ,dataFrameMergeHeaders, dataFrames2Exclude,  dataFrameExcludeHeaders)
 
     AnionCation_temp = AnionCation
-    AnionCation_temp = AnionCation_temp[ AnionCation_temp[ "Same semisphere"].astype(str).isin(['False'] )]
+    AnionCation_temp = AnionCation_temp[ AnionCation_temp [ "Distance" ] > distAnionCation ] 
+    if dirname != "ringPlane":
+      AnionCation_temp = AnionCation_temp[ AnionCation_temp[ "Same semisphere"].astype(str).isin(['False'] )]
+
 
     CationPi_temp = CationPi
     CationPi_temp = CationPi_temp[ ~CationPi_temp[ "RingChain"].astype(str).isin(['1'] )]
@@ -406,7 +420,7 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
     AnionCation_temp = AnionCation_temp[ AnionCation_temp [ "Distance" ] > 3.5 ] 
 
     CationPi_temp = CationPi
-    CationPi_temp = CationPi_temp[ CationPi_temp [ "RingChain" ] > 1.0 ] 
+    CationPi_temp = CationPi_temp[ CationPi_temp [ "RingChain" ] > 0.1 ] 
 
     dataFrames2Merge = [ AnionPi_temp , CationPi_temp , AnionCation_temp ]
     dataFrameMergeHeaders = [['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id', 'Pi acid Code', 'Pi acid chain', 'Piacid id', 'CentroidId'], ['PDB Code', 'Model No', 'Cation code', 'Cation chain', 'Cation id', 'Pi acid Code', 'Pi acid chain', 'Piacid id', 'CentroidId'], ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id', 'Cation code', 'Cation chain', 'Cation id', 'Pi acid Code', 'Pi acid chain', 'Piacid id', 'CentroidId']]
@@ -433,12 +447,12 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
     AnionPi_temp = AnionPi
     #parametry do zmiany: kąt 170-180, H-a 1.2-1.5, d-a 2.4-3
     HBonds_temp = HBonds
-    HBonds_temp = HBonds_temp[ HBonds_temp [ "Angle" ] > 150.0 ] 
+    HBonds_temp = HBonds_temp[ HBonds_temp [ "Angle" ] > 130.0 ] 
     HBonds_temp = HBonds_temp[ HBonds_temp [ "Angle" ] < 180.0 ] 
-    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance Don Acc" ] > 2.2 ] 
-    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance Don Acc" ] < 2.8 ] 
-    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance H Acc" ] > 1.2 ] 
-    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance H Acc" ] < 1.7 ] 
+    # HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance Don Acc" ] > 2.2 ] 
+    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance Don Acc" ] < 3.2 ] 
+    # HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance H Acc" ] > 1.2 ] 
+    HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance H Acc" ] < 2.2 ] 
 
     dataFrames2Merge = [ AnionPi_temp , HBonds_temp ]
     dataFrameMergeHeaders = [['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id', 'Pi acid Code', 'Pi acid chain', 'Piacid id', 'CentroidId'], ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id']]
@@ -459,7 +473,7 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
   if cases2run["a-g"]:
     cases2exclude = [ logAnionPiA, logAnionPiB, logAnionPiC, logAnionPiD, logAnionPiE, logAnionPiF, logAnionPiG ]
 
-    df = pd.read_table(logAnionPiResCylinder)
+    df = AnionPi
     mergingHeaders = ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id', 'Pi acid Code', 'Pi acid chain', 'Piacid id']
     for logPath in cases2exclude:
       # print("lol")
@@ -492,9 +506,9 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
 
   if cases2run["a-g"]:
     def getFreqAnionPi(df):
-      dfanion = df.drop_duplicates(subset = [ 'Anion code','Anion id', 'Anion group id', 'PDB Code'])
-      dfpiacid = df.drop_duplicates(subset = ['Pi acid Code', 'Piacid id', 'PDB Code'])
-      dfpiacidAnion = df.drop_duplicates(subset = ['Pi acid Code', 'Piacid id', 'Anion code','Anion id', 'Anion group id', 'PDB Code'])
+      dfanion = df.drop_duplicates(subset = [ 'Anion code','Anion id', 'Anion group id', "Sequence ID 1" ])
+      dfpiacid = df.drop_duplicates(subset = ['Pi acid Code', 'Piacid id', "Sequence ID 2" ])
+      dfpiacidAnion = df.drop_duplicates(subset = ['Pi acid Code', 'Piacid id', 'Anion code','Anion id', 'Anion group id', "Sequence ID 1" , "Sequence ID 2" ])
 
       anionFreq = dfanion.groupby("Anion code").size().sort_values(ascending=False)
       PiAcidFreq = dfpiacid.groupby("Pi acid Code").size().sort_values(ascending=False)
@@ -507,8 +521,8 @@ for dirname, anionPiSource in zip( [ "cylinder" , "ringPlane", "norCylinderNodPl
       return anionDict, PiAcidDict, piAcidAnionDict
 
     def getFreqCation(df):
-      dfcation = df.drop_duplicates(subset = ['PDB Code', 'Cation code','Cation id'])
-      dfpiacid = df.drop_duplicates(subset = ['PDB Code', 'Pi acid Code', 'Piacid id'])
+      dfcation = df.drop_duplicates(subset = ["Sequence ID 1" , 'Cation code','Cation id'])
+      dfpiacid = df.drop_duplicates(subset = ["Sequence ID 2" , 'Pi acid Code', 'Piacid id'])
 
       cationFreq = dfcation.groupby("Cation code").size().sort_values(ascending=False)
       PiAcidFreq = dfpiacid.groupby("Pi acid Code").size().sort_values(ascending=False)
@@ -608,6 +622,7 @@ logAnionPiResUnique = logAnionPiRes[:-4] +  "_UniqueSeq.log"
 logAnionPiResCylinderUnique = logAnionPiResCylinder[:-4] +  "_UniqueSeq.log"
 logAnionPiResRingPlaneUnique = logAnionPiResRingPlane[:-4] +  "_UniqueSeq.log"
 logAnionPiResDiagUnique = logAnionPiResDiag[:-4] +  "_UniqueSeq.log"
+logAnionPiResBullshitUnique = logAnionPiResBullshit[:-4] +  "_UniqueSeq.log"
 # logAnionPi45Unique = logAnionPi45[:-4] +  "_UniqueSeq.log"
 # logAnionPiRes45Unique = logAnionPiRes45[:-4]+  "_UniqueSeq.log"
 
@@ -631,6 +646,7 @@ if cases2run["UniqueSeq"]:
   saveUniqueRecordsSeq( logAnionPiResCylinder, logAnionPiResCylinderUnique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
   saveUniqueRecordsSeq( logAnionPiResRingPlane, logAnionPiResRingPlaneUnique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
   saveUniqueRecordsSeq( logAnionPiResDiag, logAnionPiResDiagUnique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
+  saveUniqueRecordsSeq( logAnionPiResBullshit, logAnionPiResBullshitUnique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
   # saveUniqueRecordsSeq( logAnionPi45, logAnionPi45Unique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
   # saveUniqueRecordsSeq( logAnionPiRes45, logAnionPiRes45Unique, 'Anion chain', 'Pi acid chain', [ 'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id'] )
 
@@ -850,7 +866,7 @@ if cases2run["histogram2d-planar"]:
   df = subMerged[ subMerged['_merge'] == 'left_only' ]
   dfPlanarAnionPi = df.drop( ['_merge'], axis = 1 )
 
-  for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane"]):
+  for logAP, pngBasename in zip([ logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique, logAnionPiResBullshitUnique ], ["_cylinder", "_norCylinderNorPlane", "_ringPlane", "_bullshit"]):
 	  df2merge = pd.read_table( logAP )
 
 	  headers = ['PDB Code', 'Pi acid Code', "Pi acid chain", 'Piacid id', "CentroidId" , 'Anion code', "Anion chain" , 'Anion id', 'Anion group id', "Model No"]
@@ -1091,8 +1107,8 @@ if cases2run["resolutionplot"]:
 
 if cases2run["occurencesTable"]:
   def getFreq(df):
-    dfanion = df.drop_duplicates(subset = ['PDB Code', 'Anion code','Anion id'])
-    dfpiacid = df.drop_duplicates(subset = ['PDB Code', 'Pi acid Code', 'Piacid id'])
+    dfanion = df.drop_duplicates(subset = [ "Sequence ID 1" ,'Anion code','Anion id'])
+    dfpiacid = df.drop_duplicates(subset = [ "Sequence ID 2" , 'Pi acid Code', 'Piacid id'])
 
     anionFreq = dfanion.groupby("Anion code").size().sort_values(ascending=False)
     PiAcidFreq = dfpiacid.groupby("Pi acid Code").size().sort_values(ascending=False)
@@ -1103,8 +1119,8 @@ if cases2run["occurencesTable"]:
     return anionDict, PiAcidDict
 
   def getFreqCation(df):
-    dfcation = df.drop_duplicates(subset = ['PDB Code', 'Cation code','Cation id'])
-    dfpiacid = df.drop_duplicates(subset = ['PDB Code', 'Pi acid Code', 'Piacid id'])
+    dfcation = df.drop_duplicates(subset = ["Sequence ID 1",  'Cation code','Cation id'])
+    dfpiacid = df.drop_duplicates(subset = ["Sequence ID 1",  'Pi acid Code', 'Piacid id'])
 
     cationFreq = dfcation.groupby("Cation code").size().sort_values(ascending=False)
     PiAcidFreq = dfpiacid.groupby("Pi acid Code").size().sort_values(ascending=False)
@@ -1116,6 +1132,9 @@ if cases2run["occurencesTable"]:
 
   dfSphere = pd.read_table(logAnionPiResUnique)
   anionSphere, piAcidSphere = getFreq(dfSphere)
+
+  print("Number of unique resnames anions in sphere ", len(list(anionSphere.keys())))
+  print("Number of unique resnames quadrupoles in sphere ", len(list(piAcidSphere.keys())))
 
   for APlog in [  logAnionPiResCylinderUnique, logAnionPiResDiagUnique, logAnionPiResRingPlaneUnique ]:
     operatingDir = APlog[:-4]+"_tables"
@@ -1321,9 +1340,11 @@ if cases2run["chainNeoghbors"]:
 
         plt.figure()
         plt.bar(list(data.keys()), list(data.values()), color = "gold" )
+        plt.xlabel("$ \\Delta_{rID - aID}$")
+        plt.ylabel("Pairs")
         plt.text(70, 0.7*max(data.values()), anion + "-"+ piAcid, fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
         plt.text(-70, 0.7*max(data.values()), piAcid + "-"+ anion , fontsize = 16, color='k',horizontalalignment='center', verticalalignment='center', weight='bold')
-        plt.savefig(join(cnbarDir, anion + "_"+ piAcid+pngBanename), dpi=600, format='png', transparent=True)
+        plt.savefig(join(cnbarDir, anion + "_"+ piAcid+pngBanename), dpi=600, format='png', transparent=True, bbox_inches = "tight")
         plt.close()
 
 
