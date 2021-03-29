@@ -80,10 +80,15 @@ logLinearAnionPi = join( logDir,  "linearAnionPi.log")
 if cases2run["preprocessing"] or cases2run["a-g"]:
   AnionPi = pd.read_csv( logAnionPi, sep = "\t").fillna("NA").sort_values(by=['Distance'],ascending=True)
   AnionPi = AnionPi.drop_duplicates( subset = [ 'PDB Code', 'Model No', 'Anion chain', 'Pi acid chain',  'Pi acid Code', 'Piacid id', 'Anion code', 'Anion id', 'Anion group id']  )
-
+  AnionPi = AnionPi[ ~AnionPi['Anion code'].astype(str).isin([ "FES", "F3S", "S3F", "9S8", "ER2", "FS4", "MSK", "SF4", "1CL", "CLF"])  ]  
   # LinearAnionPi = pd.read_csv( logdir+"linearAnionPi.log", sep = "\t").fillna("NA") 
+
   AnionCation = pd.read_csv( logAnionCation, sep = "\t").fillna("NA")
+  AnionCation = AnionCation[ ~AnionCation['Anion code'].astype(str).isin([ "FES", "F3S", "S3F", "9S8", "ER2", "FS4", "MSK", "SF4", "1CL", "CLF"]) ]
+
   HBonds = pd.read_csv( logDir+"hBonds.log", sep = "\t").fillna("NA") 
+  HBonds = HBonds[ ~HBonds['Anion code'].astype(str).isin([ "FES", "F3S", "S3F", "9S8", "ER2", "FS4", "MSK", "SF4", "1CL", "CLF"]) ]
+
   CationPi = pd.read_csv( logCationPi, sep = "\t").fillna("NA") 
   PiPi = pd.read_csv( logPiPi, sep = "\t").fillna("NA") 
   # MetalLigand = pd.read_csv( logdir+"metalLigand.log", sep = "\t").fillna("NA") 
