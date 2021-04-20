@@ -31,8 +31,8 @@ if not isdir(resUniqueDir):
 #        "occurencesTable" : True, "occurencesPairs" : True,
 #        "chainNeoghbors" : True }
 
-cases2run = { "preprocessing" : False, "a-g" : True, "UniqueSeq" : False,  "histogram2d" : False,
-       "histogram2d-planar" : False, "histograms-linear" : False , "barplots": False , "resolutionplot":False,
+cases2run = { "preprocessing" : False, "a-g" : False, "UniqueSeq" : False,  "histogram2d" : True, "hydrogenBondAnalysis" : False , "ligandsAnalysis" : False ,
+       "histogram2d-planar" : False,  "histograms-linear" : False , "barplots": False , "resolutionplot":False,
        "occurencesTable" : False, "occurencesPairs" : False,
        "chainNeoghbors" : False }
 
@@ -670,43 +670,44 @@ if cases2run["UniqueSeq"]:
 
 ##################################################################################################
 
+def anionPiHist2D(df, pngName, pngNameNorm, bin, binNorm, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
+	x = df["x"].tolist()
+	h = df["h"].tolist()
+	plt.figure()
+	plt.rcParams.update({'font.size': 16})
+
+	plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minH, maxH]])
+	plt.colorbar()
+	plt.xlabel('$\it{x}$ / $\\AA$')
+	plt.ylabel('$\it{h}$ / $\\AA$')
+	if text != "":
+		plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+	plt.savefig(pngName, dpi=600, transparent=True, bbox_inches = "tight")
+	plt.close()
+
+	H, xedges, yedges = np.histogram2d(x, h, bins=binNorm, range= [[minX, maxX], [minH, maxH]])
+
+	xNo, yNo = H.shape
+	ringH = yedges[1] - yedges[0]
+
+	for xInd in range(xNo):
+	  ringVolume = 2*pi*ringH*( xedges[xInd+1]**2-xedges[xInd]**2 )
+	  H[xInd,:] = H[xInd,:]/ringVolume
+
+	plt.figure()
+	plt.rcParams.update({'font.size': 16})
+	X, Y = np.meshgrid(xedges, yedges)
+	plt.pcolormesh(X, Y, H.transpose(), cmap=plt.cm.turbo)
+	plt.xlabel('$\it{x}$ / $\\AA$')
+	plt.ylabel('$\it{h}$ / $\\AA$')
+	plt.colorbar()
+	if text != "":
+	  plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
+
+	plt.savefig(pngNameNorm, dpi=600, transparent=True, bbox_inches = "tight")
+	plt.close()
+
 if cases2run["histogram2d"]:
-  def anionPiHist2D(df, pngName, pngNameNorm, bin, binNorm, text="", minX = 0, maxX = 4.5, minH = 0, maxH = 4.5):
-    x = df["x"].tolist()
-    h = df["h"].tolist()
-    plt.figure()
-    plt.rcParams.update({'font.size': 16})
-
-    plt.hist2d(x, h, bins = bin, cmap=plt.cm.turbo, range= [[minX, maxX], [minH, maxH]])
-    plt.colorbar()
-    plt.xlabel('$\it{x}$ / $\\AA$')
-    plt.ylabel('$\it{h}$ / $\\AA$')
-    if text != "":
-    	plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
-    plt.savefig(pngName, dpi=600, transparent=True, bbox_inches = "tight")
-    plt.close()
-
-    H, xedges, yedges = np.histogram2d(x, h, bins=binNorm, range= [[minX, maxX], [minH, maxH]])
-    
-    xNo, yNo = H.shape
-    ringH = yedges[1] - yedges[0]
-
-    for xInd in range(xNo):
-      ringVolume = 2*pi*ringH*( xedges[xInd+1]**2-xedges[xInd]**2 )
-      H[xInd,:] = H[xInd,:]/ringVolume
-
-    plt.figure()
-    plt.rcParams.update({'font.size': 16})
-    X, Y = np.meshgrid(xedges, yedges)
-    plt.pcolormesh(X, Y, H.transpose(), cmap=plt.cm.turbo)
-    plt.xlabel('$\it{x}$ / $\\AA$')
-    plt.ylabel('$\it{h}$ / $\\AA$')
-    plt.colorbar()
-    if text != "":
-      plt.text(3.5, 4.0, text, fontsize = 20, color='w',horizontalalignment='center', verticalalignment='center', weight='bold')
-
-    plt.savefig(pngNameNorm, dpi=600, transparent=True, bbox_inches = "tight")
-    plt.close()
 
   def overwievHistograms( logPath, plotDir , plotDirNorm, bin, binNorm, minX = 0, maxX = 5.0, minH = 0, maxH = 5.0 ):
     df = pd.read_table(logPath)
@@ -781,7 +782,10 @@ if cases2run["histogram2d"]:
   dfCatPiUnique = pd.read_table(logCationPiResUnique)
   dfCatPiUniqueMetals = dfCatPiUnique[  ~dfCatPiUnique['Cation code'].isin([ "ARG", "LYS" ]) ]
   logCationPiUniqueMetals = join( postprocessingDir, "cationPiResUniqueMetals.log" )
+  logCationPiUniqueMetalsDist = join( postprocessingDir, "cationPiResUniqueMetalsDist.log" )
   dfCatPiUniqueMetals.to_csv(logCationPiUniqueMetals,sep='\t')
+  dfCatPiUniqueMetals = dfCatPiUniqueMetals[ dfCatPiUniqueMetals['Distance'] < 5.0 ]
+  dfCatPiUniqueMetals.to_csv(logCationPiUniqueMetalsDist,sep='\t')
   del dfCatPiUniqueMetals
 
   dfCatPiUniqueArgLys = dfCatPiUnique[  dfCatPiUnique['Cation code'].isin([ "ARG", "LYS" ]) ]
@@ -805,6 +809,7 @@ if cases2run["histogram2d"]:
       anionPiHist2D(dfCatPiUniqueDist[dfCatPiUniqueDist["Pi acid Code"]==pa], join( histPiAcidCationDir ,pa+ ".png"), join( histPiAcidCationDirNormalizedVolumeDir ,pa+ ".png"), (100,100),(20, 20) , pa, 0.0, 5.0, 0.0, 5.0)
 
   overwievHistograms( logCationPiUniqueMetals, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
+  overwievHistograms( logCationPiUniqueMetalsDist, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
   overwievHistograms( logCatPiUniqueArgLys, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
   overwievHistograms( logdfCatPiUniqueDist, histOverwievDir, histOverwievDirNormalizedVolumeDir, bin, binNorm  )
 
@@ -833,7 +838,61 @@ if cases2run["histogram2d"]:
   		anionPiHist2D(df[df["Pi acid Code"]==piAcid], join( histPiAcidsDir ,piAcid+ ".png"), join( histPiAcidsDirNormalizedVolumeDir ,piAcid+ ".png"), (100,100),(20, 20) , piAcid, 0.0, 5.0, 0.0, 5.0)
 
 ##################################################################################################
+if cases2run["hydrogenBondAnalysis"]:
+	dfAnionPi = pd.read_table(logAnionPiResUnique)
+	dfHydrogenBonds = pd.read_csv( logDir+"hBonds.log", sep = "\t").fillna("NA") 
+	HBonds_temp = dfHydrogenBonds[ ~dfHydrogenBonds['Anion code'].astype(str).isin([ "FES", "F3S", "S3F", "9S8", "ER2", "FS4", "MSK", "SF4", "1CL", "CLF"]) ]
 
+	HBonds_temp = HBonds_temp[ HBonds_temp [ "Angle" ] > 130.0 ] 
+	HBonds_temp = HBonds_temp[ HBonds_temp [ "Angle" ] < 180.0 ] 
+	HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance Don Acc" ] < 3.2 ] 
+	HBonds_temp = HBonds_temp[ HBonds_temp [ "Distance H Acc" ] < 2.2 ] 
+
+	HBonds_temp = HBonds_temp.rename(columns = { "Donor code" : "Pi acid Code" , "Donor chain" : "Pi acid chain", "Donor id" : "Piacid id" })
+
+	mergingHeaders = ['PDB Code', 'Model No', 'Anion code', 'Anion chain', 'Anion id','Anion group id', "Pi acid Code", "Pi acid chain", "Piacid id"]
+
+	autoHBonds = pd.merge( dfAnionPi[mergingHeaders],  HBonds_temp[mergingHeaders] , on = mergingHeaders, how='inner')
+
+	noAutoHBonds = pd.merge( dfAnionPi,  autoHBonds , on = mergingHeaders, how='left', indicator=True )
+	noAutoHBonds = noAutoHBonds[ noAutoHBonds['_merge'] == 'left_only' ]
+
+	hBondAnalDir = join(postprocessingDir, "AutoHBondsAnalysis")
+
+	if not isdir(hBondAnalDir):
+		makedirs(hBondAnalDir)
+
+	anionPiHist2D(noAutoHBonds, join(hBondAnalDir ,"noAutoHBonds.png"), join(hBondAnalDir ,"noAutoHBondsNorm.png"), (500, 500), (100,100), "", 0.0 , 5.0 , 0.0 , 5.0 )
+
+##################################################################################################
+if cases2run["ligandsAnalysis"]:
+	dfAnionPi = pd.read_table(logAnionPiResUnique)
+
+	anionFreq = dfAnionPi.groupby("Anion code").size().to_dict()
+	PiAcidFreq = dfAnionPi.groupby("Pi acid Code").size().to_dict()
+
+	occurencesThreshold = 100
+	anionLigands = []
+	piAcidLigands = []
+
+	for anion in anionFreq:
+		if anionFreq[anion] < occurencesThreshold:
+			anionLigands.append(anion)
+
+	for piAcid in PiAcidFreq:
+		if PiAcidFreq[piAcid] < occurencesThreshold:
+			piAcidLigands.append(piAcid)
+
+	ligandsAnalDir = join(postprocessingDir, "ligandsAnalysis")
+
+	if not isdir(ligandsAnalDir):
+		makedirs(ligandsAnalDir)
+
+	anionPiHist2D(dfAnionPi[ dfAnionPi["Anion code"].astype(str).isin( anionLigands ) ], join(ligandsAnalDir ,"ligandsAsAnions.png"), join(ligandsAnalDir ,"ligandsAsAnionsNorm.png"), (500, 500), (100,100), "", 0.0 , 5.0 , 0.0 , 5.0 )
+	anionPiHist2D(dfAnionPi[ dfAnionPi["Pi acid Code"].astype(str).isin( piAcidLigands ) ], join(ligandsAnalDir ,"ligandsAsPiAcids.png"), join(ligandsAnalDir ,"ligandsAsPiAcidsNorm.png"), (500, 500), (100,100), "", 0.0 , 5.0 , 0.0 , 5.0 )
+
+
+##################################################################################################
 if cases2run["histogram2d-planar"]:
   def anionPiPlanarHist2D(df, pngName, bin, text="", minX = 0, maxX = 90, minY = 0, maxY = 180):
     x = df["PlanarAngle"].tolist()
