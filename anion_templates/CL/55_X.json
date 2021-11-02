@@ -1,0 +1,1 @@
+{"nodes": [{"bonded": false, "element": "CL", "aliases": [], "terminating": false, "charged": true, "id": 0}], "multigraph": false, "links": [], "graph": {"geometry": "no restrictions", "properties2measure": [], "nameMapping": {}, "fullIsomorphism": true, "name": "CL", "charged": 0, "otherCharges": [], "priority": 55}, "directed": false}
