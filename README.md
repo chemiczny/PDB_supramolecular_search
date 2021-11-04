@@ -39,7 +39,7 @@ of supercomputer. For such a situation, there are other scripts: brutalPrepare.p
 executing them are also available: brutalPrepare.slurm, brutalRun.slurm and brutalFinish.slurm. These scripts must be run in metioned order (brutalPrepare.py must be run
 everytime before brutalRun.py).
 
-##Pymol plugin
+## Pymol plugin
 After installation, you should be able to see "Supramolecular analyser" among other plugins. Well, it is written with Tkinter, so it looks like software from 
 90s, but it works even better.
 
