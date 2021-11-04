@@ -1,4 +1,5 @@
 {
 	"N" : 6,
-	"cif" : "cif/*cif",
+	"cif" : "cif/*.cif",
+	"scratch" : "scratch"
 }

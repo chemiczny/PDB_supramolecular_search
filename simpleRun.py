@@ -13,11 +13,11 @@ from configure import configure
 import glob
 import time
 from multiprocessing import Pool
-import cProfile, pstats, io
+#import cProfile, pstats, io
 
 ###profiler start
-pr = cProfile.Profile()
-pr.enable()
+#pr = cProfile.Profile()
+#pr.enable()
 
 ##############
 
@@ -132,13 +132,13 @@ timeFile.write(str(timeStop))
 timeFile.close()
 
 #######profiler stop
-pr.disable()
-s = io.StringIO()
-sortby = 'cumulative'
-ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-ps.print_stats()
-
-logFile = open("simpleRun.profile", 'w')
-logFile.write(s.getvalue())
-logFile.close()
+#pr.disable()
+#s = io.StringIO()
+#sortby = 'cumulative'
+#ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#ps.print_stats()
+#
+#logFile = open("simpleRun.profile", 'w')
+#logFile.write(s.getvalue())
+#logFile.close()
 ##############
