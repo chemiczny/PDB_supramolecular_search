@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sat May 12 14:46:55 2018
 
@@ -7,47 +6,48 @@ Created on Sat May 12 14:46:55 2018
 """
 
 import glob
-import time, datetime
+import time
+import datetime
 from os.path import isfile
-    
-cifProcessed = 0
+
+cif_processed = 0
 log_files = glob.glob("logs/partialProgress*")
 for log_file in log_files:
-    log = open(log_file, 'r')
-    cifProcessed += int(log.readline())
+    log = open(log_file, "r")
+    cif_processed += int(log.readline())
     log.close()
 
-cifNoFile = open("logs/cif2process.log", 'r')
-cifNo = int(cifNoFile.readline())
-cifNoFile.close()
+cif_no_file = open("logs/cif2process.log", "r")
+cif_no = int(cif_no_file.readline())
+cif_no_file.close()
 
-timeFile = open("logs/timeStart.log", 'r')
-timeStart = float(timeFile.readline())
-timeFile.close()
+time_file = open("logs/timeStart.log", "r")
+time_start = float(time_file.readline())
+time_file.close()
 
-timeStop = -1
+time_stop = -1
 if isfile("logs/timeStop.log"):
-    timeFile = open("logs/timeStop.log", 'r')
-    timeStop = float(timeFile.readline())
-    timeFile.close()
+    time_file = open("logs/timeStop.log", "r")
+    time_stop = float(time_file.readline())
+    time_file.close()
 
-timeActual = time.time()
+time_actual = time.time()
 
-progress = float(cifProcessed)/cifNo * 100
-if abs(progress-100) < 0.00001 or timeStop > timeStart:
-    timeActual = timeStop
-    
-timeTaken = timeActual - timeStart
+progress = float(cif_processed) / cif_no * 100
+if abs(progress - 100) < 0.00001 or time_stop > time_start:
+    time_actual = time_stop
 
-timeEstimated = timeTaken/cifProcessed * (cifNo  - cifProcessed)
-prettyTimeTaken = str(datetime.timedelta(seconds = timeTaken))
-prettyTimeEstimated = str( datetime.timedelta(seconds = timeEstimated) )
+time_taken = time_actual - time_start
+
+time_estimated = time_taken / cif_processed * (cif_no - cif_processed)
+pretty_time_taken = str(datetime.timedelta(seconds=time_taken))
+pretty_time_estimated = str(datetime.timedelta(seconds=time_estimated))
 
 print("##########################################")
 print("#################POSTEP###################")
 print("##########################################")
-print("Przetworzono: ", cifProcessed, "/", cifNo)
+print("Przetworzono: ", cif_processed, "/", cif_no)
 print(progress, "%")
-print("W czasie: ", prettyTimeTaken)
-if  timeStop < timeStart:
-    print("Szacowany pozostały czas: ", prettyTimeEstimated)
+print("W czasie: ", pretty_time_taken)
+if time_stop < time_start:
+    print("Szacowany pozostały czas: ", pretty_time_estimated)

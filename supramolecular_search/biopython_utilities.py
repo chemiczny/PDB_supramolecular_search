@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Jun 29 12:53:24 2018
 
@@ -8,14 +6,16 @@ Created on Fri Jun 29 12:53:24 2018
 In older versions of Biopython method get_fullid() returns empty tuple
 """
 
-def createResId(residue):
-    idNo = residue.get_id()[1]
+
+def create_res_id(residue):
+    id_no = residue.get_id()[1]
     chain = residue.get_parent().get_id()
     name = residue.get_resname()
-    firstCoord = list(residue.get_atoms())[0].get_coord()
-    coordStr = str(firstCoord[0])+str(firstCoord[1])+str(firstCoord[2])
-    
-    return chain+str(idNo)+name+coordStr
+    first_coord = list(residue.get_atoms())[0].get_coord()
+    coord_str = str(first_coord[0]) + str(first_coord[1]) + str(first_coord[2])
 
-def createResIdFromAtom(atom):
-    return createResId( atom.get_parent() )
+    return chain + str(id_no) + name + coord_str
+
+
+def create_res_id_from_atom(atom):
+    return create_res_id(atom.get_parent())

@@ -1,128 +1,122 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Wed May 30 14:22:30 2018
 
 @author: michal
 """
-import shlex 
 
-class primitiveCif2Dict:
-    def __init__(self, cif, interestingKeys):
-        self.cifFile = open(cif, 'r')
+import shlex
+
+
+class PrimitiveCif2Dict:
+    def __init__(self, cif, interesting_keys):
+        self.cif_file = open(cif, "r")
         self.result = {}
-        self.interestingKeys = interestingKeys
-        
-        line = self.cifFile.readline()
+        self.interesting_keys = interesting_keys
+
+        line = self.cif_file.readline()
         self.loop = False
-        self.loopKeysSize = 0
-        self.interestingKeyIndex = {}
-        
+        self.loop_keys_size = 0
+        self.interesting_key_index = {}
+
         while line:
             if self.loop:
-                self.loopCase(line)
+                self.loop_case(line)
             else:
-                self.outOfTheLoopCase(line)
-            
-            line = self.cifFile.readline()
-        
-        self.cifFile.close()
-        
-    def loopCase(self, line):
+                self.out_of_the_loop_case(line)
+
+            line = self.cif_file.readline()
+
+        self.cif_file.close()
+
+    def loop_case(self, line):
         if "loop_" in line.lower():
             self.loop = True
-            self.loopKeysSize = 0
-            self.interestingKeyIndex = {}
+            self.loop_keys_size = 0
+            self.interesting_key_index = {}
             return
-        
+
         if line.startswith("#"):
             self.loop = False
-            return 
-        
-        lineSpl = line.split()
-        if len(lineSpl) == 1 and lineSpl[0][0] == "_":
-            self.loopKeysSize +=1
-            key = self.interestingKeyInLine(line)
+            return
+
+        line_spl = line.split()
+        if len(line_spl) == 1 and line_spl[0][0] == "_":
+            self.loop_keys_size += 1
+            key = self.interesting_key_in_line(line)
             if key:
-                self.interestingKeyIndex[key] = self.loopKeysSize-1
+                self.interesting_key_index[key] = self.loop_keys_size - 1
         else:
-            if self.interestingKeyIndex:
-                loopData = []
-                while not "_" in line and not "#" in line:
-                                    
+            if self.interesting_key_index:
+                loop_data = []
+                while "_" not in line and "#" not in line:
                     if not line.startswith(";"):
-                        lineSpl = shlex.split(line)
-                        loopData += lineSpl
+                        line_spl = shlex.split(line)
+                        loop_data += line_spl
                     else:
-                        colonCounter = line.count(";")
-                        newData = ""
-                        while colonCounter < 2:
-                            newData += line.strip()
-                            line = self.cifFile.readline()
-                            colonCounter += line.count(";")
-                            
-                        newData += line.strip()
-                        loopData.append(newData)
-    
-                    line = self.cifFile.readline()
-                    
-                loopSize = len(loopData)
-                for key in self.interestingKeyIndex:
-                    index2look = self.interestingKeyIndex[key] 
-                    while index2look < loopSize:
-                        self.appendValue2Key(key, loopData[ index2look ])
-                        index2look += self.loopKeysSize
-                        
-                
+                        colon_counter = line.count(";")
+                        new_data = ""
+                        while colon_counter < 2:
+                            new_data += line.strip()
+                            line = self.cif_file.readline()
+                            colon_counter += line.count(";")
+
+                        new_data += line.strip()
+                        loop_data.append(new_data)
+
+                    line = self.cif_file.readline()
+
+                loop_size = len(loop_data)
+                for key in self.interesting_key_index:
+                    index2look = self.interesting_key_index[key]
+                    while index2look < loop_size:
+                        self.append_value2_key(key, loop_data[index2look])
+                        index2look += self.loop_keys_size
+
                 self.loop = False
-                self.loopKeysSize = 0
-                self.interestingKeyIndex = {}
-    
-    def outOfTheLoopCase(self, line):
+                self.loop_keys_size = 0
+                self.interesting_key_index = {}
+
+    def out_of_the_loop_case(self, line):
         if "loop_" in line.lower():
             self.loop = True
-            self.loopKeysSize = 0
-            self.interestingKeyIndex = {}
+            self.loop_keys_size = 0
+            self.interesting_key_index = {}
             return
         elif line.startswith(";"):
             return
         else:
-            if not self.fastInterestingKeyInLine(line):
+            if not self.fast_interesting_key_in_line(line):
                 return
-            
-            lineSpl = shlex.split(line)
-            key = self.interestingKeyInLine(lineSpl[0])
+
+            line_spl = shlex.split(line)
+            key = self.interesting_key_in_line(line_spl[0])
             if key:
-                self.appendValue2Key(key, lineSpl[-1])
-        
-    def fastInterestingKeyInLine(self, line):
-        for key in self.interestingKeys:
+                self.append_value2_key(key, line_spl[-1])
+
+    def fast_interesting_key_in_line(self, line):
+        for key in self.interesting_keys:
             if key in line:
                 return True
-            
+
         return False
-    
-    def interestingKeyInLine(self, line):
-        lineStrip =line.strip()
-        for key in self.interestingKeys:
-            if key == lineStrip:
+
+    def interesting_key_in_line(self, line):
+        line_strip = line.strip()
+        for key in self.interesting_keys:
+            if key == line_strip:
                 return key
-            
+
         return False
-    
-    def appendValue2Key(self, key, value):
-        if not key in self.result:
-            self.result[key] = [ value ]
+
+    def append_value2_key(self, key, value):
+        if key not in self.result:
+            self.result[key] = [value]
         else:
-            self.result[key].append( value )
-    
-    
-                    
+            self.result[key].append(value)
+
+
 if __name__ == "__main__":
-    
     cif = "cif2verify/4lnc.cif"
     print(cif)
-    test = primitiveCif2Dict(cif, ["_refine.ls_d_res_high"  , "_exptl.method" ])
+    test = PrimitiveCif2Dict(cif, ["_refine.ls_d_res_high", "_exptl.method"])
     print(test.result)
-        
-    

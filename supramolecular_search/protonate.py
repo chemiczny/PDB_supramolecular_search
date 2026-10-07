@@ -1,155 +1,187 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Fri Jan 18 15:16:17 2019
 
 @author: michal
 """
+
 from supramolecular_search.ring_detection import molecule2graph
 import networkx as nx
 import math
 import numpy as np
-from supramolecular_search.numpy_utilities import normalize, rotateVector
+from supramolecular_search.numpy_utilities import normalize, rotate_vector
 
 
-class HydrogenAtom(object): 
-    def __init__(self, coord): 
-        self.coord = coord 
+class HydrogenAtom(object):
+    def __init__(self, coord):
+        self.coord = coord
         self.element = "H"
-    
-    def get_coord(self): 
-        return self.coord 
-    
+
+    def get_coord(self):
+        return self.coord
+
     def __sub__(self, atom):
         r2 = 0
         for x1, x2 in zip(self.coord, atom.coord):
-            r2 += (x1-x2)*(x1-x2)
-            
+            r2 += (x1 - x2) * (x1 - x2)
+
         return math.sqrt(r2)
 
+
 class Protonate:
-    """ Protonates atoms using VSEPR theory """
+    """Protonates atoms using VSEPR theory"""
 
     def __init__(self, verbose=False):
-        self.verbose=verbose
+        self.verbose = verbose
 
         self.valence_electrons = {
-                                  'N': 5,
-                                  'O': 6,
-                                }
+            "N": 5,
+            "O": 6,
+        }
 
-        self.standard_charges= {'ARG-NH1':1.0,
-                                'ASP-OD2':-1.0,
-                                'GLU-OE2':-1.0,
-                                'HIS-ND1':1.0,
-                                'LYS-NZ':1.0,
-                                'ARG-NE' :1,
-                                'N+':1.0,
-                                'C-':-1.0}
+        self.standard_charges = {
+            "ARG-NH1": 1.0,
+            "ASP-OD2": -1.0,
+            "GLU-OE2": -1.0,
+            "HIS-ND1": 1.0,
+            "LYS-NZ": 1.0,
+            "ARG-NE": 1,
+            "N+": 1.0,
+            "C-": -1.0,
+        }
 
+        self.sybyl_charges = {
+            "N.pl3": +1,
+            "N.3": +1,
+            "N.4": +1,
+            "N.ar": +1,
+            "O.co2-": -1,
+        }
 
-        self.sybyl_charges = {'N.pl3':+1,
-                              'N.3':+1,
-                              'N.4':+1,
-                              'N.ar':+1,
-                              'O.co2-':-1}
+        self.bond_lengths = {
+            "C": 1.09,
+            "N": 1.01,
+            "O": 0.96,
+            "F": 0.92,
+            "Cl": 1.27,
+            "Br": 1.41,
+            "I": 1.61,
+            "S": 1.35,
+        }
 
+        self.number_of_pi_electrons_in_bonds_in_backbone = {"O": 1}
 
-        self.bond_lengths = {'C':1.09,
-                             'N':1.01,
-                             'O':0.96,
-                             'F':0.92,
-                             'Cl':1.27,
-                             'Br':1.41,
-                             'I':1.61,
-                             'S':1.35}
-        
-        self.number_of_pi_electrons_in_bonds_in_backbone = { 'O':1}
+        self.number_of_pi_electrons_in_conjugate_bonds_in_backbone = {"N": 1}
 
-        self.number_of_pi_electrons_in_conjugate_bonds_in_backbone = {'N':1}
+        self.number_of_pi_electrons_in_bonds_in_sidechains = {
+            "ARG-NH1": 1,
+            "ASN-OD1": 1,
+            "ASP-OD1": 1,
+            "GLU-OE1": 1,
+            "GLN-OE1": 1,
+            "HIS-ND1": 1,
+        }
 
-        self.number_of_pi_electrons_in_bonds_in_sidechains = {'ARG-NH1':1,
-                                                              'ASN-OD1':1,
-                                                              'ASP-OD1':1,
-                                                              'GLU-OE1':1,
-                                                              'GLN-OE1':1,
-                                                              'HIS-ND1':1}
-        
         self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains = {
-                                                                'ARG-NH2':1,
-                                                                'ASN-ND2':1,
-                                                                'GLN-NE2':1,
-                                                                'HIS-NE2':1,
-                                                                'TRP-NE1':1,
-                                                                'GLU-OE2':1,
-                                                                'ASP-OD2':1,
-                                                                'ARG-NE' :1}
+            "ARG-NH2": 1,
+            "ASN-ND2": 1,
+            "GLN-NE2": 1,
+            "HIS-NE2": 1,
+            "TRP-NE1": 1,
+            "GLU-OE2": 1,
+            "ASP-OD2": 1,
+            "ARG-NE": 1,
+        }
 
+        self.number_of_pi_electrons_in_bonds_ligands = {
+            "N.pl3": 0,
+            "O.2": 1,
+            "O.co2": 1,
+            "N.ar": 1,
+            "N.1": 2,
+        }
 
-        self.number_of_pi_electrons_in_bonds_ligands = {'N.pl3':0,
-                                                        'O.2':1,
-                                                        'O.co2':1,
-                                                        'N.ar':1,
-                                                        'N.1':2}
+        self.number_of_pi_electrons_in_conjugate_bonds_in_ligands = {
+            "N.am": 1,
+            "N.pl3": 1,
+        }
 
-        self.number_of_pi_electrons_in_conjugate_bonds_in_ligands = {'N.am':1,'N.pl3':1}
+        self.protonation_methods = {4: self.tetrahedral, 3: self.trigonal}
 
-        self.protonation_methods = {4:self.tetrahedral,
-                                    3:self.trigonal}
+        self.molecule_graph = {}
 
-        self.moleculeGraph = {}
-        
-        self.anionId = -1
-        self.atomList = []
-        self.hydrogenAtomsList = []
-        self.connected2H = []
+        self.anion_id = -1
+        self.atom_list = []
+        self.hydrogen_atoms_list = []
+        self.connected2_h = []
 
-        self.AAcodes = set([ "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS",
-            "ILE", "LEU", "LYS", "MET", "PHE","PRO", "SER", "THR", "TRP", "TYR", "VAL"])
-        
+        self.aa_codes = set(
+            [
+                "ALA",
+                "ARG",
+                "ASN",
+                "ASP",
+                "CYS",
+                "GLN",
+                "GLU",
+                "GLY",
+                "HIS",
+                "ILE",
+                "LEU",
+                "LYS",
+                "MET",
+                "PHE",
+                "PRO",
+                "SER",
+                "THR",
+                "TRP",
+                "TYR",
+                "VAL",
+            ]
+        )
+
         return
 
+    def protonate(self, atom_list, anion_atom):
+        self.atom_list = atom_list
+        self.molecule_graph, self.anion_id = molecule2graph(
+            atom_list, anion_atom, False, omit_metals=True
+        )
+        self.molecule_graph = self.molecule_graph.copy()
 
-
-
-    def protonate(self, atomList, anionAtom):
-        self.atomList = atomList
-        self.moleculeGraph, self.anionId = molecule2graph(atomList, anionAtom, False, omitMetals = True)
-        self.moleculeGraph = self.moleculeGraph.copy()
-        
-        self.anionCoords = anionAtom.get_coord()
+        self.anion_coords = anion_atom.get_coord()
         # protonate all atoms
-        for atomId in self.moleculeGraph.nodes():
-            atom = self.atomList[atomId]
+        for atom_id in self.molecule_graph.nodes():
+            atom = self.atom_list[atom_id]
             element = atom.element
-            resName = atom.get_parent().get_resname()
-            
-            if element in ["O", "N" ] and atom != anionAtom and resName in self.AAcodes:
-#                print("protonuje: ", atom.get_parent().get_resname(), atom.get_name())
-                self.protonate_atom(atomId)
-                
-        hInd = len(self.atomList)
-        for connInd in self.connected2H:
-            self.moleculeGraph.add_edge(hInd, connInd)
-            hInd +=1
-        self.atomList += self.hydrogenAtomsList
+            res_name = atom.get_parent().get_resname()
+
+            if (
+                element in ["O", "N"]
+                and atom != anion_atom
+                and res_name in self.aa_codes
+            ):
+                self.protonate_atom(atom_id)
+
+        h_ind = len(self.atom_list)
+        for conn_ind in self.connected2_h:
+            self.molecule_graph.add_edge(h_ind, conn_ind)
+            h_ind += 1
+        self.atom_list += self.hydrogen_atoms_list
 
         return
 
-
-    def set_charge(self, atomId):
-        atom = self.atomList[atomId]
+    def set_charge(self, atom_id):
+        atom = self.atom_list[atom_id]
         # atom is a protein atom
 
-        key = '%3s-%s'%(atom.get_parent().get_resname(), atom.get_name())
-        self.moleculeGraph.nodes[atomId]["key"] = key
+        key = "%3s-%s" % (atom.get_parent().get_resname(), atom.get_name())
+        self.molecule_graph.nodes[atom_id]["key"] = key
         if key in list(self.standard_charges.keys()):
-            self.moleculeGraph.nodes[atomId]["charge"] = self.standard_charges[key]
+            self.molecule_graph.nodes[atom_id]["charge"] = self.standard_charges[key]
         else:
-            self.moleculeGraph.nodes[atomId]["charge"] = 0
+            self.molecule_graph.nodes[atom_id]["charge"] = 0
 
-#        print("ustalono ladunek: ", self.moleculeGraph.nodes[atomId]["charge"])
-        return 
+        return
 
     def protonate_atom(self, atom):
 
@@ -160,233 +192,309 @@ class Protonate:
         self.add_protons(atom)
         return
 
-
     def set_number_of_pi_electrons(self, atom):
-        atomKey = self.moleculeGraph.nodes[atom]["key"]
-        
-        atomObj = self.atomList[atom]
+        atom_key = self.molecule_graph.nodes[atom]["key"]
+
+        atom_obj = self.atom_list[atom]
         aminoacid = False
-        if atomObj.get_parent().get_resname() in [ "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY",
-            "ILE", "LEU", "LYS", "MET", "PRO", "SER", "THR", "VAL", "HIS", "TRP", "PHE" , "TYR" ] :
-                aminoacid = True
-        
+        if atom_obj.get_parent().get_resname() in [
+            "ALA",
+            "ARG",
+            "ASN",
+            "ASP",
+            "CYS",
+            "GLN",
+            "GLU",
+            "GLY",
+            "ILE",
+            "LEU",
+            "LYS",
+            "MET",
+            "PRO",
+            "SER",
+            "THR",
+            "VAL",
+            "HIS",
+            "TRP",
+            "PHE",
+            "TYR",
+        ]:
+            aminoacid = True
+
         if aminoacid:
-            if atomObj.get_name() in [ "O", "OXT"] :
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 1
-            elif atomKey in self.number_of_pi_electrons_in_bonds_in_sidechains:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"] = self.number_of_pi_electrons_in_bonds_in_sidechains[atomKey]
+            if atom_obj.get_name() in ["O", "OXT"]:
+                self.molecule_graph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 1
+            elif atom_key in self.number_of_pi_electrons_in_bonds_in_sidechains:
+                self.molecule_graph.nodes[atom]["number_of_pi_electrons_in_bonds"] = (
+                    self.number_of_pi_electrons_in_bonds_in_sidechains[atom_key]
+                )
             else:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 0
-                
-            if atomObj.get_name() == "N" :
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"] = 1
-            elif atomKey in self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"] = self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains[atomKey]
+                self.molecule_graph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 0
+
+            if atom_obj.get_name() == "N":
+                self.molecule_graph.nodes[atom][
+                    "number_of_pi_electrons_in_conjugate_bonds"
+                ] = 1
+            elif (
+                atom_key in self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains
+            ):
+                self.molecule_graph.nodes[atom][
+                    "number_of_pi_electrons_in_conjugate_bonds"
+                ] = self.number_of_pi_electrons_in_conjugate_bonds_in_sidechains[
+                    atom_key
+                ]
             else:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"] = 0
-                
+                self.molecule_graph.nodes[atom][
+                    "number_of_pi_electrons_in_conjugate_bonds"
+                ] = 0
+
         else:
-            
-            if atomObj.get_name() in self.number_of_pi_electrons_in_bonds_ligands:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"] = self.number_of_pi_electrons_in_bonds_ligands[atomObj.get_name()]
+            if atom_obj.get_name() in self.number_of_pi_electrons_in_bonds_ligands:
+                self.molecule_graph.nodes[atom]["number_of_pi_electrons_in_bonds"] = (
+                    self.number_of_pi_electrons_in_bonds_ligands[atom_obj.get_name()]
+                )
             else:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 0
-                
-            if atomObj.get_name() in self.number_of_pi_electrons_in_conjugate_bonds_in_ligands:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"] = self.number_of_pi_electrons_in_conjugate_bonds_in_ligands[atomObj.get_name()]
+                self.molecule_graph.nodes[atom]["number_of_pi_electrons_in_bonds"] = 0
+
+            if (
+                atom_obj.get_name()
+                in self.number_of_pi_electrons_in_conjugate_bonds_in_ligands
+            ):
+                self.molecule_graph.nodes[atom][
+                    "number_of_pi_electrons_in_conjugate_bonds"
+                ] = self.number_of_pi_electrons_in_conjugate_bonds_in_ligands[
+                    atom_obj.get_name()
+                ]
             else:
-                self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"] = 0
-                
-#        print("elektrony pi w wiazaniach 2 i 3: ",self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"]  )
-#        print("elektrony pi w sprzezonych wiazaniach ", self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"])
+                self.molecule_graph.nodes[atom][
+                    "number_of_pi_electrons_in_conjugate_bonds"
+                ] = 0
 
     def set_number_of_protons_to_add(self, atom):
-        number_of_protons_to_add  = 8
-        number_of_protons_to_add -= self.valence_electrons[self.atomList[atom].element]
-        number_of_protons_to_add -= len(list(nx.neighbors(self.moleculeGraph, atom)))
-        
-        number_of_pi_electrons_in_double_and_triple_bonds = self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"]
+        number_of_protons_to_add = 8
+        number_of_protons_to_add -= self.valence_electrons[self.atom_list[atom].element]
+        number_of_protons_to_add -= len(list(nx.neighbors(self.molecule_graph, atom)))
+
+        number_of_pi_electrons_in_double_and_triple_bonds = self.molecule_graph.nodes[
+            atom
+        ]["number_of_pi_electrons_in_bonds"]
         number_of_protons_to_add -= number_of_pi_electrons_in_double_and_triple_bonds
-        number_of_protons_to_add += int(self.moleculeGraph.nodes[atom]["charge"])
-        
-        self.moleculeGraph.nodes[atom]["number_of_protons_to_add"] =  number_of_protons_to_add
-#        print("liczba protonow do dodania: ",self.moleculeGraph.nodes[atom]["number_of_protons_to_add"]  )
+        number_of_protons_to_add += int(self.molecule_graph.nodes[atom]["charge"])
+
+        self.molecule_graph.nodes[atom]["number_of_protons_to_add"] = (
+            number_of_protons_to_add
+        )
 
     def set_steric_number_and_lone_pairs(self, atom):
         steric_number = 0
 
-        steric_number += self.valence_electrons[self.atomList[atom].element]
-        steric_number += len(list(nx.neighbors(self.moleculeGraph, atom)))
-        steric_number += self.moleculeGraph.nodes[atom]["number_of_protons_to_add"]
-        steric_number -= self.moleculeGraph.nodes[atom]["charge"]
-        steric_number -= self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_bonds"]
-        steric_number -= self.moleculeGraph.nodes[atom]["number_of_pi_electrons_in_conjugate_bonds"]
+        steric_number += self.valence_electrons[self.atom_list[atom].element]
+        steric_number += len(list(nx.neighbors(self.molecule_graph, atom)))
+        steric_number += self.molecule_graph.nodes[atom]["number_of_protons_to_add"]
+        steric_number -= self.molecule_graph.nodes[atom]["charge"]
+        steric_number -= self.molecule_graph.nodes[atom][
+            "number_of_pi_electrons_in_bonds"
+        ]
+        steric_number -= self.molecule_graph.nodes[atom][
+            "number_of_pi_electrons_in_conjugate_bonds"
+        ]
 
-        self.moleculeGraph.nodes[atom]["steric_number"] = math.floor(steric_number/2.0)
+        self.molecule_graph.nodes[atom]["steric_number"] = math.floor(
+            steric_number / 2.0
+        )
 
-        self.moleculeGraph.nodes[atom]["number_of_lone_pairs"] = steric_number - len(list(nx.neighbors(self.moleculeGraph, atom))) - self.moleculeGraph.nodes[atom]["number_of_protons_to_add"]
+        self.molecule_graph.nodes[atom]["number_of_lone_pairs"] = (
+            steric_number
+            - len(list(nx.neighbors(self.molecule_graph, atom)))
+            - self.molecule_graph.nodes[atom]["number_of_protons_to_add"]
+        )
 
-        self.moleculeGraph.nodes[atom]["steric_number_and_lone_pairs_set"] = True
-#        print("liczba steryczna: ", self.moleculeGraph.nodes[atom]["steric_number"] )
+        self.molecule_graph.nodes[atom]["steric_number_and_lone_pairs_set"] = True
         return
-
 
     def add_protons(self, atom):
         # decide which method to use
-        
-        if self.moleculeGraph.nodes[atom]["steric_number"] in list(self.protonation_methods.keys()):
-            self.protonation_methods[self.moleculeGraph.nodes[atom]["steric_number"]](atom)
+
+        if self.molecule_graph.nodes[atom]["steric_number"] in list(
+            self.protonation_methods.keys()
+        ):
+            self.protonation_methods[self.molecule_graph.nodes[atom]["steric_number"]](
+                atom
+            )
 
         return
-
 
     def trigonal(self, atom):
-        number_of_protons_to_add = self.moleculeGraph.nodes[atom]["number_of_protons_to_add"]
-        
+        number_of_protons_to_add = self.molecule_graph.nodes[atom][
+            "number_of_protons_to_add"
+        ]
+
         if number_of_protons_to_add == 0:
             return
-        
+
         rot_angle = math.radians(120.0)
-        bonded_atoms_ids = list(self.moleculeGraph.neighbors(atom))
-        
+        bonded_atoms_ids = list(self.molecule_graph.neighbors(atom))
+
         if len(bonded_atoms_ids) == 0:
             return
 
         if len(bonded_atoms_ids) == 1:
-            A = self.atomList[atom].get_coord()
-            B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
-            
-            Bneighbors = list(self.moleculeGraph.neighbors(bonded_atoms_ids[0]))
-            for cCandidate in Bneighbors:
-                if cCandidate != atom and self.atomList[cCandidate].element in [ "N" , "C" ]:
-                    C = self.atomList[cCandidate].get_coord()
-                    norm_vec = -normalize(np.cross(A-B, B-C))
+            point_a = self.atom_list[atom].get_coord()
+            point_b = self.atom_list[bonded_atoms_ids[0]].get_coord()
+
+            b_neighbors = list(self.molecule_graph.neighbors(bonded_atoms_ids[0]))
+            for c_candidate in b_neighbors:
+                if c_candidate != atom and self.atom_list[c_candidate].element in [
+                    "N",
+                    "C",
+                ]:
+                    point_c = self.atom_list[c_candidate].get_coord()
+                    norm_vec = -normalize(
+                        np.cross(point_a - point_b, point_b - point_c)
+                    )
                     break
             else:
-                norm_vec = normalize( np.cross( B-A, self.anionCoords - A ) )
-#                norm_vec = get_ortonormal(B-A)
-            
-            bondDirection = B-A
+                norm_vec = normalize(
+                    np.cross(point_b - point_a, self.anion_coords - point_a)
+                )
+
+            bond_direction = point_b - point_a
             for i in range(number_of_protons_to_add):
-                bondDirection = rotateVector(bondDirection, norm_vec, rot_angle)
-                bondDirection = normalize(bondDirection)* self.bond_lengths[ self.atomList[atom].element ]
-                
-                newAtomCoords = A + bondDirection
-                self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-                self.connected2H.append(atom)
-                
+                bond_direction = rotate_vector(bond_direction, norm_vec, rot_angle)
+                bond_direction = (
+                    normalize(bond_direction)
+                    * self.bond_lengths[self.atom_list[atom].element]
+                )
+
+                new_atom_coords = point_a + bond_direction
+                self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+                self.connected2_h.append(atom)
+
         elif len(bonded_atoms_ids) == 2:
-            A = self.atomList[atom].get_coord()
-            B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
-            C = self.atomList[ bonded_atoms_ids[1] ].get_coord()
-            
-            AB = normalize(B-A)
-            AC = normalize(C-A)
-            
-            bondDirection = -(AB+AC)
-            bondDirection = normalize(bondDirection)* self.bond_lengths[ self.atomList[atom].element ]
-            
-            newAtomCoords = A + bondDirection
-            
-            self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-            self.connected2H.append(atom)
+            point_a = self.atom_list[atom].get_coord()
+            point_b = self.atom_list[bonded_atoms_ids[0]].get_coord()
+            point_c = self.atom_list[bonded_atoms_ids[1]].get_coord()
+
+            vec_ab = normalize(point_b - point_a)
+            vec_ac = normalize(point_c - point_a)
+
+            bond_direction = -(vec_ab + vec_ac)
+            bond_direction = (
+                normalize(bond_direction)
+                * self.bond_lengths[self.atom_list[atom].element]
+            )
+
+            new_atom_coords = point_a + bond_direction
+
+            self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+            self.connected2_h.append(atom)
 
         return
 
-
     def tetrahedral(self, atom):
-        number_of_protons_to_add = self.moleculeGraph.nodes[atom]["number_of_protons_to_add"]
+        number_of_protons_to_add = self.molecule_graph.nodes[atom][
+            "number_of_protons_to_add"
+        ]
         rot_angle = math.radians(109.5)
-        
+
         if number_of_protons_to_add == 0:
             return
-        
-        bonded_atoms_ids = list(self.moleculeGraph.neighbors(atom))
-        
+
+        bonded_atoms_ids = list(self.molecule_graph.neighbors(atom))
+
         if len(bonded_atoms_ids) == 0:
             return
 
         if len(bonded_atoms_ids) == 1:
-            A = self.atomList[atom].get_coord()
-            B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
-            
-#            norm_vec = get_ortonormal(B-A)
-            norm_vec = normalize( np.cross( B-A, self.anionCoords - A ) )
+            point_a = self.atom_list[atom].get_coord()
+            point_b = self.atom_list[bonded_atoms_ids[0]].get_coord()
+
+            norm_vec = normalize(
+                np.cross(point_b - point_a, self.anion_coords - point_a)
+            )
             dih_rot = math.radians(120)
-            bondDirection = rotateVector(B-A, norm_vec, rot_angle)
-            bondDirection = normalize(bondDirection)* self.bond_lengths[ self.atomList[atom].element ]
-            
+            bond_direction = rotate_vector(point_b - point_a, norm_vec, rot_angle)
+            bond_direction = (
+                normalize(bond_direction)
+                * self.bond_lengths[self.atom_list[atom].element]
+            )
+
             for i in range(number_of_protons_to_add):
-                newAtomCoords = A + bondDirection
-                self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-                self.connected2H.append(atom)
-                
-                bondDirection = rotateVector(bondDirection, B-A, dih_rot)
-                
+                new_atom_coords = point_a + bond_direction
+                self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+                self.connected2_h.append(atom)
+
+                bond_direction = rotate_vector(
+                    bond_direction, point_b - point_a, dih_rot
+                )
+
         # 1 bond
-        
+
         elif len(bonded_atoms_ids) == 2:
-            A = self.atomList[atom].get_coord()
-            B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
-            C = self.atomList[ bonded_atoms_ids[1] ].get_coord()
-            
-            AB = normalize(B-A)
-            AC = normalize(C-A)
-            
-            axis = AB+AC
-            bondDirection = rotateVector(-AB, axis, math.radians(90))
-            bondDirection = normalize(bondDirection)*self.bond_lengths[ self.atomList[atom].element ]
-            
-            newAtomCoords = A + bondDirection
-            self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-            self.connected2H.append(atom)
-            
+            point_a = self.atom_list[atom].get_coord()
+            point_b = self.atom_list[bonded_atoms_ids[0]].get_coord()
+            point_c = self.atom_list[bonded_atoms_ids[1]].get_coord()
+
+            vec_ab = normalize(point_b - point_a)
+            vec_ac = normalize(point_c - point_a)
+
+            axis = vec_ab + vec_ac
+            bond_direction = rotate_vector(-vec_ab, axis, math.radians(90))
+            bond_direction = (
+                normalize(bond_direction)
+                * self.bond_lengths[self.atom_list[atom].element]
+            )
+
+            new_atom_coords = point_a + bond_direction
+            self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+            self.connected2_h.append(atom)
+
             if number_of_protons_to_add > 1:
-                bondDirection = rotateVector(bondDirection, axis, math.radians(180))
-                newAtomCoords = A + bondDirection
-                self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-                self.connected2H.append(atom)
-                
+                bond_direction = rotate_vector(bond_direction, axis, math.radians(180))
+                new_atom_coords = point_a + bond_direction
+                self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+                self.connected2_h.append(atom)
+
         elif len(bonded_atoms_ids) == 3:
-            A = self.atomList[atom].get_coord()
-            B = self.atomList[ bonded_atoms_ids[0] ].get_coord()
-            C = self.atomList[ bonded_atoms_ids[1] ].get_coord()
-            D = self.atomList[ bonded_atoms_ids[2] ].get_coord()
-            
-            AB = normalize(B-A)
-            AC = normalize(C-A)
-            AD = normalize(D-A)
-            
-            bondDirection = -(AB+AC+AD)
-            bondDirection = bondDirection*self.bond_lengths[ self.atomList[atom].element ]
-            
-            
-            newAtomCoords = A + bondDirection
-            self.hydrogenAtomsList.append(HydrogenAtom(newAtomCoords))
-            self.connected2H.append(atom)
-            
+            point_a = self.atom_list[atom].get_coord()
+            point_b = self.atom_list[bonded_atoms_ids[0]].get_coord()
+            point_c = self.atom_list[bonded_atoms_ids[1]].get_coord()
+            point_d = self.atom_list[bonded_atoms_ids[2]].get_coord()
+
+            vec_ab = normalize(point_b - point_a)
+            vec_ac = normalize(point_c - point_a)
+            vec_ad = normalize(point_d - point_a)
+
+            bond_direction = -(vec_ab + vec_ac + vec_ad)
+            bond_direction = (
+                bond_direction * self.bond_lengths[self.atom_list[atom].element]
+            )
+
+            new_atom_coords = point_a + bond_direction
+            self.hydrogen_atoms_list.append(HydrogenAtom(new_atom_coords))
+            self.connected2_h.append(atom)
 
         return
 
-    
+
 def get_ortonormal(vec):
-    closest2zeroIndex = -1
+    closest2zero_index = -1
     dist = 100
     for i, el in enumerate(vec):
         if abs(el) < dist:
-            closest2zeroIndex = i
+            closest2zero_index = i
             dist = abs(el)
-            
-    vecOut = np.array([0.0, 0.0, 0.0])
-    
-    aInd = (closest2zeroIndex+1)%3
-    bInd = (closest2zeroIndex+2)%3
-    
-    if abs(vec[bInd]) < 0.001:
-        vecOut[bInd]=1
-        return vecOut
-    
-    vecOut[aInd] =1
-    vecOut[bInd] = -vec[aInd]/vec[bInd]
-    
-    return normalize(vecOut)
+
+    vec_out = np.array([0.0, 0.0, 0.0])
+
+    a_ind = (closest2zero_index + 1) % 3
+    b_ind = (closest2zero_index + 2) % 3
+
+    if abs(vec[b_ind]) < 0.001:
+        vec_out[b_ind] = 1
+        return vec_out
+
+    vec_out[a_ind] = 1
+    vec_out[b_ind] = -vec[a_ind] / vec[b_ind]
+
+    return normalize(vec_out)

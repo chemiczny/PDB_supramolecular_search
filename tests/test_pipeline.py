@@ -15,10 +15,10 @@ def workdir(tmp_path, monkeypatch):
 
 def test_primitive_cif2dict_matches_biopython(workdir):
     from Bio.PDB.MMCIF2Dict import MMCIF2Dict
-    from supramolecular_search.primitive_cif2dict import primitiveCif2Dict
+    from supramolecular_search.primitive_cif2dict import PrimitiveCif2Dict
 
     keys = ["_refine.ls_d_res_high", "_exptl.method"]
-    parsed = primitiveCif2Dict(CIF_1BP0, keys).result
+    parsed = PrimitiveCif2Dict(CIF_1BP0, keys).result
     reference = MMCIF2Dict(CIF_1BP0)
 
     for key in keys:
@@ -26,9 +26,9 @@ def test_primitive_cif2dict_matches_biopython(workdir):
 
 
 def test_anion_templates_are_packaged(workdir):
-    from supramolecular_search.anion_recogniser import getAllTemplates
+    from supramolecular_search.anion_recogniser import get_all_templates
 
-    templates = getAllTemplates()
+    templates = get_all_templates()
 
     assert {"O", "N", "C", "S", "F", "CL", "BR", "I"} <= set(templates)
 
@@ -36,7 +36,7 @@ def test_anion_templates_are_packaged(workdir):
 def test_find_supramolecular_1bp0(workdir):
     from supramolecular_search import cif_analyser
 
-    cif_analyser.findSupramolecular((CIF_1BP0, "1BP0", "test"))
+    cif_analyser.find_supramolecular((CIF_1BP0, "1BP0", "test"))
 
     expected_rows = {
         "anionPi": 20,

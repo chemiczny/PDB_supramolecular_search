@@ -64,6 +64,13 @@ pip install -e ".[test]"
 pytest
 ```
 
+## Code style
+The code follows PEP 8, enforced with [ruff](https://docs.astral.sh/ruff/) (configured in pyproject.toml):
+```
+ruff check .
+ruff format .
+```
+
 ## Pymol plugin
 After installation, you should be able to see "Supramolecular analyser" among other plugins. Well, it is written with Tkinter, so it looks like software from 
 90s, but it works even better.
