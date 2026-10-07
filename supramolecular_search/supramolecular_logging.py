@@ -8,9 +8,9 @@ Created on Sat Apr 21 13:44:59 2018
 
 from math import  sin, cos, radians, sqrt, acos, degrees
 import numpy as np
-from numpy_utilities import normalize
+from supramolecular_search.numpy_utilities import normalize
 from os.path import isfile, join
-from ringDetection import getNormVec, getAverageCoords
+from supramolecular_search.ring_detection import getNormVec, getAverageCoords
 
 def writeAnionPiHeader( ):
     """

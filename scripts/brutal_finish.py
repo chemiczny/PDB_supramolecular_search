@@ -9,7 +9,7 @@ import glob
 from os.path import join
 from os import remove
 import time
-from configure import configure
+from supramolecular_search.config import configure
 from multiprocessing import Pool
 
 def mergeLogs( logList  ):

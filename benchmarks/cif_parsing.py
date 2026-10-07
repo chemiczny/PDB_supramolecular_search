@@ -4,19 +4,19 @@
 Created on Tue Jun  5 13:19:32 2018
 
 @author: michal
+
+Compares parsing speed of Biopython's MMCIF2Dict and primitiveCif2Dict.
+Usage: python3 benchmarks/cif_parsing.py "cif/*.cif"
 """
 import sys
-if not "../" in sys.path:
-    sys.path.append('../')
-    
 import time
 from glob import glob
 from Bio.PDB import MMCIF2Dict
-from primitiveCif2Dict import primitiveCif2Dict
+from supramolecular_search.primitive_cif2dict import primitiveCif2Dict
 
 
     
-cifs = glob("../cif/*cif")
+cifs = glob(sys.argv[1] if len(sys.argv) > 1 else "cif/*.cif")
 timeStart = time.time()
 
 for cif in cifs:

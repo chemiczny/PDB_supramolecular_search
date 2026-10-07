@@ -13,18 +13,18 @@ import sys
 def configure():
     configurationFileName = "config.json"
     
-    if not isfile(configurationFileName):
-        return { "N" : 1, "cif" : "cif/*.cif", "scratch" : "scr" }
-        
-    configFile = open(configurationFileName)
-    config = json.load(configFile)
-    configFile.close()
-    
-    if "scratch" in config:
-        if not isdir(config["scratch"]):
-            makedirs(config["scratch"])
+    if isfile(configurationFileName):
+        configFile = open(configurationFileName)
+        config = json.load(configFile)
+        configFile.close()
     else:
+        config = { "N" : 1, "cif" : "cif/*.cif" }
+
+    if not "scratch" in config:
         config["scratch"] = "scr"
+
+    if not isdir(config["scratch"]):
+        makedirs(config["scratch"])
         
     if "externalLibsPath" in config:
         if not config["externalLibsPath"] in sys.path:

@@ -5,18 +5,18 @@ Created on Sat Apr 21 14:04:23 2018
 
 @author: michal
 """
-from configure import configure
+from supramolecular_search.config import configure
 configure()
     
 from Bio.PDB import Selection, NeighborSearch
-from ringDetection import getSubstituents, isFlat, isFlatPrimitive, molecule2graph
-from anionTemplateCreator import anionMatcher
+from supramolecular_search.ring_detection import getSubstituents, isFlat, isFlatPrimitive, molecule2graph
+from supramolecular_search.anion_template_creator import anionMatcher, ANION_TEMPLATES_DIR
 import json
 from os.path import join
 from glob import glob
 from networkx.readwrite.json_graph import node_link_graph
 from copy import copy
-from biopythonUtilities import createResId, createResIdFromAtom
+from supramolecular_search.biopython_utilities import createResId, createResIdFromAtom
 #from collections import defaultdict
 #from supramolecularLogging import writeAdditionalInfo
 #from time import time
@@ -176,7 +176,7 @@ class AnionRecogniser:
         return False, element
     
     def try2matchTemplate(self, moleculeGraph, atomId, graphTemplate, atoms):
-        moleculeGraph.node[atomId]["charged"] = True
+        moleculeGraph.nodes[atomId]["charged"] = True
     #    print("Tworze obiekta")
         anMatcher = anionMatcher(moleculeGraph, graphTemplate)
     #    print("Potworzylem")
@@ -189,8 +189,8 @@ class AnionRecogniser:
             result = anMatcher.subgraph_is_isomorphic()
     #    print("mom rezultat")
         if not result:
-            moleculeGraph.node[atomId]["charged"] = False
-            return result, moleculeGraph.node[atomId]["element"]
+            moleculeGraph.nodes[atomId]["charged"] = False
+            return result, moleculeGraph.nodes[atomId]["element"]
         
         matching = anMatcher.mapping
         reverseMapping = {}
@@ -200,15 +200,15 @@ class AnionRecogniser:
         if graphTemplate.graph["geometry"] == "planarWithSubstituents":
             flatAnalysis = isFlat(atoms, list(matching.keys()), getSubstituents( moleculeGraph, list(matching.keys()) ) )
             if not flatAnalysis["isFlat"]:
-                moleculeGraph.node[atomId]["charged"] = False
-                return False, moleculeGraph.node[atomId]["element"]
+                moleculeGraph.nodes[atomId]["charged"] = False
+                return False, moleculeGraph.nodes[atomId]["element"]
         elif graphTemplate.graph["geometry"] == "planar":
     #        print("Sprawdzam płaskosc")
             flatAnalysis = isFlatPrimitive(atoms, list(matching.keys() ), 0.5)
             if not flatAnalysis["isFlat"]:
     #            print("nie je plaski", graphTemplate.graph["name"])
-                moleculeGraph.node[atomId]["charged"] = False
-                return False, moleculeGraph.node[atomId]["element"]
+                moleculeGraph.nodes[atomId]["charged"] = False
+                return False, moleculeGraph.nodes[atomId]["element"]
     #        else:
     #            print("jest plaski", graphTemplate.graph["name"])
         
@@ -217,12 +217,12 @@ class AnionRecogniser:
         if "X" in graphTemplate.graph["name"] and  graphTemplate.graph["nameMapping"]:
             matching = anMatcher.mapping
             for node in graphTemplate.graph["nameMapping"]:
-#                element =  moleculeGraph.node[reverseMapping[node]]["element"]
+#                element =  moleculeGraph.nodes[reverseMapping[node]]["element"]
                 element = getElementFromMatch( matching, int(node), moleculeGraph)
                 anionGroup = anionGroup.replace( "X", element )
                 break
         
-        moleculeGraph.node[atomId]["charged"] = False
+        moleculeGraph.nodes[atomId]["charged"] = False
         
         anionGroupId = sorted( list( [ atoms[aid].get_name() for aid in matching ]  ) )[0]
         
@@ -342,7 +342,7 @@ def createResDicts(atoms, residues, ligand):
 def graph2Composition( graph ):
     composition = {}
     for node in list(graph):
-        element = graph.node[node]["element"]
+        element = graph.nodes[node]["element"]
         if not element in composition:
             composition[element] = 1
         else:
@@ -378,8 +378,8 @@ def graph2Composition( graph ):
 
 def dummyCompare(composition, template):
     for node in list(template):
-        if not "aliases" in template.node[node]:
-            element = template.node[node]["element"]
+        if not "aliases" in template.nodes[node]:
+            element = template.nodes[node]["element"]
             if element == "X":
                 continue
             
@@ -389,8 +389,8 @@ def dummyCompare(composition, template):
                 composition[element] -= 1
                 if composition[element] < 0:
                     return False
-        elif not template.node[node]["aliases"]:
-            element = template.node[node]["element"]
+        elif not template.nodes[node]["aliases"]:
+            element = template.nodes[node]["element"]
             if element == "X":
                 continue
             if not element in composition:
@@ -402,18 +402,18 @@ def dummyCompare(composition, template):
     return True
 
 def getAllTemplates():
-    templates = join("anion_templates", "*", "*.json")
+    templates = join(ANION_TEMPLATES_DIR, "*", "*.json")
     anionsTemplates = glob(  templates )
     
     graphTemplates = {}
     
     for template in anionsTemplates:
         jsonF = open(template)
-        graphTemplate = node_link_graph(json.load(jsonF))
+        graphTemplate = node_link_graph(json.load(jsonF), edges="links")
         jsonF.close()
         
         priority = graphTemplate.graph["priority"]
-        element = graphTemplate.node[ graphTemplate.graph["charged"] ]["element"]
+        element = graphTemplate.nodes[ graphTemplate.graph["charged"] ]["element"]
         
         if not element in graphTemplates:
             graphTemplates[element] = { priority : [ graphTemplate ] }
@@ -427,7 +427,7 @@ def getAllTemplates():
 def getElementFromMatch( matching, node, graph):
     for match in matching:
         if matching[match] == node:
-            return graph.node[match]["element"]
+            return graph.nodes[match]["element"]
         
 
 if __name__ == "__main__":

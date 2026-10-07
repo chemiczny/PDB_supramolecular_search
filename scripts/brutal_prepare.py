@@ -5,13 +5,13 @@ Created on Mon Oct  1 14:26:23 2018
 
 @author: michal
 """
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
-from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
+from supramolecular_search.supramolecular_logging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
+from supramolecular_search.supramolecular_logging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
 from os.path import isdir, join
 from os import makedirs, remove
 import glob
 import time
-from configure import configure
+from supramolecular_search.config import configure
 config = configure()
 
 cifFiles =  config["cif"]

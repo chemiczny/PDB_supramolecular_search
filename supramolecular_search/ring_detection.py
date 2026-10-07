@@ -6,7 +6,7 @@ Created on Sat Apr 21 13:58:24 2018
 @author: michal
 """
 import numpy as np
-from numpy_utilities import normalize
+from supramolecular_search.numpy_utilities import normalize
 import networkx as nx
 #from supramolecularLogging import writeAdditionalInfo
 #from multiprocessing import current_process

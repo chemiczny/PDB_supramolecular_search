@@ -1,4 +1,4 @@
-from configure import configure
+from supramolecular_search.config import configure
 config = configure()
 
 from Bio.PDB import PDBList

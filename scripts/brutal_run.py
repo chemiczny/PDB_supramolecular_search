@@ -6,7 +6,7 @@ Created on Mon Oct  1 14:31:05 2018
 @author: michal
 """
 
-from cif_analyser import findSupramolecular
+from supramolecular_search.cif_analyser import findSupramolecular
 from os.path import basename
 import sys
 

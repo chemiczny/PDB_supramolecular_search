@@ -9,36 +9,38 @@ Created on Wed May 23 12:34:08 2018
 import networkx as nx
 from networkx.algorithms.isomorphism import GraphMatcher
 from networkx.readwrite.json_graph import node_link_data
-from os.path import isdir, join, isfile
+from os.path import isdir, join, isfile, dirname, abspath
 from os import mkdir
 import json
 from glob import glob
 import shutil
 
+ANION_TEMPLATES_DIR = join(dirname(abspath(__file__)), "anion_templates")
+
 class anionMatcher(GraphMatcher):
     def semantic_feasibility(self, G1_node, G2_node):
-        if "charged" in self.G1.node[G1_node]:
-            if self.G1.node[G1_node]["charged"] != self.G2.node[G2_node]["charged"]:
+        if "charged" in self.G1.nodes[G1_node]:
+            if self.G1.nodes[G1_node]["charged"] != self.G2.nodes[G2_node]["charged"]:
                 return False
-        elif self.G2.node[G2_node]["charged"]:
+        elif self.G2.nodes[G2_node]["charged"]:
             return False
         
-        if self.G2.node[G2_node]["terminating"]:
+        if self.G2.nodes[G2_node]["terminating"]:
             if len(list(self.G2.neighbors(G2_node))) != len(list(self.G1.neighbors(G1_node))):
                 return False
             
-        if ( self.G2.node[G2_node]["element"] == "X" or "X" in self.G2.node[G2_node]["aliases"] ) and  not self.G1.node[G1_node]["element"] in self.G2.node[G2_node]["notAliases"] :
+        if ( self.G2.nodes[G2_node]["element"] == "X" or "X" in self.G2.nodes[G2_node]["aliases"] ) and  not self.G1.nodes[G1_node]["element"] in self.G2.nodes[G2_node]["notAliases"] :
             return True
         
-        return self.G1.node[G1_node]["element"] == self.G2.node[G2_node]["element"] or self.G1.node[G1_node]["element"] in self.G2.node[G2_node]["aliases"]
+        return self.G1.nodes[G1_node]["element"] == self.G2.nodes[G2_node]["element"] or self.G1.nodes[G1_node]["element"] in self.G2.nodes[G2_node]["aliases"]
 
 def addAtribute( graph, nodes, key ):
     if isinstance(nodes, list):
         for nodeId in nodes:
-            graph.node[nodeId][key] = True
+            graph.nodes[nodeId][key] = True
             
     else:
-        graph.node[nodes][key] = True 
+        graph.nodes[nodes][key] = True 
         
 
 def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases = {},
@@ -55,10 +57,10 @@ def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases
     addAtribute( graph, terminating, "terminating")
         
     for nodeId in aliases:
-        graph.node[nodeId]["aliases"] = aliases[nodeId]
+        graph.nodes[nodeId]["aliases"] = aliases[nodeId]
     
     for nodeId in notAliases:
-        graph.node[nodeId]["notAliases"] = notAliases[nodeId]
+        graph.nodes[nodeId]["notAliases"] = notAliases[nodeId]
             
     if not geometry:
         graph.graph["geometry"]= "no restrictions"
@@ -84,14 +86,14 @@ def saveAnion( atoms, bonds, charged, name, priority , terminating = [], aliases
         saveAnionJson(graph, fileName, charged, nonUniqueCharge)
         
 def saveAnionJson( graph, fileName, charged, nonUniqueCharges = []):
-    mainElement = graph.node[charged]["element"]
+    mainElement = graph.nodes[charged]["element"]
     elements = [ mainElement ] 
     
-    if "aliases" in graph.node[charged]:
-        elements += graph.node[charged]["aliases"]
-        graph.node[charged]["aliases"] = []
+    if "aliases" in graph.nodes[charged]:
+        elements += graph.nodes[charged]["aliases"]
+        graph.nodes[charged]["aliases"] = []
     
-    graph.node[charged]["charged"] = True
+    graph.nodes[charged]["charged"] = True
     graph.graph["charged"] = charged 
     graph.graph["otherCharges"] = list(nonUniqueCharges)
     
@@ -104,22 +106,22 @@ def saveAnionJson( graph, fileName, charged, nonUniqueCharges = []):
         
     
     for element in elements:
-        graph.node[charged]["element"] = element
+        graph.nodes[charged]["element"] = element
         
         if nameMapping:
             graph.graph["name"] = oldName.replace( nameMapping , element)
         
-        dir_path = join("anion_templates", element)
+        dir_path = join(ANION_TEMPLATES_DIR, element)
         if not isdir( dir_path ):
             mkdir( dir_path )
             
         path2save = getUniquePath( dir_path , fileName)
         output = open(path2save, 'w')
         
-        json.dump(node_link_data(graph), output )
+        json.dump(node_link_data(graph, edges="links"), output )
         output.close()
             
-    graph.node[charged]["charged"] = False
+    graph.nodes[charged]["charged"] = False
     
 def getUniquePath(dirPath, fileName):
     path2save = join( dirPath , fileName+".json")
@@ -138,9 +140,9 @@ def getUniquePath(dirPath, fileName):
     return join( dirPath , fileName+"_"+str(maxNumber+1)+".json")
     
 def clearAnionTemplates():
-    if isdir("anion_templates"):
-        shutil.rmtree("anion_templates")
-    mkdir("anion_templates")
+    if isdir(ANION_TEMPLATES_DIR):
+        shutil.rmtree(ANION_TEMPLATES_DIR)
+    mkdir(ANION_TEMPLATES_DIR)
 
 if __name__ == "__main__":
     clearAnionTemplates()

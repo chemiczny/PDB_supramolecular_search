@@ -3,10 +3,10 @@
 #SBATCH --ntasks-per-node=24
 #SBATCH --time=3:00:00
 #SBATCH --mem-per-cpu=5GB
-##### Nazwa kolejki
+##### Queue (partition) name
 #SBATCH -p plgrid
 #SBATCH -A supraml
 
 module add plgrid/tools/python/3.6.5
 
-cat cif2process.dat | xargs -t -d "\n" -P ${SLURM_NTASKS} -n 1 srun -n 1 -N 1 --mem=10gb python3 brutalRun.py
+cat cif2process.dat | xargs -t -d "\n" -P ${SLURM_NTASKS} -n 1 srun -n 1 -N 1 --mem=10gb python3 scripts/brutal_run.py

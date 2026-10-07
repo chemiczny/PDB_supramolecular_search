@@ -11,16 +11,16 @@ wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
 """
 from os.path import getsize
 
-from configure import configure
+from supramolecular_search.config import configure
 config = configure()
 
 from Bio.PDB import FastMMCIFParser, NeighborSearch, Selection
-from primitiveCif2Dict import primitiveCif2Dict
+from supramolecular_search.primitive_cif2dict import primitiveCif2Dict
 import numpy as np                
-from supramolecularLogging import SupramolecularLogger
-from ringDetection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
-from protonate import Protonate
-from anionRecogniser import AnionRecogniser, createResId
+from supramolecular_search.supramolecular_logging import SupramolecularLogger
+from supramolecular_search.ring_detection import getRingsCentroids, findInGraph, isFlatPrimitive, normalize, molecule2graph
+from supramolecular_search.protonate import Protonate
+from supramolecular_search.anion_recogniser import AnionRecogniser, createResId
 from multiprocessing import current_process
 import networkx as nx
 from collections import defaultdict
@@ -50,14 +50,7 @@ class CifAnalyser:
         self.PDBcode = PDBcode
         
         if logId == "default":
-            self.fileId = current_process()
-            self.fileId = str(self.fileId)
-            self.fileId = self.fileId.replace(" ", "")
-            self.fileId = self.fileId.replace("(", "")
-            self.fileId = self.fileId.replace(")", "")
-            self.fileId = self.fileId.replace(",", "")
-            self.fileId = self.fileId.replace("<", "")
-            self.fileId = self.fileId.replace(">", "")
+            self.fileId = current_process().name
         else:
             self.fileId = logId
     

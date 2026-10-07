@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supramolecular-search"
+version = "0.1.0"
+description = "Search for aromatic-ring interactions (anion-pi, cation-pi, pi-pi, methyl-pi, ...) in PDB mmCIF files"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Michał Glanowski" }]
+requires-python = ">=3.10"
+dependencies = [
+    "biopython>=1.79",
+    "networkx>=3.4",
+    "numpy",
+]
+
+[project.optional-dependencies]
+analysis = ["matplotlib", "pandas", "requests"]
+test = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/chemiczny/PDB_supramolecular_search"
+
+[tool.setuptools]
+packages = ["supramolecular_search"]
+
+[tool.setuptools.package-data]
+supramolecular_search = ["anion_templates/*/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

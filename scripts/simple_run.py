@@ -4,12 +4,12 @@ Created on Mon Jan  1 18:00:25 2018
 
 @author: michal
 """
-from cif_analyser import findSupramolecular
-from supramolecularLogging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
-from supramolecularLogging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
+from supramolecular_search.cif_analyser import findSupramolecular
+from supramolecular_search.supramolecular_logging import writeAnionPiHeader, writeAnionCationHeader, writePiPiHeader, writeCationPiHeader, writeHbondsHeader, writeMetalLigandHeader
+from supramolecular_search.supramolecular_logging import writeAnionPiLinearHeader, writeAnionPiPlanarHeader, writeMethylPiHeader
 from os.path import isdir, basename, join
 from os import makedirs, remove
-from configure import configure
+from supramolecular_search.config import configure
 import glob
 import time
 from multiprocessing import Pool

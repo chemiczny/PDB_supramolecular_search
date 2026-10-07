@@ -5,11 +5,11 @@ Created on Fri Jan 18 15:16:17 2019
 
 @author: michal
 """
-from ringDetection import molecule2graph
+from supramolecular_search.ring_detection import molecule2graph
 import networkx as nx
 import math
 import numpy as np
-from numpy_utilities import normalize, rotateVector
+from supramolecular_search.numpy_utilities import normalize, rotateVector
 
 
 class HydrogenAtom(object): 

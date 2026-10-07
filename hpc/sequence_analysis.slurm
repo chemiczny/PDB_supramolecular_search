@@ -3,9 +3,9 @@
 #SBATCH -n 1
 #SBATCH --time=1:00:00
 #SBATCH --mem-per-cpu=50GB
-##### Nazwa kolejki
+##### Queue (partition) name
 #SBATCH -p plgrid-testing
 
 module add plgrid/tools/python/3.6.5
 
-python3 sekwencja_new.py &> sequence.log
+python3 scripts/sequence_analysis.py &> sequence.log
