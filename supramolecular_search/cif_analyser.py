@@ -1,12 +1,12 @@
 """
 Created on Sun Dec 17 13:56:41 2017
 
-Skrypt powstał we wspolpracy z najpiekniejsza kobieta na swiecie, Zrodzona
-w Olkuszu, Pania mojego serca Emilia Kuzniak.
+Written in collaboration with the most beautiful woman in the world, born
+in Olkusz, the lady of my heart, Emilia Kuzniak.
 
-Sluzy do analizy pojedynczego pliku cif celem znalezienia potencjalnych struktur
-zawierajacych oddzialywania supramolekularne anion-pi oraz obliczenie
-wielkosci geometrycznych tychze czasteczek na potrzeby dalszej analizy
+Analyses a single CIF file to find supramolecular interactions involving
+aromatic rings (anion-pi, cation-pi, pi-pi, ...) and computes their geometric
+parameters for further analysis.
 """
 
 import logging
@@ -39,16 +39,10 @@ logger = logging.getLogger(__name__)
 
 
 def find_supramolecular(cif_data):
-    """
-    Przeanalizuj pojedynczy plik cif pod katem oddzialywan suporamolekularnych
-    zwiazanych z konkretnym ligandem
+    """Analyse a single CIF file and write the interactions found to the logs.
 
-    Wejscie:
-    ligand_code - kod liganda
-    cif_file    - plik cif pobrany z bazy PDB
-
-    Wyjscie:
-    Hehehe, czas pokaze...
+    Args:
+        cif_data: tuple (cif_file, pdb_code, log_id) passed to CifAnalyser.
     """
 
     cif_analyser = CifAnalyser(*cif_data)
@@ -96,7 +90,7 @@ class CifAnalyser:
             self.aromatic_aa_counter[aa_code] = 0
 
     def analyse_cif(self):
-        self.supra_logger.write_additional_info("Zaczynam analize: " + self.pdb_code)
+        self.supra_logger.write_additional_info("Starting analysis: " + self.pdb_code)
         parser = FastMMCIFParser(QUIET=True)
 
         time_start = time()
@@ -111,7 +105,7 @@ class CifAnalyser:
             return True
 
         self.supra_logger.write_additional_info(
-            "Rozmiar pliku: " + str(getsize(self.cif_file))
+            "File size: " + str(getsize(self.cif_file))
         )
 
         not_piacids = [
@@ -205,7 +199,7 @@ class CifAnalyser:
             )
 
         self.supra_logger.write_additional_info(
-            "Analiza skonczona " + self.pdb_code + " czas: " + str(time_taken)
+            "Analysis finished " + self.pdb_code + " time: " + str(time_taken)
         )
 
     def determine_structure_type(self, structure):

@@ -9,14 +9,13 @@ from math import sin, cos
 
 
 def normalize(v):
-    """
-    Funkcja pomocnicza. Normalizuje wektor v.
+    """Return v scaled to unit length.
 
-    Wejscie:
-    v - numpy numeric array, wektor do normalizacji
+    Args:
+        v: numeric numpy array.
 
-    Wyjcie:
-    v - znormalizowany wektor v
+    Returns:
+        The normalized vector.
     """
     norm = np.linalg.norm(v)
     if norm == 0:
@@ -25,16 +24,15 @@ def normalize(v):
 
 
 def rotate_vector(vector, axis, angle):
-    """
-    Obroc wspolrzedne wokol zadanej osi o zadany kat. Czyli wygeneruj macierz obrotu i
-    przemnoz wspolrzedne przez nia.
-    Wejscie:
-    coords - lista wspolrzednych atomow
-    norm_vec - os obroty
-    angle - kat w radianach!!!
+    """Rotate a vector around an axis by the given angle.
 
-    Wyjscie:
-    newCoords - obrocone wspolrzedne
+    Args:
+        vector: 3-element vector to rotate.
+        axis: rotation axis (does not need to be normalized).
+        angle: rotation angle in radians.
+
+    Returns:
+        The rotated vector.
     """
     norm_vec = normalize(axis)
     a, b, c = norm_vec

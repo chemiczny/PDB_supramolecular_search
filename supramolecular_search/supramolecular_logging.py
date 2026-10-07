@@ -13,7 +13,7 @@ from supramolecular_search.ring_detection import get_norm_vec, get_average_coord
 
 def write_anion_pi_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/anionPi.log"
     results_file = open(results_file_name, "w")
@@ -35,7 +35,7 @@ def write_anion_pi_header():
 
 def write_cation_pi_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/cationPi.log"
     results_file = open(results_file_name, "w")
@@ -55,7 +55,7 @@ def write_cation_pi_header():
 
 def write_metal_ligand_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/metalLigand.log"
     results_file = open(results_file_name, "w")
@@ -74,7 +74,7 @@ def write_metal_ligand_header():
 
 def write_pi_pi_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/piPi.log"
     results_file = open(results_file_name, "w")
@@ -94,7 +94,7 @@ def write_pi_pi_header():
 
 def write_anion_cation_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/anionCation.log"
     results_file = open(results_file_name, "w")
@@ -113,7 +113,7 @@ def write_anion_cation_header():
 
 def write_hbonds_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/hBonds.log"
     results_file = open(results_file_name, "w")
@@ -131,7 +131,7 @@ def write_hbonds_header():
 
 def write_anion_pi_planar_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/planarAnionPi.log"
     results_file = open(results_file_name, "w")
@@ -150,7 +150,7 @@ def write_anion_pi_planar_header():
 
 def write_anion_pi_linear_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/linearAnionPi.log"
     results_file = open(results_file_name, "w")
@@ -168,7 +168,7 @@ def write_anion_pi_linear_header():
 
 def write_methyl_pi_header():
     """
-    Zapisz naglowki do pliku z wynikami:
+    Write the column headers of the results file.
     """
     results_file_name = "logs/methylPi.log"
     results_file = open(results_file_name, "w")
@@ -259,7 +259,7 @@ class SupramolecularLogger:
         structure_type,
     ):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         results_file_name = self.anion_pi_log
         ligand_code = ligand.get_resname()
@@ -328,7 +328,7 @@ class SupramolecularLogger:
         self, ligand, centroid, plane_data, model_index, anion_group_id
     ):
         """
-        Zapisz naglowki do pliku z wynikami:
+        Write the column headers of the results file.
         """
         results_file_name = self.planar_anion_pi_log
 
@@ -458,7 +458,7 @@ class SupramolecularLogger:
         self, ligand, centroid, extracted_atoms, cation_ring_chain_lens, model_index
     ):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         if not extracted_atoms:
             return
@@ -519,7 +519,7 @@ class SupramolecularLogger:
 
     def write_metal_ligand_results(self, extracted_atoms, complex_data, model_index):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         if not extracted_atoms:
             return
@@ -586,7 +586,7 @@ class SupramolecularLogger:
         self, ligand, centroid, extracted_res, extracted_centroids, model_index
     ):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         results_file_name = self.pi_pi_log
         ligand_code = ligand.get_resname()
@@ -655,7 +655,7 @@ class SupramolecularLogger:
         self, anion_atom, ligand, centroid, extracted_cations, model_index
     ):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         results_file_name = self.anion_cation_log
         anion = anion_atom.get_parent()
@@ -804,7 +804,7 @@ class SupramolecularLogger:
         structure_type,
     ):
         """
-        Zapisz dane do pliku z wynikami
+        Write the results to the results file.
         """
         results_file_name = self.methyl_pi_log
         ligand_code = ligand.get_resname()
@@ -888,16 +888,14 @@ class SupramolecularLogger:
 
 
 def atom_distance_from_centroid(atom, centroid):
-    """
-    Funkcja pomocnicza, oblicza odleglosc pomiedzy atomem a srodkiem
-    pierscienia
+    """Return the distance between an atom and a ring centroid.
 
-    Wejscie:
-    atom - obiekt Atom (Biopython)
-    centroid - slownik, klucze: coords, norm_vec
+    Args:
+        atom: Biopython Atom.
+        centroid: dict with keys "coords" and "normVec".
 
-    Wyjscie:
-    odleglosc (float)
+    Returns:
+        Distance (float).
     """
     atom_coords = atom.get_coord()
     centorid_coords = centroid["coords"]
@@ -910,16 +908,14 @@ def atom_distance_from_centroid(atom, centroid):
 
 
 def atom_angle_nom_vec_centroid(atom, centroid):
-    """
-    Funkcja pomocnicza, oblicza kat pomiedzy kierunkiem od srodka
-    pierscienia do atomu a wektorem normalnym plaszczyzny pierscienia
+    """Return the angle between the centroid-atom direction and the ring normal.
 
-    Wejscie:
-    atom - obiekt Atom (Biopython)
-    centroid - slownik, klucze: coords, norm_vec
+    Args:
+        atom: Biopython Atom.
+        centroid: dict with keys "coords" and "normVec".
 
-    Wyjscie:
-    kat w stopniach
+    Returns:
+        Angle in degrees.
     """
     atom_coords = np.array(atom.get_coord())
     centroid_coords = np.array(centroid["coords"])

@@ -49,7 +49,7 @@ cases2run = {
 
 
 def save_unique_records_seq(log_path, log_out, chain1_key, chain2_key, headers_subset):
-    print("Aktualnie przetwarzam: ", log_path)
+    print("Processing: ", log_path)
 
     unique_seq_df = pd.read_csv("chainClusters.csv", sep="\t")
 
@@ -295,7 +295,7 @@ for dirname, anion_pi_source in zip(
     log_anion_cation_a = join(a_dir, "anionCation.log")
 
     if cases2run["a-g"]:
-        print("lecimy z a")
+        print("Starting case a")
 
         anion_pi_temp = anion_pi
 
@@ -360,7 +360,7 @@ for dirname, anion_pi_source in zip(
             ~anion_cation_temp["Cation code"].astype(str).isin(["ARG", "LYS"])
         ]
 
-        ####sprawdzić czy są kationy po przeciwnej stronie pierscienia i jak duzo#####
+        # Check whether there are cations on the opposite side of the ring, and how many
 
         data_frames2_merge = [anion_pi_temp, cation_pi_temp, anion_cation_temp]
         data_frame_merge_headers = [
@@ -427,7 +427,7 @@ for dirname, anion_pi_source in zip(
     log_anion_cation_b = join(b_dir, "anionCation.log")
 
     if cases2run["a-g"]:
-        print("lecimy z b")
+        print("Starting case b")
 
         anion_pi_temp = anion_pi
 
@@ -553,7 +553,7 @@ for dirname, anion_pi_source in zip(
     log_anion_cation_c = join(c_dir, "anionCation.log")
 
     if cases2run["a-g"]:
-        print("lecimy z c")
+        print("Starting case c")
 
         anion_pi_temp = anion_pi
 
@@ -631,7 +631,7 @@ for dirname, anion_pi_source in zip(
     log_pi_pi_d = join(d_dir, "piPi.log")
 
     if cases2run["a-g"]:
-        print("lecimy z d")
+        print("Starting case d")
 
         anion_pi_temp = anion_pi
 
@@ -685,7 +685,7 @@ for dirname, anion_pi_source in zip(
     log_pi_pi_e = join(e_dir, "piPi.log")
 
     if cases2run["a-g"]:
-        print("lecimy z e")
+        print("Starting case e")
 
         anion_pi_temp = anion_pi
 
@@ -739,7 +739,7 @@ for dirname, anion_pi_source in zip(
     log_anion_cation_f = join(f_dir, "anionCation.log")
 
     if cases2run["a-g"]:
-        print("lecimy z f")
+        print("Starting case f")
 
         anion_pi_temp = anion_pi
 
@@ -853,10 +853,10 @@ for dirname, anion_pi_source in zip(
     log_h_bonds_g = join(g_dir, "hbond.log")
 
     if cases2run["a-g"]:
-        print("lecimy z g")
+        print("Starting case g")
 
         anion_pi_temp = anion_pi
-        # parametry do zmiany: kąt 170-180, H-a 1.2-1.5, d-a 2.4-3
+        # Parameters to tune: angle 170-180, H-acceptor 1.2-1.5, donor-acceptor 2.4-3
         h_bonds_temp = h_bonds
         h_bonds_temp = h_bonds_temp[h_bonds_temp["Angle"] > 130.0]
         h_bonds_temp = h_bonds_temp[h_bonds_temp["Angle"] < 180.0]
@@ -2767,7 +2767,7 @@ if cases2run["chainNeoghbors"]:
     df_cylinder = get_residue_id_diff_data_frame(log_anion_pi_res_cylinder_unique)
     df_plane = get_residue_id_diff_data_frame(log_anion_pi_res_ring_plane_unique)
     df_nor = get_residue_id_diff_data_frame(log_anion_pi_res_diag_unique)
-    # print("Wielkosc zerowego slupka")
+    # print("Size of the zero bar")
     # print( len(AnionPi_temp[ AnionPi_temp[ "chainDist" ] == 0 ].index) )
     # AnionPi_temp[ AnionPi_temp[ "chainDist" ] == 0 ].to_csv( join(cnbarDir, "zeroDiffChain.csv"), sep = "\t")
 

@@ -14,17 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 def get_average_coords(all_atoms_list, atoms_ind_list):
-    """
-    Oblicz srednie wspolrzedne x, y, z wybranych atomow
+    """Return the mean x, y, z coordinates of the selected atoms.
 
-    Wejscie:
-    all_atoms_list - lista obiektow Atom (cala czasteczka)
-    atoms_ind_list - lista indeksow atomow, ktorych usrednione polozenie
-                    ma byc obliczone
+    Args:
+        all_atoms_list: list of Biopython Atom objects (the whole molecule).
+        atoms_ind_list: indices of the atoms to average.
 
-    Wyjscie:
-    average_coords - 3-elementowa lista zawierajaca usrednione wspolrzedne
-                    x, y, z wybranych atomow
+    Returns:
+        3-element array with the averaged coordinates.
     """
     average_coords = [0.0, 0.0, 0.0]
 
@@ -43,26 +40,23 @@ def get_average_coords(all_atoms_list, atoms_ind_list):
 
 
 def is_flat(all_atoms_list, atoms_ind_list, substituents):
-    """
-    Sprawdz czy wybrane atomy leza w jednej plaszczyznie.
-    Procedura: na podstawie polozen trzech pierwszych atomow wyznacza sie
-    wektor normalnych do wyznaczonej przez nich plaszczyzny. Nastepnie
-    sprawdzane jest czy kolejne wiazania tworza wektory prostopadle
-    do wektora normalnego. Dopuszczalne jest odchylenie 5 stopni.
+    """Check whether a ring and its substituents lie in one plane.
 
-    TODO: Nie lepiej byloby obliczyc tensor momentu bezwladnosci,
-    zdiagonalizowac go i rozstrzygnac na podstawie jego wartosci wlasnych?
+    The ring normal is computed from the ring atoms. The ring is flat when the
+    directions from the ring atoms to the centroid, and the bonds to the
+    substituents, are (nearly) perpendicular to that normal.
 
-    Wejscie:
-    all_atoms_list - lista obiektow Atom (cala czasteczka)
-    atoms_ind_list - lista indeksow atomow, ktore maja byc zweryfikowane
-                    pod wzgledem lezenia w jednej plaszczyznie
+    TODO: diagonalizing the inertia tensor and using its eigenvalues might be
+    a more robust criterion.
 
-    Wyjscie:
-    verdict - slownik, posiada klucze: is_flat (zmienna logiczna, True jesli
-                struktura jest plaska), norm_vec (3-elementowa lista float,
-                wspolrzedne wektora normalnego plaszczyzny, jesli struktura nie
-                jest plaska wszystkie jego wspolrzedne sa rowne 0)
+    Args:
+        all_atoms_list: list of Biopython Atom objects (the whole molecule).
+        atoms_ind_list: indices of the ring atoms.
+        substituents: dict mapping a ring atom index to its substituent index.
+
+    Returns:
+        Dict with keys "isFlat" (bool) and "normVec" (normal vector, all zeros
+        for fewer than 3 atoms); flat rings also get "coords" (the centroid).
     """
 
     verdict = {"isFlat": False, "normVec": [0, 0, 0]}
@@ -101,26 +95,19 @@ def is_flat(all_atoms_list, atoms_ind_list, substituents):
 
 
 def is_flat_primitive(all_atoms_list, atoms_ind_list, max_dist=0.15):
-    """
-    Sprawdz czy wybrane atomy leza w jednej plaszczyznie.
-    Procedura: na podstawie polozen trzech pierwszych atomow wyznacza sie
-    wektor normalnych do wyznaczonej przez nich plaszczyzny. Nastepnie
-    sprawdzane jest czy kolejne wiazania tworza wektory prostopadle
-    do wektora normalnego. Dopuszczalne jest odchylenie 5 stopni.
+    """Check whether the selected atoms lie in one plane.
 
-    TODO: Nie lepiej byloby obliczyc tensor momentu bezwladnosci,
-    zdiagonalizowac go i rozstrzygnac na podstawie jego wartosci wlasnych?
+    The atoms are flat when each of them is at most max_dist from the plane
+    through their centroid.
 
-    Wejscie:
-    all_atoms_list - lista obiektow Atom (cala czasteczka)
-    atoms_ind_list - lista indeksow atomow, ktore maja byc zweryfikowane
-                    pod wzgledem lezenia w jednej plaszczyznie
+    Args:
+        all_atoms_list: list of Biopython Atom objects (the whole molecule).
+        atoms_ind_list: indices of the atoms to check.
+        max_dist: maximal allowed distance from the plane (in angstroms).
 
-    Wyjscie:
-    verdict - slownik, posiada klucze: is_flat (zmienna logiczna, True jesli
-                struktura jest plaska), norm_vec (3-elementowa lista float,
-                wspolrzedne wektora normalnego plaszczyzny, jesli struktura nie
-                jest plaska wszystkie jego wspolrzedne sa rowne 0)
+    Returns:
+        Dict with keys "isFlat" (bool) and "normVec" (normal vector, all zeros
+        for fewer than 3 atoms); flat sets also get "coords" (the centroid).
     """
 
     verdict = {"isFlat": False, "normVec": [0, 0, 0]}
@@ -190,27 +177,24 @@ def get_ring_elements(cycle, atoms):
 
 
 def get_rings_centroids(molecule, return_graph=False):
-    """
-    Znajdz pierscienie w czasteczce i wyznacz wspolrzedne ich srodkow jesli
-    sa one aromatyczne.
+    """Find (potentially) aromatic rings in a molecule and their centroids.
 
-    Procedura:
-    - utworz graf na podstawie danych o atomach, wszystkie atomy lezace blizej
-        niz 1.8 A sa traktowane jako wierzcholki grafu polaczone krawedzia
-    - znajdz fundamentalne cykle w grafie (Stosowany algorytm:
-    Paton, K. An algorithm for finding a fundamental set of cycles of a graph.
-    Comm. ACM 12, 9 (Sept 1969), 514-518.)
-    - odrzuc cykle, ktore skladaja sie z wiecej niz 6 wierzcholkow
-    - sprawdz czy znalezione pierscienie sa plaskie
+    Procedure:
+    - build a molecular graph (see molecule2graph),
+    - find the fundamental cycles of the graph (Paton, K. An algorithm for
+      finding a fundamental set of cycles of a graph. Comm. ACM 12, 9
+      (Sept 1969), 514-518),
+    - keep 5- and 6-membered cycles made of light atoms,
+    - keep only the flat ones.
 
-    Wejscie:
-    -molecule - obiekt Residue (Biopython)
+    Args:
+        molecule: Biopython Residue.
+        return_graph: also return the molecular graph.
 
-    Wyjscie:
-    -centroids - lista slownikow z danymi o znalezionych (potencjalnie)
-        aromatycznych pierscienieniach. Slownik zawiera klucze:
-        coords (wspolrzedne srodka pierscienia),
-        norm_vec (wektor normalnych plaszczyzny pierscienia)
+    Returns:
+        List of dicts describing the rings, with keys "coords" (centroid),
+        "normVec" (ring plane normal), "ringSize", "cycleAtoms", "cycleId"
+        and "ringElements"; followed by the graph if return_graph is set.
     """
     atoms = list(molecule.get_atoms())
     graph = molecule2graph(atoms, None, True, True, True)
@@ -270,15 +254,21 @@ def get_substituents(graph_molecule, cycle):
 def molecule2graph(
     atoms, atom=None, return_subgraph=True, omit_hydrogens=True, omit_metals=False
 ):
-    """
-    Konwersja czasteczki na graf (networkx)
+    """Convert a molecule into a networkx graph.
 
-    Wejscie:
-    atom - obiekt Atom (Biopython), ktorego polozenie w grafie jest istotne
-    atoms - lista wszystkich atomow
+    Atoms are nodes; two atoms are bonded when their distance is below 1.2 times
+    the sum of their covalent radii.
 
-    Wyjscie:
-    G, atom_ind - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
+    Args:
+        atoms: list of Biopython Atom objects.
+        atom: optional atom whose node index should be returned.
+        return_subgraph: with atom given, return only the connected component
+            containing it.
+        omit_hydrogens: skip hydrogen atoms.
+        omit_metals: skip metal atoms.
+
+    Returns:
+        The graph, or (graph, atom node index) when atom is given.
     """
 
     radius = {
@@ -552,15 +542,18 @@ def molecule2graph(
 
 
 def molecule_fragment2graph(atoms, atom, max_dist, return_subgraph=True):
-    """
-    Konwersja czasteczki na graf (networkx)
+    """Convert the part of a molecule around one atom into a networkx graph.
 
-    Wejscie:
-    atom - obiekt Atom (Biopython), ktorego polozenie w grafie jest istotne
-    atoms - lista wszystkich atomow
+    Like molecule2graph, but atoms farther than max_dist from atom are skipped.
 
-    Wyjscie:
-    G, atom_ind - graf (networkx), indeks wejsciowego atomu (wierzcholek w grafie)
+    Args:
+        atoms: list of Biopython Atom objects.
+        atom: atom whose surroundings are converted.
+        max_dist: maximal distance from atom (in angstroms).
+        return_subgraph: return only the connected component containing atom.
+
+    Returns:
+        Tuple (graph, atom node index).
     """
     radius = {
         "H": 0.32,

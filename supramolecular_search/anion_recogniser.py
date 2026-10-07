@@ -61,16 +61,16 @@ class AnionRecogniser:
         self.properties2calculate_pack = []
 
     def extract_anion_atoms(self, atom_list_orig, ligand, ns):
-        """
-        Wydziel atomy, ktore moga byc anionami w sasiedztwie liganda
+        """Extract atoms that may belong to anions near the given ligand.
 
-        Wejscie:
-        atom_list - lista obiektow Atom (Biopython)
-        ligand_code - kod liganda
+        Args:
+            atom_list_orig: list of Biopython Atom objects to search.
+            ligand: Biopython Residue whose own atoms are skipped.
+            ns: NeighborSearch over the structure.
 
-        Wysjcie:
-        extracted_atoms - lista slownikow z informacjami o potencjalnym anionie,
-            klucze: Atom - atom, AnionType - rodzaj anionu
+        Returns:
+            List of dicts describing potential anion atoms, with keys "Atom",
+            "AnionType" and "AnionId".
         """
         extracted_atoms = []
         atom_list = []
