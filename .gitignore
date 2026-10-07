@@ -1,0 +1,37 @@
+# Structure files (mmCIF), including compressed and backup variants
+*.cif
+*.cif.gz
+*.cifold
+
+# Local configuration
+config.json
+
+# Run outputs and working directories
+logs/
+scratch/
+scr/
+*.log
+*.profile
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+build/
+dist/
+
+# Editors and OS
+*~
+*.swp
+.vscode/
+.idea/
+.DS_Store
+
+# Build artifacts
+pymol_plugin/*.zip
+
+# ...except small fixtures used by the test suite
+!tests/data/*.cif
