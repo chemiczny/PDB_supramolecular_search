@@ -6,7 +6,7 @@ REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(REPO_DIR, "pymol_plugin", "supramolecular"))
 
 import matplotlib.pyplot as plt
-from simpleFilters import simpleMerge
+from simple_filters import simple_merge
 import pandas as pd
 import numpy as np
 import matplotlib as mpl
@@ -333,7 +333,7 @@ for dirname, anion_pi_source in zip(
             ]
         ]
 
-        [anion_pi_temp, cation_pi_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -406,7 +406,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -465,7 +465,7 @@ for dirname, anion_pi_source in zip(
             ]
         ]
 
-        [anion_pi_temp, cation_pi_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -532,7 +532,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -611,7 +611,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -666,7 +666,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, pi_pi_temp] = simpleMerge(
+        [anion_pi_temp, pi_pi_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -719,7 +719,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, pi_pi_temp] = simpleMerge(
+        [anion_pi_temp, pi_pi_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -778,7 +778,7 @@ for dirname, anion_pi_source in zip(
             ]
         ]
 
-        [anion_pi_temp, anion_cation_temp] = simpleMerge(
+        [anion_pi_temp, anion_cation_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -833,7 +833,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simpleMerge(
+        [anion_pi_temp, cation_pi_temp, anion_cation_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,
@@ -891,7 +891,7 @@ for dirname, anion_pi_source in zip(
         data_frames2_exclude = []
         data_frame_exclude_headers = []
 
-        [anion_pi_temp, h_bonds_temp] = simpleMerge(
+        [anion_pi_temp, h_bonds_temp] = simple_merge(
             data_frames2_merge,
             data_frame_merge_headers,
             data_frames2_exclude,

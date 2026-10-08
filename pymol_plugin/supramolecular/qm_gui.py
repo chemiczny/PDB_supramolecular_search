@@ -1,859 +1,987 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Mon Feb 25 16:21:16 2019
 
 @author: michal
 """
-import sys
+
 import os
 from copy import deepcopy
 
 try:
     from pymol import cmd
-except:
+except ImportError:
     pass
 
-if sys.version_info[0] < 3:
-    import Tkinter
-    import tkMessageBox, tkFileDialog
-else:
-    import tkinter as Tkinter
-    from tkinter import filedialog as tkFileDialog
-    from tkinter import messagebox as tkMessageBox
-    
-def getAllSelectionNames():
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import messagebox
+
+
+def get_all_selection_names():
     return cmd.get_names("selections", 0)
-    
+
+
 class QMGUI:
     def __init__(self, page):
         self.page = page
-        self.keywordSet = {}
-        
-        self.chargeTotal = None
-        self.spinTotal = None
-        self.chargeGuest = None
-        self.spinGuest = None
-        self.chargeHost = None
-        self.spinHost = None
-        
-    def gridBasicLabels(self):
-        actualRow = 1
-        chargeLabel = Tkinter.Label(self.page, text = "charge")
-        chargeLabel.grid(row=actualRow, column=0)
-        
-        actualRow+=1
-        
-        spinLabel = Tkinter.Label(self.page, text = "spin")
-        spinLabel.grid(row=actualRow, column=0)
-        
-        actualRow +=1
-        
-        seleLabel = Tkinter.Label(self.page, text = "sele")
-        seleLabel.grid(row=actualRow, column=0, rowspan=2)
-        
-        actualRow +=2
-        
-        frozenLabel = Tkinter.Label(self.page, text = "frozen")
-        frozenLabel.grid(row=actualRow, column=0, rowspan=2)
-        
-        actualRow+=2
-        
-        addAtomsLabel = Tkinter.Label(self.page, text = "Add atoms")
-        addAtomsLabel.grid(row=actualRow, column=0, rowspan=2)
-        
-        actualRow+=2
-        
-        self.countAtoms = Tkinter.Button(self.page, width=5, text = "count at", command = self.countAtoms)
-        self.countAtoms.grid(row=actualRow, column=0)
-        
-#        seleAroundLabel = Tkinter.Label(self.page, text = "around sele")
-#        seleAroundLabel.grid(row=4, column=0)
-#        
-#        self.seleRadius = Tkinter.Entry(self.page, width=5)
-#        self.seleRadius.grid(row=5, column=0)
-#        self.seleRadius.insert('end', "5")
-    def countAtoms(self):
-        try:
-            modelHost = cmd.get_model("host")
-            hostAtomNo =  len(modelHost.atom)
-        except:
-            hostAtomNo = 0
-        
-        try:
-            modelGuest = cmd.get_model("guest")
-            guestAtomNo = len(modelGuest.atom)
-        except:
-            guestAtomNo = 0
-        
-        complexAtomNo = hostAtomNo + guestAtomNo
-        
-        self.guestAtomsNo.delete(0, "end")
-        self.guestAtomsNo.insert("end", str(guestAtomNo))
-        
-        self.hostAtomsNo.delete(0, "end")
-        self.hostAtomsNo.insert("end", str(hostAtomNo))
-        
-        self.complexAtomsNo.delete(0, "end")
-        self.complexAtomsNo.insert("end", str(complexAtomNo))
+        self.keyword_set = {}
 
+        self.charge_total = None
+        self.spin_total = None
+        self.charge_guest = None
+        self.spin_guest = None
+        self.charge_host = None
+        self.spin_host = None
 
-        
-    def gridHost(self):
-        actualRow = 0
-        
-        hostLabel = Tkinter.Label(self.page, text = "Host")
-        hostLabel.grid(row=actualRow, column = 1)
-        
-        actualRow +=1
-        
-        self.hostCharge = Tkinter.Entry(self.page, width = 5)
-        self.hostCharge.grid(row=actualRow, column=1)
-        
-        actualRow +=1
-        
-        self.hostSpin = Tkinter.Entry(self.page, width = 5)
-        self.hostSpin.grid(row=actualRow, column =1)
-        self.hostSpin.insert( 'end', "1")
-        
-        actualRow +=1
-        
-        self.hostSele = Tkinter.Button(self.page, width = 5, text = "get", command = self.readHost)
-        self.hostSele.grid(row=actualRow, column =1)
-        
-        actualRow+=1
-        
-        self.hostAddSele = Tkinter.Button(self.page, width = 5, text = "add", command = self.addSele2Host)
-        self.hostAddSele.grid(row=actualRow, column =1)
-        
-        actualRow+=1
-        
-        self.hostFrozenClear = Tkinter.Button(self.page, width =5, text = "clear", command = self.clearHostFrozen)
-        self.hostFrozenClear.grid(row=actualRow, column=1)
-        
-        actualRow+=1
-        
-        self.hostFrozenDefault = Tkinter.Button(self.page, width = 5, text = "default", command = self.defaultHostFrozen)
-        self.hostFrozenDefault.grid(row=actualRow, column=1)
-        
-        actualRow+=1
-        
-        self.hostAddH = Tkinter.Button(self.page, width = 5, text = "addH", command = self.addHHost)
-        self.hostAddH.grid(row=actualRow, column=1)
-        
-        actualRow+=1
-        
-        self.hostAddNCA = Tkinter.Button(self.page, width = 5, text = "chop", command = self.hostChop)
-        self.hostAddNCA.grid(row=actualRow, column=1)
-        
-        actualRow+=1
-        
-        self.hostAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.hostAtomsNo.grid(row=actualRow, column=1)
-        
-        actualRow+=1
-        
-#        self.hostAroundSele = Tkinter.Button(self.page, width = 5, text = "get", command = self.readHostFromSeleAround)
-#        self.hostAroundSele.grid(row=4, column = 1)
-        
-    def addSele2Host(self):
+    def grid_basic_labels(self):
+        actual_row = 1
+        charge_label = tk.Label(self.page, text="charge")
+        charge_label.grid(row=actual_row, column=0)
+
+        actual_row += 1
+
+        spin_label = tk.Label(self.page, text="spin")
+        spin_label.grid(row=actual_row, column=0)
+
+        actual_row += 1
+
+        sele_label = tk.Label(self.page, text="sele")
+        sele_label.grid(row=actual_row, column=0, rowspan=2)
+
+        actual_row += 2
+
+        frozen_label = tk.Label(self.page, text="frozen")
+        frozen_label.grid(row=actual_row, column=0, rowspan=2)
+
+        actual_row += 2
+
+        add_atoms_label = tk.Label(self.page, text="Add atoms")
+        add_atoms_label.grid(row=actual_row, column=0, rowspan=2)
+
+        actual_row += 2
+
+        self.count_atoms_button = tk.Button(
+            self.page, width=5, text="count at", command=self.count_atoms
+        )
+        self.count_atoms_button.grid(row=actual_row, column=0)
+
+    def count_atoms(self):
         try:
-            stateNo = cmd.get_state()
-            cmd.create("host", "%host or sele", stateNo)
-        except:
-            stateNo = cmd.get_state()
-            cmd.create("host", "sele", stateNo)
-        
-    def clearHostFrozen(self):
-        cmd.select( "hostFrozen", "none")
-        
-    def defaultHostFrozen(self):
+            model_host = cmd.get_model("host")
+            host_atom_no = len(model_host.atom)
+        except Exception:
+            host_atom_no = 0
+
+        try:
+            model_guest = cmd.get_model("guest")
+            guest_atom_no = len(model_guest.atom)
+        except Exception:
+            guest_atom_no = 0
+
+        complex_atom_no = host_atom_no + guest_atom_no
+
+        self.guest_atoms_no.delete(0, "end")
+        self.guest_atoms_no.insert("end", str(guest_atom_no))
+
+        self.host_atoms_no.delete(0, "end")
+        self.host_atoms_no.insert("end", str(host_atom_no))
+
+        self.complex_atoms_no.delete(0, "end")
+        self.complex_atoms_no.insert("end", str(complex_atom_no))
+
+    def grid_host(self):
+        actual_row = 0
+
+        host_label = tk.Label(self.page, text="Host")
+        host_label.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_charge = tk.Entry(self.page, width=5)
+        self.host_charge.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_spin = tk.Entry(self.page, width=5)
+        self.host_spin.grid(row=actual_row, column=1)
+        self.host_spin.insert("end", "1")
+
+        actual_row += 1
+
+        self.host_sele = tk.Button(
+            self.page, width=5, text="get", command=self.read_host
+        )
+        self.host_sele.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_add_sele = tk.Button(
+            self.page, width=5, text="add", command=self.add_sele2_host
+        )
+        self.host_add_sele.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_frozen_clear = tk.Button(
+            self.page, width=5, text="clear", command=self.clear_host_frozen
+        )
+        self.host_frozen_clear.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_frozen_default = tk.Button(
+            self.page, width=5, text="default", command=self.default_host_frozen
+        )
+        self.host_frozen_default.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_add_h = tk.Button(
+            self.page, width=5, text="addH", command=self.add_h_host
+        )
+        self.host_add_h.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_add_nca = tk.Button(
+            self.page, width=5, text="chop", command=self.host_chop
+        )
+        self.host_add_nca.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+        self.host_atoms_no = tk.Entry(self.page, width=5)
+        self.host_atoms_no.grid(row=actual_row, column=1)
+
+        actual_row += 1
+
+    def add_sele2_host(self):
+        try:
+            state_no = cmd.get_state()
+            cmd.create("host", "%host or sele", state_no)
+        except Exception:
+            state_no = cmd.get_state()
+            cmd.create("host", "sele", state_no)
+
+    def clear_host_frozen(self):
+        cmd.select("hostFrozen", "none")
+
+    def default_host_frozen(self):
         cmd.select("hostFrozen", " %hostFrozen or ( host and ( name CA ) ) ")
-        
-    def addHHost(self):
+
+    def add_h_host(self):
         cmd.h_add("host")
-        
-    def hostChop(self):
+
+    def host_chop(self):
         self.chop("host")
-        
-    def readHost(self):
+
+    def read_host(self):
         try:
-            stateNo = cmd.get_state()
-            cmd.create("host", "sele", stateNo)
-            cmd.select( "hostFrozen", "none")
-        except:
+            state_no = cmd.get_state()
+            cmd.create("host", "sele", state_no)
+            cmd.select("hostFrozen", "none")
+        except Exception:
             print("lo kurla")
-            
-    def readHostFromSeleAround(self):
+
+    def read_host_from_sele_around(self):
         try:
-            stateNo = cmd.get_state()
-            radius = self.seleRadius.get()
-            cmd.create("host", "byres ( sele around "+radius+")", stateNo)
-        except:
+            state_no = cmd.get_state()
+            radius = self.sele_radius.get()
+            cmd.create("host", "byres ( sele around " + radius + ")", state_no)
+        except Exception:
             print("lo kurla")
-        
-    def gridGuest(self):
-        actualRow = 0
-        guestLabel = Tkinter.Label(self.page, text = "Guest")
-        guestLabel.grid(row=actualRow, column = 2)
-        
-        actualRow+=1
-        
-        self.guestCharge = Tkinter.Entry(self.page, width = 5)
-        self.guestCharge.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestSpin = Tkinter.Entry(self.page, width = 5)
-        self.guestSpin.grid(row=actualRow, column =2)
-        self.guestSpin.insert('end', '1')
-        
-        actualRow+=1
-        
-        self.guestSele = Tkinter.Button(self.page, text = "get" ,  width = 5, command = self.readGuest)
-        self.guestSele.grid(row=actualRow, column =2)
-        
-        actualRow+=1
-        
-        self.guestSeleAdd = Tkinter.Button(self.page, text = "add", width = 5, command = self.addSele2Guest)
-        self.guestSeleAdd.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestFrozenClear = Tkinter.Button(self.page, width = 5, text = "clear", command = self.clearGuestFrozen)
-        self.guestFrozenClear.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestFrozenDefault = Tkinter.Button(self.page, width = 5, text = "default", command = self.defaultGuestFrozen)
-        self.guestFrozenDefault.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestAddH = Tkinter.Button(self.page, width = 5, text = "addH", command = self.addHGuest)
-        self.guestAddH.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestAddNCA = Tkinter.Button(self.page, width = 5, text = "chop", command = self.guestChop)
-        self.guestAddNCA.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-        self.guestAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.guestAtomsNo.grid(row=actualRow, column=2)
-        
-        actualRow+=1
-        
-#        self.guestAround = Tkinter.Button(self.page, text = "get", width = 5, command = self.readGuestFromSeleAround)
-#        self.guestAround.grid(row=4, column=2)
-        
-    def addSele2Guest(self):
+
+    def grid_guest(self):
+        actual_row = 0
+        guest_label = tk.Label(self.page, text="Guest")
+        guest_label.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_charge = tk.Entry(self.page, width=5)
+        self.guest_charge.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_spin = tk.Entry(self.page, width=5)
+        self.guest_spin.grid(row=actual_row, column=2)
+        self.guest_spin.insert("end", "1")
+
+        actual_row += 1
+
+        self.guest_sele = tk.Button(
+            self.page, text="get", width=5, command=self.read_guest
+        )
+        self.guest_sele.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_sele_add = tk.Button(
+            self.page, text="add", width=5, command=self.add_sele2_guest
+        )
+        self.guest_sele_add.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_frozen_clear = tk.Button(
+            self.page, width=5, text="clear", command=self.clear_guest_frozen
+        )
+        self.guest_frozen_clear.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_frozen_default = tk.Button(
+            self.page, width=5, text="default", command=self.default_guest_frozen
+        )
+        self.guest_frozen_default.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_add_h = tk.Button(
+            self.page, width=5, text="addH", command=self.add_h_guest
+        )
+        self.guest_add_h.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_add_nca = tk.Button(
+            self.page, width=5, text="chop", command=self.guest_chop
+        )
+        self.guest_add_nca.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+        self.guest_atoms_no = tk.Entry(self.page, width=5)
+        self.guest_atoms_no.grid(row=actual_row, column=2)
+
+        actual_row += 1
+
+    def add_sele2_guest(self):
         try:
-            stateNo = cmd.get_state()
-            cmd.create("guest", "%guest or sele", stateNo)
-        except:
-            stateNo = cmd.get_state()
-            cmd.create("guest", "sele", stateNo)
-            
+            state_no = cmd.get_state()
+            cmd.create("guest", "%guest or sele", state_no)
+        except Exception:
+            state_no = cmd.get_state()
+            cmd.create("guest", "sele", state_no)
+
     def chop(self, sele):
         try:
-            model = cmd.get_model( sele )
-        except:
+            model = cmd.get_model(sele)
+        except Exception:
             return
-        
-        chain2resId2atomNames = {}
-        
+
+        chain2res_id2atom_names = {}
+
         for atom in model.atom:
             resnum = int(atom.resi)
             pdbname = atom.name
             chain = atom.chain
-            
-            if not chain in chain2resId2atomNames:
-                chain2resId2atomNames[chain] = { resnum : set([ pdbname ]) }
+
+            if chain not in chain2res_id2atom_names:
+                chain2res_id2atom_names[chain] = {resnum: set([pdbname])}
             else:
-                if resnum in chain2resId2atomNames[chain]:
-                    chain2resId2atomNames[chain][resnum].add(pdbname)
+                if resnum in chain2res_id2atom_names[chain]:
+                    chain2res_id2atom_names[chain][resnum].add(pdbname)
                 else:
-                    chain2resId2atomNames[chain][resnum] = set([ pdbname ])
-                
-        for chain in chain2resId2atomNames:
-            resId2atomNames = chain2resId2atomNames[chain]
-            
-            resIds2addN = set([])
-            resIds2addC = set([])
-            
-            for resnum in resId2atomNames:
-                if resId2atomNames[resnum] != set( [ "CA", "C", "O" ]) and resId2atomNames[resnum] != set( [ "CA", "N" ]):
-                    resIds2addC.add(resnum+1)
-                    resIds2addN.add(resnum-1)
-                    
-            resIds2addN-= set(resId2atomNames.keys())
-            resIds2addC-= set(resId2atomNames.keys())
-            
-            stateNo = cmd.get_state()
-            for resnum in resIds2addC:
-                cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name N) ) ", stateNo)
-                cmd.bond( "%"+sele+" and name N and resi "+str(resnum), "%"+sele+" and name C and resi "+str(resnum-1), 1 )
-                
-            for resnum in resIds2addN:
-                cmd.create( sele, " %"+sele+" or ( ( resi "+str(resnum)+ " and chain "+chain+ " ) and ( name CA or name C or name O) ) ", stateNo)
-                cmd.bond( "%"+sele+" and name C and resi "+str(resnum), "%"+sele+" and name N and resi "+str(resnum+1), 1 )
-            
-        cmd.show("sticks", sele )
-        
-    def guestChop(self):
+                    chain2res_id2atom_names[chain][resnum] = set([pdbname])
+
+        for chain in chain2res_id2atom_names:
+            res_id2atom_names = chain2res_id2atom_names[chain]
+
+            res_ids2add_n = set([])
+            res_ids2add_c = set([])
+
+            for resnum in res_id2atom_names:
+                if res_id2atom_names[resnum] != set(
+                    ["CA", "C", "O"]
+                ) and res_id2atom_names[resnum] != set(["CA", "N"]):
+                    res_ids2add_c.add(resnum + 1)
+                    res_ids2add_n.add(resnum - 1)
+
+            res_ids2add_n -= set(res_id2atom_names.keys())
+            res_ids2add_c -= set(res_id2atom_names.keys())
+
+            state_no = cmd.get_state()
+            for resnum in res_ids2add_c:
+                cmd.create(
+                    sele,
+                    " %"
+                    + sele
+                    + " or ( ( resi "
+                    + str(resnum)
+                    + " and chain "
+                    + chain
+                    + " ) and ( name CA or name N) ) ",
+                    state_no,
+                )
+                cmd.bond(
+                    "%" + sele + " and name N and resi " + str(resnum),
+                    "%" + sele + " and name C and resi " + str(resnum - 1),
+                    1,
+                )
+
+            for resnum in res_ids2add_n:
+                cmd.create(
+                    sele,
+                    " %"
+                    + sele
+                    + " or ( ( resi "
+                    + str(resnum)
+                    + " and chain "
+                    + chain
+                    + " ) and ( name CA or name C or name O) ) ",
+                    state_no,
+                )
+                cmd.bond(
+                    "%" + sele + " and name C and resi " + str(resnum),
+                    "%" + sele + " and name N and resi " + str(resnum + 1),
+                    1,
+                )
+
+        cmd.show("sticks", sele)
+
+    def guest_chop(self):
         self.chop("guest")
-        
-    def clearGuestFrozen(self):
-        cmd.select( "guestFrozen", "none")
-        
-    def defaultGuestFrozen(self):
+
+    def clear_guest_frozen(self):
+        cmd.select("guestFrozen", "none")
+
+    def default_guest_frozen(self):
         cmd.select("guestFrozen", " %guestFrozen or ( guest and ( name CA  ) ) ")
-        
-    def addHGuest(self):
+
+    def add_h_guest(self):
         cmd.h_add("guest")
-        
-    def readGuest(self):
+
+    def read_guest(self):
         try:
-            stateNo = cmd.get_state()
-            cmd.create("guest", "sele", stateNo)
+            state_no = cmd.get_state()
+            cmd.create("guest", "sele", state_no)
             cmd.select("guestFrozen", "none")
-        except:
+        except Exception:
             print("lo kurla")
-            
-    def readGuestFromSeleAround(self):
+
+    def read_guest_from_sele_around(self):
         try:
-            stateNo = cmd.get_state()
-            radius = self.seleRadius.get()
-#            print(radius)
-            cmd.create("guest", "byres ( sele around "+radius+")", stateNo)
-        except:
+            state_no = cmd.get_state()
+            radius = self.sele_radius.get()
+            cmd.create("guest", "byres ( sele around " + radius + ")", state_no)
+        except Exception:
             print("lo kurla")
-    
-    def gridComplex(self):
-        complexLabel = Tkinter.Label(self.page, text = "Complex")
-        complexLabel.grid(row=0, column = 3)
-        
-        self.complexCharge = Tkinter.Entry(self.page, width = 5)
-        self.complexCharge.grid(row=1, column=3)
-        
-        self.complexSpin = Tkinter.Entry(self.page, width = 5)
-        self.complexSpin.grid(row=2, column =3)
-        self.complexSpin.insert('end', '1')
-        
-        self.complexAtomsNo = Tkinter.Entry(self.page, width = 5)
-        self.complexAtomsNo.grid(row=9, column=3)
-        
-    
-    def gridWrite(self):
-        writeButton = Tkinter.Button(self.page, text = "write", command = self.write)
-        writeButton.grid(row=10, column = 0)
-        
+
+    def grid_complex(self):
+        complex_label = tk.Label(self.page, text="Complex")
+        complex_label.grid(row=0, column=3)
+
+        self.complex_charge = tk.Entry(self.page, width=5)
+        self.complex_charge.grid(row=1, column=3)
+
+        self.complex_spin = tk.Entry(self.page, width=5)
+        self.complex_spin.grid(row=2, column=3)
+        self.complex_spin.insert("end", "1")
+
+        self.complex_atoms_no = tk.Entry(self.page, width=5)
+        self.complex_atoms_no.grid(row=9, column=3)
+
+    def grid_write(self):
+        write_button = tk.Button(self.page, text="write", command=self.write)
+        write_button.grid(row=10, column=0)
+
     def write(self):
-        self.chargeTotal = self.complexCharge.get()
-        self.spinTotal = self.complexSpin.get()
-        self.chargeGuest = self.guestCharge.get()
-        self.spinGuest = self.guestSpin.get()
-        self.chargeHost = self.hostCharge.get()
-        self.spinHost = self.hostSpin.get()
-        
-        if not self.chargeTotal or not self.chargeGuest or not self.chargeHost:
-            tkMessageBox.showwarning(title = "Error!", message = "Please fill the charge data")
+        self.charge_total = self.complex_charge.get()
+        self.spin_total = self.complex_spin.get()
+        self.charge_guest = self.guest_charge.get()
+        self.spin_guest = self.guest_spin.get()
+        self.charge_host = self.host_charge.get()
+        self.spin_host = self.host_spin.get()
+
+        if not self.charge_total or not self.charge_guest or not self.charge_host:
+            messagebox.showwarning(
+                title="Error!", message="Please fill the charge data"
+            )
             return
-        
-        if not self.spinTotal or not self.spinGuest or not self.spinHost:
-            tkMessageBox.showwarning(title = "Error!", message = "Please fill the spin data")
+
+        if not self.spin_total or not self.spin_guest or not self.spin_host:
+            messagebox.showwarning(title="Error!", message="Please fill the spin data")
             return
-        
-        options = { "mustexist" : False , "title" : "Job directory selection"}
-        directory = tkFileDialog.askdirectory(**options)
+
+        options = {"mustexist": False, "title": "Job directory selection"}
+        directory = filedialog.askdirectory(**options)
         if not directory:
             return
-        
+
         if not os.path.isdir(directory):
             os.makedirs(directory)
-            
+
         basename = os.path.basename(directory)
-        
-        cmd.save( os.path.join(directory, basename+".pdb" ), "host or guest"  )
-        
-        additional = open( os.path.join(directory, basename+".dat"), 'w' )
+
+        cmd.save(os.path.join(directory, basename + ".pdb"), "host or guest")
+
+        additional = open(os.path.join(directory, basename + ".dat"), "w")
         objects = cmd.get_object_list()
         for obj in objects:
             if obj != "host" and obj != "guest":
-                additional.write(obj+"\n")
-        
-        
+                additional.write(obj + "\n")
+
         additional.close()
-        
-        if self.keywordSet:
-            for setName in self.keywordSet:
-                self.combineSet(directory, setName)
-                
+
+        if self.keyword_set:
+            for set_name in self.keyword_set:
+                self.combine_set(directory, set_name)
+
         else:
-            self.writeInputJob(directory, basename, {})
-            
-    def combineSet(self, directory, setName):
+            self.write_input_job(directory, basename, {})
+
+    def combine_set(self, directory, set_name):
         queue = [{}]
-        
-        for key in self.keywordSet[setName]:
-            newQueue = []
-            
-            for value in self.keywordSet[setName][key]:
-            
+
+        for key in self.keyword_set[set_name]:
+            new_queue = []
+
+            for value in self.keyword_set[set_name][key]:
                 for element in queue:
-                    newElement = deepcopy(element)
-                    newElement[key] = value
-                    newQueue.append(newElement)
-                    
-            queue = newQueue
-            
-        for jobDict in queue:
-            basename = setName
-            for key in jobDict:
-                newPart = jobDict[key]
-                newPart = newPart.replace(" ","")
-                newPart = newPart.replace("=","")
-                newPart = newPart.replace("(","")
-                newPart = newPart.replace(")", "")
-                
-                basename += "_" + newPart
-            
-            newDirectory = os.path.join(directory, basename)
-            os.makedirs(newDirectory)
-            
-            self.writeInputJob( newDirectory, basename, jobDict)
-        
-    def writeInputJob(self, directory, basename, keywordDict):
-        
-        slurmFile = os.path.join( directory, basename + ".slurm" )
-        inpFile = os.path.join(directory, basename + ".inp")
-        inpFileBasename = os.path.basename(inpFile)
-        
-        slurmF = open(slurmFile, 'w')
-        
-        slurmHead = self.slurmTextG16.get("1.0", "end")
-        slurmHead = self.updateText(slurmHead, keywordDict)
-        
-        slurmF.write(slurmHead)
-        slurmF.write("\n")
-        
-        slurmF.write("\nmodule add plgrid/apps/gaussian/g16.A.03\n\n")
-        slurmF.write("g16 "+inpFileBasename+ "\n\n")
-        
-        slurmF.close()
-        
-        inpF = open(inpFile, 'w')
-        
-        inpF.write("%Chk="+inpFileBasename.replace(".inp",".chk")+"\n")
-        routeSection = self.routeSection.get("1.0", "end")
-        routeSection = self.updateText(routeSection, keywordDict)
-        inpF.write(routeSection)
-        
-        inpF.write("\nEmilka jest najpiekniejsza!\n\n")
-        
-        inpF.write(self.chargeTotal+","+self.spinTotal+" "+self.chargeGuest+","+self.spinGuest+" "+self.chargeHost+","+self.spinHost+"\n")
-        
+                    new_element = deepcopy(element)
+                    new_element[key] = value
+                    new_queue.append(new_element)
+
+            queue = new_queue
+
+        for job_dict in queue:
+            basename = set_name
+            for key in job_dict:
+                new_part = job_dict[key]
+                new_part = new_part.replace(" ", "")
+                new_part = new_part.replace("=", "")
+                new_part = new_part.replace("(", "")
+                new_part = new_part.replace(")", "")
+
+                basename += "_" + new_part
+
+            new_directory = os.path.join(directory, basename)
+            os.makedirs(new_directory)
+
+            self.write_input_job(new_directory, basename, job_dict)
+
+    def write_input_job(self, directory, basename, keyword_dict):
+
+        slurm_file = os.path.join(directory, basename + ".slurm")
+        inp_file = os.path.join(directory, basename + ".inp")
+        inp_file_basename = os.path.basename(inp_file)
+
+        slurm_f = open(slurm_file, "w")
+
+        slurm_head = self.slurm_text_g16.get("1.0", "end")
+        slurm_head = self.update_text(slurm_head, keyword_dict)
+
+        slurm_f.write(slurm_head)
+        slurm_f.write("\n")
+
+        slurm_f.write("\nmodule add plgrid/apps/gaussian/g16.A.03\n\n")
+        slurm_f.write("g16 " + inp_file_basename + "\n\n")
+
+        slurm_f.close()
+
+        inp_f = open(inp_file, "w")
+
+        inp_f.write("%Chk=" + inp_file_basename.replace(".inp", ".chk") + "\n")
+        route_section = self.route_section.get("1.0", "end")
+        route_section = self.update_text(route_section, keyword_dict)
+        inp_f.write(route_section)
+
+        inp_f.write("\nEmilka jest najpiekniejsza!\n\n")
+
+        inp_f.write(
+            self.charge_total
+            + ","
+            + self.spin_total
+            + " "
+            + self.charge_guest
+            + ","
+            + self.spin_guest
+            + " "
+            + self.charge_host
+            + ","
+            + self.spin_host
+            + "\n"
+        )
+
         model = cmd.get_model("guest and guestFrozen")
-        self.writeModelToFile(model, inpF, 1, True)
-            
+        self.write_model_to_file(model, inp_f, 1, True)
+
         model = cmd.get_model("guest and not guestFrozen")
-        self.writeModelToFile(model,inpF, 1)
-            
+        self.write_model_to_file(model, inp_f, 1)
+
         model = cmd.get_model("host and hostFrozen")
-        self.writeModelToFile(model, inpF, 2, True)
-            
+        self.write_model_to_file(model, inp_f, 2, True)
+
         model = cmd.get_model("host and not hostFrozen")
-        self.writeModelToFile(model, inpF, 2)
-            
-        inpF.write("\n")
-        
-        additionaInput = self.additionalSection.get("1.0", "end")
-        additionaInput = self.updateText(additionaInput, keywordDict)
-        inpF.write(additionaInput)
-        inpF.write("\n\n")
-        
-        inpF.close()
-        
-    def writeModelToFile(self, model, file2append, fragmentNo, frozen = False):
+        self.write_model_to_file(model, inp_f, 2)
+
+        inp_f.write("\n")
+
+        additional_input = self.additional_section.get("1.0", "end")
+        additional_input = self.update_text(additional_input, keyword_dict)
+        inp_f.write(additional_input)
+        inp_f.write("\n\n")
+
+        inp_f.close()
+
+    def write_model_to_file(self, model, file2append, fragment_no, frozen=False):
         for atom in model.atom:
             resnum = atom.resi
             resname = atom.resn
             chain = atom.chain
             pdbname = atom.name
             element = atom.symbol
-            
+
             x = str(atom.coord[0])
             y = str(atom.coord[1])
             z = str(atom.coord[2])
-            
+
             if not frozen:
-                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+"_"+chain+") "+x+" "+y+" "+z+"\n" )
+                file2append.write(
+                    element
+                    + "(Fragment="
+                    + str(fragment_no)
+                    + ", PDBName="
+                    + pdbname
+                    + ", ResName="
+                    + resname
+                    + ", ResNum="
+                    + str(resnum)
+                    + "_"
+                    + chain
+                    + ") "
+                    + x
+                    + " "
+                    + y
+                    + " "
+                    + z
+                    + "\n"
+                )
             else:
-                file2append.write(element+"(Fragment="+str(fragmentNo)+", PDBName="+pdbname+", ResName="+resname+", ResNum="+str(resnum)+"_"+chain+") -1"+x+" "+y+" "+z+"\n" )
-                
-    def getKeywordsFromText(self, text):
+                file2append.write(
+                    element
+                    + "(Fragment="
+                    + str(fragment_no)
+                    + ", PDBName="
+                    + pdbname
+                    + ", ResName="
+                    + resname
+                    + ", ResNum="
+                    + str(resnum)
+                    + "_"
+                    + chain
+                    + ") -1"
+                    + x
+                    + " "
+                    + y
+                    + " "
+                    + z
+                    + "\n"
+                )
+
+    def get_keywords_from_text(self, text):
         keywords = []
-        
-        insideKeyword = False
-        
+
+        inside_keyword = False
+
         for letter in text:
             if letter == "{":
-                insideKeyword = True
+                inside_keyword = True
                 keywords.append("")
                 continue
             elif letter == "}":
-                insideKeyword = False
-                
-            if insideKeyword:
+                inside_keyword = False
+
+            if inside_keyword:
                 keywords[-1] += letter
-                
+
         return keywords
-    
-    def updateText(self, text, keyDict):
-        keywords = self.getKeywordsFromText(text)
-        
+
+    def update_text(self, text, key_dict):
+        keywords = self.get_keywords_from_text(text)
+
         for key in keywords:
-            if key in keyDict:
-                text = text.replace("{"+key+"}", keyDict[key])
+            if key in key_dict:
+                text = text.replace("{" + key + "}", key_dict[key])
             else:
-                text = text.replace("{"+key+"}", " ")
-                
+                text = text.replace("{" + key + "}", " ")
+
         return text
-        
-    def gridGaussianRouteSection(self):
-        routeSectionLabel = Tkinter.Label(self.page, text = "Gaussian route section")
-        routeSectionLabel.grid(row = 1, column=5, columnspan = 5)
-        
-        self.routeSection =Tkinter.Text(self.page, width =50, height = 10 )
-        self.routeSection.grid(row = 2, column = 5, columnspan = 5, rowspan = 5)
-        self.routeSection.insert("end", "%Mem=100GB\n#P B3LYP/6-31G(d,p)\n# Opt Counterpoise=2\n# SCRF(Solvent=Water, Read)\n# Gfinput IOP(6/7=3)  Pop=full  Density  Test \n# Units(Ang,Deg)")
-        
-    def gridGaussianAdditionalInput(self):
-        additionalInputLabel = Tkinter.Label(self.page, text="Additional input")
-        additionalInputLabel.grid(row=7, column = 5, columnspan = 5)
-        
-        self.additionalSection = Tkinter.Text(self.page, width = 50, height = 10)
-        self.additionalSection.grid(row=8, column=5, columnspan = 5, rowspan = 5)
-        self.additionalSection.insert("end", "eps=4\n")
-                                 
-    def gridSlurmSection(self):
-        slurmSection = Tkinter.Label(self.page, text = "Slurm input")
-        slurmSection.grid(row = 1, column = 10, columnspan = 10)
-        
-        self.slurmTextG16 = Tkinter.Text(self.page, width = 50, height = 10)
-        self.slurmTextG16.grid(row = 2, column = 10 , columnspan = 5, rowspan = 5)
-        self.slurmTextG16.insert("end" , "#!/bin/env bash\n#SBATCH --nodes=1\n#SBATCH --cpus-per-task=24\n#SBATCH --time=70:00:00\n##### Nazwa kolejki\n#SBATCH -p plgrid\n" )
-                  
-    def gridSetKeywordsSection(self):
-        setLabel = Tkinter.Label(self.page, text = "Set")
-        setLabel.grid(row = 7, column = 10, columnspan = 2)
-        
-        self.setListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
-        self.setListbox.grid(row= 8, column = 10, columnspan = 2, rowspan = 5)
-        self.setListbox.bind("<<ListboxSelect>>", self.selectSet )
-        
-        setNewButton = Tkinter.Button(self.page, width = 4, text = "New:", command = self.addSet)
-        setNewButton.grid(row = 20, column = 10, columnspan = 1)
-        
-        setCopyButton = Tkinter.Button(self.page, width = 4, text = "Copy:", command = self.copySet)
-        setCopyButton.grid(row = 20, column = 11, columnspan = 1)
-        
-        self.setNewEntry = Tkinter.Entry(self.page, width = 8)
-        self.setNewEntry.grid(row = 21, column = 10, columnspan = 2)
-        
-        setDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteSet)
-        setDeleteButton.grid(row = 22, column = 10, columnspan = 2)
-        
+
+    def grid_gaussian_route_section(self):
+        route_section_label = tk.Label(self.page, text="Gaussian route section")
+        route_section_label.grid(row=1, column=5, columnspan=5)
+
+        self.route_section = tk.Text(self.page, width=50, height=10)
+        self.route_section.grid(row=2, column=5, columnspan=5, rowspan=5)
+        self.route_section.insert(
+            "end",
+            "%Mem=100GB\n"
+            "#P B3LYP/6-31G(d,p)\n"
+            "# Opt Counterpoise=2\n"
+            "# SCRF(Solvent=Water, Read)\n"
+            "# Gfinput IOP(6/7=3)  Pop=full  Density  Test \n"
+            "# Units(Ang,Deg)",
+        )
+
+    def grid_gaussian_additional_input(self):
+        additional_input_label = tk.Label(self.page, text="Additional input")
+        additional_input_label.grid(row=7, column=5, columnspan=5)
+
+        self.additional_section = tk.Text(self.page, width=50, height=10)
+        self.additional_section.grid(row=8, column=5, columnspan=5, rowspan=5)
+        self.additional_section.insert("end", "eps=4\n")
+
+    def grid_slurm_section(self):
+        slurm_section = tk.Label(self.page, text="Slurm input")
+        slurm_section.grid(row=1, column=10, columnspan=10)
+
+        self.slurm_text_g16 = tk.Text(self.page, width=50, height=10)
+        self.slurm_text_g16.grid(row=2, column=10, columnspan=5, rowspan=5)
+        self.slurm_text_g16.insert(
+            "end",
+            "#!/bin/env bash\n"
+            "#SBATCH --nodes=1\n"
+            "#SBATCH --cpus-per-task=24\n"
+            "#SBATCH --time=70:00:00\n"
+            "##### Nazwa kolejki\n"
+            "#SBATCH -p plgrid\n",
+        )
+
+    def grid_set_keywords_section(self):
+        set_label = tk.Label(self.page, text="Set")
+        set_label.grid(row=7, column=10, columnspan=2)
+
+        self.set_listbox = tk.Listbox(
+            self.page, width=12, height=9, exportselection=False
+        )
+        self.set_listbox.grid(row=8, column=10, columnspan=2, rowspan=5)
+        self.set_listbox.bind("<<ListboxSelect>>", self.select_set)
+
+        set_new_button = tk.Button(
+            self.page, width=4, text="New:", command=self.add_set
+        )
+        set_new_button.grid(row=20, column=10, columnspan=1)
+
+        set_copy_button = tk.Button(
+            self.page, width=4, text="Copy:", command=self.copy_set
+        )
+        set_copy_button.grid(row=20, column=11, columnspan=1)
+
+        self.set_new_entry = tk.Entry(self.page, width=8)
+        self.set_new_entry.grid(row=21, column=10, columnspan=2)
+
+        set_delete_button = tk.Button(
+            self.page, width=8, text="Delete:", command=self.delete_set
+        )
+        set_delete_button.grid(row=22, column=10, columnspan=2)
+
         #########################################################
-        
-        keysLabel = Tkinter.Label(self.page, text = "Keys")
-        keysLabel.grid(row = 7, column = 12, columnspan = 2)
-        
-        self.keysListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
-        self.keysListbox.grid(row= 8, column = 12, columnspan = 2, rowspan = 5)
-        self.keysListbox.bind("<<ListboxSelect>>", self.selectKey)
-        
-        keysNewButton = Tkinter.Button(self.page, width = 4, text = "New:", command = self.addKey)
-        keysNewButton.grid(row = 20, column = 12, columnspan = 1)
-        
-        keysCopyButton = Tkinter.Button(self.page, width = 4, text = "Copy:", command = self.copyKey)
-        keysCopyButton.grid(row = 20, column = 13, columnspan = 1)
-        
-        self.keysNewEntry = Tkinter.Entry(self.page, width = 8)
-        self.keysNewEntry.grid(row = 21, column = 12, columnspan = 2)
-        
-        keysDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteKey)
-        keysDeleteButton.grid(row = 22, column = 12, columnspan = 2)
-        
+
+        keys_label = tk.Label(self.page, text="Keys")
+        keys_label.grid(row=7, column=12, columnspan=2)
+
+        self.keys_listbox = tk.Listbox(
+            self.page, width=12, height=9, exportselection=False
+        )
+        self.keys_listbox.grid(row=8, column=12, columnspan=2, rowspan=5)
+        self.keys_listbox.bind("<<ListboxSelect>>", self.select_key)
+
+        keys_new_button = tk.Button(
+            self.page, width=4, text="New:", command=self.add_key
+        )
+        keys_new_button.grid(row=20, column=12, columnspan=1)
+
+        keys_copy_button = tk.Button(
+            self.page, width=4, text="Copy:", command=self.copy_key
+        )
+        keys_copy_button.grid(row=20, column=13, columnspan=1)
+
+        self.keys_new_entry = tk.Entry(self.page, width=8)
+        self.keys_new_entry.grid(row=21, column=12, columnspan=2)
+
+        keys_delete_button = tk.Button(
+            self.page, width=8, text="Delete:", command=self.delete_key
+        )
+        keys_delete_button.grid(row=22, column=12, columnspan=2)
+
         #########################################################
-        
-        valuesLabel = Tkinter.Label(self.page, text = "Values")
-        valuesLabel.grid(row = 7, column = 14, columnspan = 2)
-        
-        self.valuesListbox = Tkinter.Listbox(self.page, width =12, height = 9, exportselection = False)
-        self.valuesListbox.grid(row= 8, column = 14, columnspan = 2, rowspan = 5)
-        
-        valuesNewButton = Tkinter.Button(self.page, width = 8, text = "New:", command = self.addValues)
-        valuesNewButton.grid(row = 20, column = 14, columnspan = 2)
-        
-        self.valuesNewEntry = Tkinter.Entry(self.page, width = 8)
-        self.valuesNewEntry.grid(row = 21, column = 14, columnspan = 2)
-        
-        valuesDeleteButton = Tkinter.Button(self.page, width = 8, text = "Delete:", command = self.deleteValue)
-        valuesDeleteButton.grid(row = 22, column = 14, columnspan = 2)
-        
-    def addSet(self):
-        newRecord = self.setNewEntry.get()
-        
-        if not newRecord:
+
+        values_label = tk.Label(self.page, text="Values")
+        values_label.grid(row=7, column=14, columnspan=2)
+
+        self.values_listbox = tk.Listbox(
+            self.page, width=12, height=9, exportselection=False
+        )
+        self.values_listbox.grid(row=8, column=14, columnspan=2, rowspan=5)
+
+        values_new_button = tk.Button(
+            self.page, width=8, text="New:", command=self.add_values
+        )
+        values_new_button.grid(row=20, column=14, columnspan=2)
+
+        self.values_new_entry = tk.Entry(self.page, width=8)
+        self.values_new_entry.grid(row=21, column=14, columnspan=2)
+
+        values_delete_button = tk.Button(
+            self.page, width=8, text="Delete:", command=self.delete_value
+        )
+        values_delete_button.grid(row=22, column=14, columnspan=2)
+
+    def add_set(self):
+        new_record = self.set_new_entry.get()
+
+        if not new_record:
             return
-        
-        self.keywordSet[newRecord] = {}
-        self.setListbox.insert(0, newRecord)
-        self.setListbox.selection_clear(0, "end")
-        self.setListbox.selection_set(0)
-        self.selectSet(0)
-        
-        self.setNewEntry.delete(0, "end")
-        
-    def copySet(self):
-        newRecord = self.setNewEntry.get()
-        
-        if not newRecord:
+
+        self.keyword_set[new_record] = {}
+        self.set_listbox.insert(0, new_record)
+        self.set_listbox.selection_clear(0, "end")
+        self.set_listbox.selection_set(0)
+        self.select_set(0)
+
+        self.set_new_entry.delete(0, "end")
+
+    def copy_set(self):
+        new_record = self.set_new_entry.get()
+
+        if not new_record:
             return
-        
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
+            messagebox.showwarning(title="Error!", message="Please select the set")
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        self.keywordSet[newRecord] = deepcopy( self.keywordSet[selectedSet] )
-        self.setListbox.insert(0, newRecord)
-        self.setListbox.selection_clear(0, "end")
-        self.setListbox.selection_set(0)
-        self.selectSet(0)
-        
-        self.setNewEntry.delete(0, "end")
-    
-    def addKey(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        self.keyword_set[new_record] = deepcopy(self.keyword_set[selected_set])
+        self.set_listbox.insert(0, new_record)
+        self.set_listbox.selection_clear(0, "end")
+        self.set_listbox.selection_set(0)
+        self.select_set(0)
+
+        self.set_new_entry.delete(0, "end")
+
+    def add_key(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
+            messagebox.showwarning(title="Error!", message="Please select the set")
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        newRecord = self.keysNewEntry.get()
-        
-        if not newRecord:
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        new_record = self.keys_new_entry.get()
+
+        if not new_record:
             return
-        
-        self.keywordSet[selectedSet][newRecord] = []
-        self.keysListbox.insert(0, newRecord)
-        self.keysListbox.selection_clear(0, "end")
-        self.keysListbox.selection_set(0)
-        self.selectKey(0)
-        
-        self.keysNewEntry.delete(0, "end")
-        
-    def copyKey(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        self.keyword_set[selected_set][new_record] = []
+        self.keys_listbox.insert(0, new_record)
+        self.keys_listbox.selection_clear(0, "end")
+        self.keys_listbox.selection_set(0)
+        self.select_key(0)
+
+        self.keys_new_entry.delete(0, "end")
+
+    def copy_key(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
+            messagebox.showwarning(title="Error!", message="Please select the set")
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        selectedKey = self.keysListbox.curselection()
-        if not selectedKey:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the key")
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        selected_key = self.keys_listbox.curselection()
+        if not selected_key:
+            messagebox.showwarning(title="Error!", message="Please select the key")
             return
-        
-        selectedKey = self.keysListbox.get(selectedKey)
-        
-        newRecord = self.keysNewEntry.get()
-        
-        if not newRecord:
+
+        selected_key = self.keys_listbox.get(selected_key)
+
+        new_record = self.keys_new_entry.get()
+
+        if not new_record:
             return
-        
-        self.keywordSet[selectedSet][newRecord] = deepcopy( self.keywordSet[selectedSet][selectedKey] )
-        self.keysListbox.insert(0, newRecord)
-        self.keysListbox.selection_clear(0, "end")
-        self.keysListbox.selection_set(0)
-        self.selectKey(0)
-        
-        self.keysNewEntry.delete(0, "end")
-    
-    def addValues(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        self.keyword_set[selected_set][new_record] = deepcopy(
+            self.keyword_set[selected_set][selected_key]
+        )
+        self.keys_listbox.insert(0, new_record)
+        self.keys_listbox.selection_clear(0, "end")
+        self.keys_listbox.selection_set(0)
+        self.select_key(0)
+
+        self.keys_new_entry.delete(0, "end")
+
+    def add_values(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
+            messagebox.showwarning(title="Error!", message="Please select the set")
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        selectedKey = self.keysListbox.curselection()
-        if not selectedKey:
-            tkMessageBox.showwarning(title = "Error!", message = "Please select the key")
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        selected_key = self.keys_listbox.curselection()
+        if not selected_key:
+            messagebox.showwarning(title="Error!", message="Please select the key")
             return
-        
-        selectedKey = self.keysListbox.get(selectedKey)
-        
-        newRecord = self.valuesNewEntry.get()
-        
-        if not newRecord:
+
+        selected_key = self.keys_listbox.get(selected_key)
+
+        new_record = self.values_new_entry.get()
+
+        if not new_record:
             return
-        
-        if newRecord in self.keywordSet[selectedSet][selectedKey]:
+
+        if new_record in self.keyword_set[selected_set][selected_key]:
             return
-        
-        self.keywordSet[selectedSet][selectedKey] = [ newRecord ] + self.keywordSet[selectedSet][selectedKey]
-        self.valuesListbox.insert(0, newRecord)
-        self.valuesListbox.selection_clear(0, "end")
-        self.valuesListbox.selection_set(0)
-        
-        self.valuesNewEntry.delete(0, "end")
-        
-    def selectSet(self, arg):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
+
+        self.keyword_set[selected_set][selected_key] = [new_record] + self.keyword_set[
+            selected_set
+        ][selected_key]
+        self.values_listbox.insert(0, new_record)
+        self.values_listbox.selection_clear(0, "end")
+        self.values_listbox.selection_set(0)
+
+        self.values_new_entry.delete(0, "end")
+
+    def select_set(self, arg):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
             print("nihuhu")
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        self.keysListbox.delete(0,"end")
-        self.valuesListbox.delete(0, "end")
-        
-        for key in self.keywordSet[selectedSet]:
-            self.keysListbox.insert("end", key)
-    
-    def selectKey(self, arg):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        self.keys_listbox.delete(0, "end")
+        self.values_listbox.delete(0, "end")
+
+        for key in self.keyword_set[selected_set]:
+            self.keys_listbox.insert("end", key)
+
+    def select_key(self, arg):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        selectedKey = self.keysListbox.curselection()
-        if not selectedKey:
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        selected_key = self.keys_listbox.curselection()
+        if not selected_key:
             print("nihuhu")
             return
-        
-        selectedKey = self.keysListbox.get(selectedKey)
-        self.valuesListbox.delete(0, "end")
-        
-        for value in self.keywordSet[selectedSet][selectedKey]:
-            self.valuesListbox.insert("end", value)
-        
-    def deleteSet(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
+
+        selected_key = self.keys_listbox.get(selected_key)
+        self.values_listbox.delete(0, "end")
+
+        for value in self.keyword_set[selected_set][selected_key]:
+            self.values_listbox.insert("end", value)
+
+    def delete_set(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
             print("nihuhu")
             return
-        
-        selectedSetName = self.setListbox.get(selectedSet)
-        self.setListbox.delete(selectedSet)
-        
-        self.keysListbox.delete(0,"end")
-        self.valuesListbox.delete(0, "end")
-        
-        del self.keywordSet[selectedSetName]
-    
-    def deleteKey(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        selected_set_name = self.set_listbox.get(selected_set)
+        self.set_listbox.delete(selected_set)
+
+        self.keys_listbox.delete(0, "end")
+        self.values_listbox.delete(0, "end")
+
+        del self.keyword_set[selected_set_name]
+
+    def delete_key(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        selectedKey = self.keysListbox.curselection()
-        if not selectedKey:
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        selected_key = self.keys_listbox.curselection()
+        if not selected_key:
             print("nihuhu")
             return
-        
-        selectedKeyName = self.keysListbox.get(selectedKey)
-        self.keysListbox.delete(selectedKey)
-        
-        self.valuesListbox.delete(0, "end")
-        del self.keywordSet[selectedSet][selectedKeyName]
-        
-    
-    def deleteValue(self):
-        selectedSet = self.setListbox.curselection()
-        if not selectedSet:
-#            tkMessageBox.showwarning(title = "Error!", message = "Please select the set")
+
+        selected_key_name = self.keys_listbox.get(selected_key)
+        self.keys_listbox.delete(selected_key)
+
+        self.values_listbox.delete(0, "end")
+        del self.keyword_set[selected_set][selected_key_name]
+
+    def delete_value(self):
+        selected_set = self.set_listbox.curselection()
+        if not selected_set:
             return
-        
-        selectedSet = self.setListbox.get(selectedSet)
-        
-        selectedKey = self.keysListbox.curselection()
-        if not selectedKey:
+
+        selected_set = self.set_listbox.get(selected_set)
+
+        selected_key = self.keys_listbox.curselection()
+        if not selected_key:
             print("nihuhu")
             return
-        
-        selectedKey = self.keysListbox.get(selectedKey)
-        
-        selectedValue = self.valuesListbox.curselection()
-        if not selectedValue:
+
+        selected_key = self.keys_listbox.get(selected_key)
+
+        selected_value = self.values_listbox.curselection()
+        if not selected_value:
             return
-        
-        selectedValueName = self.valuesListbox.get(selectedValue)
-        self.valuesListbox.delete(selectedValue)
-        
-        self.keywordSet[selectedSet][selectedKey].remove(selectedValueName)
-        
-        
-    def insertKeywordSet(self):
-        self.setListbox.delete(0, "end")
-        self.keysListbox.delete(0,"end")
-        self.valuesListbox.delete(0, "end")
-        
-        for setName in self.keywordSet:
-            self.setListbox.insert("end", setName)
-    
+
+        selected_value_name = self.values_listbox.get(selected_value)
+        self.values_listbox.delete(selected_value)
+
+        self.keyword_set[selected_set][selected_key].remove(selected_value_name)
+
+    def insert_keyword_set(self):
+        self.set_listbox.delete(0, "end")
+        self.keys_listbox.delete(0, "end")
+        self.values_listbox.delete(0, "end")
+
+        for set_name in self.keyword_set:
+            self.set_listbox.insert("end", set_name)
+
     def grid(self):
-        self.gridBasicLabels()
-        self.gridHost()
-        self.gridGuest()
-        self.gridComplex()
-        self.gridWrite()
-        self.gridSlurmSection()
-        self.gridSetKeywordsSection()
-        
-        self.gridGaussianRouteSection()
-        self.gridGaussianAdditionalInput()
-        
-    def getState(self):
-        state = {  "inputBegin" : "", "additionalInput" : "", "slurmConfig" : "" , "keywordSet" : {} }
-        
-        state["inputBegin"] = self.routeSection.get("1.0", "end")
-        state["additionalInput"] = self.additionalSection.get("1.0", "end")
-        state["slurmConfig"] = self.slurmTextG16.get("1.0", "end")
-        state["keywordSet"] = self.keywordSet
-        
+        self.grid_basic_labels()
+        self.grid_host()
+        self.grid_guest()
+        self.grid_complex()
+        self.grid_write()
+        self.grid_slurm_section()
+        self.grid_set_keywords_section()
+
+        self.grid_gaussian_route_section()
+        self.grid_gaussian_additional_input()
+
+    def get_state(self):
+        state = {
+            "inputBegin": "",
+            "additionalInput": "",
+            "slurmConfig": "",
+            "keywordSet": {},
+        }
+
+        state["inputBegin"] = self.route_section.get("1.0", "end")
+        state["additionalInput"] = self.additional_section.get("1.0", "end")
+        state["slurmConfig"] = self.slurm_text_g16.get("1.0", "end")
+        state["keywordSet"] = self.keyword_set
+
         return state
-    
-    def loadState(self, state):
+
+    def load_state(self, state):
         if "inputBegin" in state:
-            self.routeSection.delete("1.0", "end")
-            self.routeSection.insert("end", state["inputBegin"] )
-        
+            self.route_section.delete("1.0", "end")
+            self.route_section.insert("end", state["inputBegin"])
+
         if "additionalInput" in state:
-            self.additionalSection.delete("1.0", "end")
-            self.additionalSection.insert("end", state["additionalInput"])
-        
+            self.additional_section.delete("1.0", "end")
+            self.additional_section.insert("end", state["additionalInput"])
+
         if "slurmConfig" in state:
-            self.slurmTextG16.delete("1.0", "end")
-            self.slurmTextG16.insert("end", state["slurmConfig"])
-        
+            self.slurm_text_g16.delete("1.0", "end")
+            self.slurm_text_g16.insert("end", state["slurmConfig"])
+
         if "keywordSet" in state:
-            self.keywordSet = state["keywordSet"]
-            self.insertKeywordSet()
-        
+            self.keyword_set = state["keywordSet"]
+            self.insert_keyword_set()

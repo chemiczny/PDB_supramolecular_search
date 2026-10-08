@@ -1,36 +1,42 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 try:
     from pymol import cmd, cgo
-except:
+except ImportError:
     pass
-    
-def cgo_arrow(atom1='pk1', atom2='pk2', radius=0.5, gap=0.0, hlength=-1, hradius=-1,
-              color='blue red', name=''):
-    '''
-DESCRIPTION
 
-    Create a CGO arrow between two picked atoms.
 
-ARGUMENTS
+def cgo_arrow(
+    atom1="pk1",
+    atom2="pk2",
+    radius=0.5,
+    gap=0.0,
+    hlength=-1,
+    hradius=-1,
+    color="blue red",
+    name="",
+):
+    """
+    DESCRIPTION
 
-    atom1 = string: single atom selection or list of 3 floats {default: pk1}
+        Create a CGO arrow between two picked atoms.
 
-    atom2 = string: single atom selection or list of 3 floats {default: pk2}
+    ARGUMENTS
 
-    radius = float: arrow radius {default: 0.5}
+        atom1 = string: single atom selection or list of 3 floats {default: pk1}
 
-    gap = float: gap between arrow tips and the two atoms {default: 0.0}
+        atom2 = string: single atom selection or list of 3 floats {default: pk2}
 
-    hlength = float: length of head
+        radius = float: arrow radius {default: 0.5}
 
-    hradius = float: radius of head
+        gap = float: gap between arrow tips and the two atoms {default: 0.0}
 
-    color = string: one or two color names {default: blue red}
+        hlength = float: length of head
 
-    name = string: name of CGO object
-    '''
+        hradius = float: radius of head
+
+        color = string: one or two color names {default: blue red}
+
+        name = string: name of CGO object
+    """
     from chempy import cpv
 
     radius, gap = float(radius), float(gap)
@@ -38,7 +44,7 @@ ARGUMENTS
 
     try:
         color1, color2 = color.split()
-    except:
+    except ValueError:
         color1 = color2 = color
     color1 = list(cmd.get_color_tuple(color1))
     color2 = list(cmd.get_color_tuple(color2))
@@ -46,7 +52,7 @@ ARGUMENTS
     def get_coord(v):
         if not isinstance(v, str):
             return v
-        if v.startswith('['):
+        if v.startswith("["):
             return cmd.safe_list_eval(v)
         return cmd.get_atom_coords(v)
 
@@ -66,11 +72,23 @@ ARGUMENTS
 
     xyz3 = cpv.add(cpv.scale(normal, hlength), xyz2)
 
-    obj = [cgo.CYLINDER] + xyz1 + xyz3 + [radius] + color1 + color2 + \
-          [cgo.CONE] + xyz3 + xyz2 + [hradius, 0.0] + color2 + color2 + \
-          [1.0, 0.0]
+    obj = (
+        [cgo.CYLINDER]
+        + xyz1
+        + xyz3
+        + [radius]
+        + color1
+        + color2
+        + [cgo.CONE]
+        + xyz3
+        + xyz2
+        + [hradius, 0.0]
+        + color2
+        + color2
+        + [1.0, 0.0]
+    )
 
     if not name:
-        name = cmd.get_unused_name('arrow')
+        name = cmd.get_unused_name("arrow")
 
     cmd.load_cgo(obj, name)

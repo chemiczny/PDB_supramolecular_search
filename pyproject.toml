@@ -35,7 +35,6 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-extend-exclude = ["pymol_plugin"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "N"]
@@ -48,3 +47,8 @@ select = ["E", "W", "F", "N"]
 "scripts/update_pdb.py" = ["E402"]
 # Imports follow the sys.path setup; commented-out analysis variants are kept.
 "scripts/sequence_analysis.py" = ["E402", "E501"]
+# PyMOL loads the plugin through __init_plugin__, after the plugin directory is
+# put on sys.path so its modules can import each other.
+"pymol_plugin/supramolecular/__init__.py" = ["E402", "N807"]
+# Old camelCase aliases kept for scripts recorded before the rename.
+"pymol_plugin/supramolecular/simpleFilters.py" = ["N816", "N999"]
